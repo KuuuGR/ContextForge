@@ -1,5 +1,21 @@
 # Release Notes — ContextForge
 
+## Version 0.0.3
+
+**Release Date:** 2026-02-08
+
+### What's New
+
+- Immutable `Prompt` domain model with JSON serialization/deserialization, `copyWith()`, equality, and readable `toString()`.
+- Abstract `PromptRepository` contract (getAll, getById, save, delete).
+- `PromptService` skeleton depending on the repository abstraction.
+
+### Notes
+
+- No persistence, storage, or CRUD logic yet — domain foundation only.
+
+---
+
 ## Version 0.0.2
 
 **Release Date:** 2026-02-08

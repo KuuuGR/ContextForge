@@ -256,4 +256,104 @@ None
 - No TextEditingControllers are wired yet; future phases will need to attach controllers to the URL fields, prompt editor, and output preview.
 - The window title currently uses the default macOS runner configuration; window metadata (title/size) may need adjustment in a later phase.
 - The mock prompt options are hardcoded constants in `prompt_selector.dart`; Phase 003/004 will replace these with service-backed data.
+
+---
+
+## Phase 003 — Prompt Domain Foundation
+
+## Phase
+
+003 — Prompt Domain Foundation
+
+## Status
+
+Completed
+
+## Completed Work
+
+- Created the immutable `Prompt` domain model (`lib/models/prompt.dart`).
+  - Fields: `id`, `title`, `content`, `rating`, `createdAt`, `updatedAt`.
+  - JSON serialization (`toJson()`) and deserialization (`fromJson()`).
+  - `copyWith()` for immutability-friendly updates.
+  - Value equality (`operator ==` and `hashCode`).
+  - Readable `toString()` for debugging.
+- Created the abstract `PromptRepository` contract (`lib/repositories/prompt_repository.dart`).
+  - Methods: `getAll()`, `getById()`, `save()`, `delete()`.
+  - No storage implementation.
+- Created the `PromptService` skeleton (`lib/services/prompt_service.dart`).
+  - Depends on `PromptRepository` abstraction.
+  - Public API defined: `getAll()`, `getById()`, `getActivePrompt()`, `createCustomPrompt()`.
+  - No implementation logic yet — method bodies throw `UnimplementedError` with TODO notes for future phases.
+- Created unit tests for the Prompt model (`test/prompt_model_test.dart`).
+  - JSON serialization/deserialization round-trip.
+  - `fromJson` rating default.
+  - `copyWith` field updates.
+  - Value equality and hashCode.
+  - Readable `toString()`.
+- Updated `docs/ARCHITECTURE.md` to mark the Prompt model, PromptRepository, and PromptService as implemented.
+- Verified `flutter analyze` (No issues found) and `flutter test` (All tests passed).
+
+## Files Created
+
+- `lib/models/prompt.dart` — immutable Prompt domain model.
+- `lib/repositories/prompt_repository.dart` — abstract repository contract.
+- `lib/services/prompt_service.dart` — service skeleton depending on repository abstraction.
+- `test/prompt_model_test.dart` — unit tests for the Prompt model.
+
+## Files Modified
+
+- `docs/ARCHITECTURE.md` — Prompt domain marked as implemented.
+- `docs/CHANGELOG.md` — added 0.0.3 entry.
+- `docs/ROADMAP.md` — Phase 003 marked Completed, Phase 004 marked Next.
+- `docs/SESSION_REPORT.md` — this report.
+- `docs/PROJECT_STATE.md` — version 0.0.3, phase 003.
+- `docs/RELEASE_NOTES.md` — added 0.0.3 entry.
+- `pubspec.yaml` — version bumped to `0.0.3+1`.
+
+## Known Risks
+
+- `PromptService` methods throw `UnimplementedError`; callers must not invoke them yet.
+- No storage implementation exists; the repository contract is not yet exercised end-to-end.
+- The `Prompt` model uses ISO-8601 strings for timestamps rather than `DateTime` objects, matching the JSON contract; this may need revisiting if timezone handling becomes complex.
+- The `rating` field defaults to `0`; semantics for unrated vs. rated prompts are not yet defined.
+
+## Next Phase
+
+Phase 004 — Prompt Local Storage (status: Next on the roadmap).
+
+## Commit Placeholder
+
+```
+Phase 003 - Prompt domain foundation
+```
+
+The single commit for this phase will be created once all changes are verified.
+
+---
+
+## Self Review
+
+### Completed
+
+YES
+
+### Skipped
+
+None
+
+### Assumptions
+
+- Timestamps are stored as ISO-8601 strings to keep the model plain and serializable without adding third-party date packages.
+- The repository contract uses `Future`-based methods, anticipating async local storage (file system or database) in Phase 004.
+- `rating` is an integer intended to support prompt ratings in Phase 013; `0` represents "unrated".
+- The service skeleton exposes a public `repository` field to allow future dependency injection into the UI layer (e.g., PromptSelector).
+- The `save()` method in the repository contract covers both create and update semantics; the storage implementation will define exact behavior.
+
+### Potential Risks
+
+- `UnimplementedError` throws in the service could surprise future callers; a structured `UnsupportedOperationException` or similar may be better once the API stabilizes.
+- ISO-8601 strings lack timezone information normalization; future phases may need to convert to `DateTime` with UTC handling.
+- The repository abstraction returns `null` for not-found `getById()`; callers must handle nullability carefully.
+- The Prompt model tests added in Phase 003 cover basic JSON/copyWith/equality cases; edge cases (malformed JSON, missing required fields) are not yet covered.
+- The public `repository` field in the service increases API surface; it could be made private once the service methods are implemented in Phase 005.
 </content>

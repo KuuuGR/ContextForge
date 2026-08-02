@@ -71,13 +71,14 @@ lib/
 
 ---
 
-## Planned Services
+## Services
 
-### PromptService
+### PromptService — IMPLEMENTED (Phase 003)
 
 - Loads available prompt templates for selection.
 - Provides the active prompt for output generation.
 - Supports custom prompt authoring during the workflow.
+- Depends on the `PromptRepository` abstraction; no storage details leak to callers.
 
 ### YouTubeService
 
@@ -122,12 +123,13 @@ lib/
 
 ---
 
-## Planned Repositories
+## Repositories
 
-### PromptRepository
+### PromptRepository — IMPLEMENTED (Phase 003, contract only)
 
 - Persists saved prompt templates locally.
 - Provides CRUD operations for prompts.
+- Defined as an abstract contract; no storage implementation yet.
 
 ### VideoHistoryRepository
 
@@ -146,12 +148,13 @@ lib/
 
 ---
 
-## Planned Models
+## Models
 
-### Prompt
+### Prompt — IMPLEMENTED (Phase 003)
 
 - A saved or custom prompt template.
 - Contains the prompt text and metadata (title, rating in later phases).
+- Immutable; supports JSON serialization/deserialization, `copyWith()`, equality, and readable `toString()`.
 
 ### Video
 

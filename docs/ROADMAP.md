@@ -36,18 +36,21 @@
 
 ---
 
-## Phase 003 — Prompt Manager
+## Phase 003 — Prompt Domain Foundation
 
-**Status: Next**
+**Status: Completed**
 
-- Prompt selection UI.
-- Prompt list and basic prompt management.
+- Immutable `Prompt` model with id, title, content, rating, createdAt, updatedAt.
+- JSON serialization/deserialization, `copyWith()`, equality, and readable `toString()`.
+- Abstract `PromptRepository` contract (getAll, getById, save, delete).
+- `PromptService` skeleton depending on the repository abstraction.
+- No persistence, no storage implementation, no CRUD logic.
 
 ---
 
 ## Phase 004 — Prompt Local Storage
 
-**Status: Planned**
+**Status: Next**
 
 - Persist prompt templates locally.
 - Local-first storage for prompts.

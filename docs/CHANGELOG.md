@@ -2,6 +2,25 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.0.3] — 2026-02-08
+
+### Added
+
+- Immutable `Prompt` domain model (`lib/models/prompt.dart`).
+  - Fields: `id`, `title`, `content`, `rating`, `createdAt`, `updatedAt`.
+  - JSON serialization/deserialization.
+  - `copyWith()`, value equality, and readable `toString()`.
+- Abstract `PromptRepository` contract (`lib/repositories/prompt_repository.dart`).
+  - Methods: `getAll()`, `getById()`, `save()`, `delete()`.
+- `PromptService` skeleton (`lib/services/prompt_service.dart`).
+  - Depends on the repository abstraction.
+  - No implementation logic yet; method bodies arrive in later phases.
+
+### Changed
+
+- Project version updated to `0.0.3`.
+- Architecture documentation marks Prompt model, PromptRepository, and PromptService as implemented.
+
 ## [0.0.2] — 2026-02-08
 
 ### Added
