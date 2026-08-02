@@ -2,6 +2,31 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.0.6] — 2026-02-08
+
+### Added
+
+- `TranscriptLanguage` enum (`lib/models/transcript_language.dart`).
+  - Values: `polish`, `polishAuto`, `english`, `englishAuto`, `other`, `none`.
+  - Human-readable `label` values; no strings used in the domain.
+- Immutable `Video` domain model (`lib/models/video.dart`).
+  - Fields: id, url, videoId, title, channelName, publishedAt, transcriptLanguage, transcriptAvailable, createdAt, updatedAt.
+  - All timestamps are `DateTime` (UTC).
+  - JSON serialization/deserialization, `copyWith()`, equality, readable `toString()`.
+  - Unknown transcript language values default to `none` on deserialization.
+- Abstract `VideoRepository` contract (`lib/repositories/video_repository.dart`).
+  - Methods: `getAll()`, `getByVideoId()`, `save()`, `delete()`.
+- `VideoService` skeleton (`lib/services/video_service.dart`).
+  - Public API: `getAllVideos()`, `getVideoByVideoId()`, `hasBeenUsed()`.
+  - No business logic yet; implementations arrive in Phase 007.
+- Unit tests (`test/video_model_test.dart`).
+  - JSON serialization, round-trip, defaults, copyWith, equality, toString, language labels.
+
+### Changed
+
+- Project version updated to `0.0.6`.
+- Architecture documentation marks Video model, TranscriptLanguage, VideoRepository, and VideoService as implemented.
+
 ## [0.0.5] — 2026-02-08
 
 ### Added

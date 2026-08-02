@@ -1,5 +1,25 @@
 # Release Notes — ContextForge
 
+## Version 0.0.6
+
+**Release Date:** 2026-02-08
+
+### What's New
+
+- Immutable `Video` domain model:
+  - id, url, videoId, title, channelName, publishedAt, transcriptLanguage, transcriptAvailable, createdAt, updatedAt.
+  - All timestamps are `DateTime` (UTC).
+- `TranscriptLanguage` enum (polish, polishAuto, english, englishAuto, other, none).
+- Abstract `VideoRepository` contract (getAll, getByVideoId, save, delete).
+- `VideoService` skeleton (getAllVideos, getVideoByVideoId, hasBeenUsed).
+- Unit tests for JSON serialization, equality, copyWith, and language labels.
+
+### Notes
+
+- No networking, storage, history, or metadata fetching — domain foundation only.
+
+---
+
 ## Version 0.0.5
 
 **Release Date:** 2026-02-08

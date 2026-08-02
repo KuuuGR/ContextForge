@@ -86,11 +86,17 @@ lib/
   - Keeps storage exceptions hidden behind domain exceptions.
 - The UI must never communicate directly with repositories — always via this service.
 
-### YouTubeService
+### YouTubeService — PLANNED (VideoService skeleton in Phase 006)
 
 - Validates YouTube URLs (up to three per run).
 - Fetches video metadata, including publication date.
 - Resolves the video identifier used for history tracking.
+
+### VideoService — IMPLEMENTED (Phase 006, skeleton only)
+
+- Public API established: `getAllVideos()`, `getVideoByVideoId()`, `hasBeenUsed()`.
+- Depends on `VideoRepository` abstraction.
+- No business logic yet — implementations arrive in Phase 007.
 
 ### TranscriptService
 
@@ -141,6 +147,11 @@ lib/
 
 ## Repositories
 
+### VideoRepository — IMPLEMENTED (Phase 006, contract only)
+
+- Abstract contract: `getAll()`, `getByVideoId()`, `save()`, `delete()`.
+- No storage implementation; storage for videos arrives in later phases.
+
 ### PromptRepository — IMPLEMENTED (Phase 003, contract only)
 
 - Persists saved prompt templates locally.
@@ -178,10 +189,19 @@ lib/
 - Contains the prompt text and metadata (title, rating in later phases).
 - Immutable; supports JSON serialization/deserialization, `copyWith()`, equality, and readable `toString()`.
 
-### Video
+### Video — IMPLEMENTED (Phase 006)
 
 - Represents a YouTube video referenced in the workflow.
-- Contains the URL, video identifier, and fetched metadata (publication date).
+- Contains: id, url, videoId, title, channelName, publishedAt, transcriptLanguage, transcriptAvailable, createdAt, updatedAt.
+- Immutable; all timestamps are `DateTime` (UTC).
+- JSON serialization/deserialization, `copyWith()`, equality, readable `toString()`.
+- Independent of any external API.
+
+### TranscriptLanguage — IMPLEMENTED (Phase 006)
+
+- Enum: `polish`, `polishAuto`, `english`, `englishAuto`, `other`, `none`.
+- Used instead of strings throughout the application.
+- Provides human-readable `label` values.
 
 ### Transcript
 

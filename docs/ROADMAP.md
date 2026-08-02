@@ -74,18 +74,22 @@
 
 ---
 
-## Phase 006 — Video History
+## Phase 006 — Video Domain Foundation
 
-**Status: Next**
+**Status: Completed**
 
-- Track which videos have already been used.
-- Green indicator = new video; blue indicator = previously used.
+- Immutable `Video` model with id, url, videoId, title, channelName, publishedAt, transcriptLanguage, transcriptAvailable, createdAt, updatedAt.
+- All timestamps are `DateTime` (UTC).
+- `TranscriptLanguage` enum (polish, polishAuto, english, englishAuto, other, none) — no strings in the domain.
+- Abstract `VideoRepository` contract (getAll, getByVideoId, save, delete).
+- `VideoService` skeleton with public API established.
+- Unit tests: JSON serialization, equality, copyWith, transcript language labels.
 
 ---
 
 ## Phase 007 — YouTube Metadata
 
-**Status: Planned**
+**Status: Next**
 
 - Fetch publication date and video metadata from YouTube.
 - Validate up to three YouTube URLs.

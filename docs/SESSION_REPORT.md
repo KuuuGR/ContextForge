@@ -529,4 +529,104 @@ None
 - `updatedAt` precision at second granularity could be insufficient for audit trails; may need milliseconds in a future phase.
 - There is no pagination on `getAllPrompts()`; large prompt collections could cause memory pressure.
 - The service API may need additional methods (e.g., `getActivePrompt`) when the output builder phase lands.
+
+---
+
+## Phase 006 — Video Domain Foundation
+
+## Phase
+
+006 — Video Domain Foundation
+
+## Status
+
+Completed
+
+## Completed Work
+
+- Created `TranscriptLanguage` enum (`lib/models/transcript_language.dart`).
+  - Values: `polish`, `polishAuto`, `english`, `englishAuto`, `other`, `none`.
+  - Human-readable `label` values (e.g., "Manual Polish", "Automatic English").
+  - Used instead of strings throughout the domain.
+- Created the immutable `Video` domain model (`lib/models/video.dart`).
+  - Fields: id, url, videoId, title, channelName, publishedAt, transcriptLanguage, transcriptAvailable, createdAt, updatedAt.
+  - All timestamps are `DateTime` (UTC) per architect constraints.
+  - JSON serialization (`toJson()`) and deserialization (`fromJson()`).
+  - Unknown transcript language values default to `TranscriptLanguage.none`.
+  - `copyWith()` for immutability-friendly updates.
+  - Value equality (`operator ==`, `hashCode`), readable `toString()`.
+  - Independent of any external API.
+- Created the abstract `VideoRepository` contract (`lib/repositories/video_repository.dart`).
+  - Methods: `getAll()`, `getByVideoId()`, `save()`, `delete()`.
+  - No implementation.
+- Created the `VideoService` skeleton (`lib/services/video_service.dart`).
+  - Public API established: `getAllVideos()`, `getVideoByVideoId()`, `hasBeenUsed()`.
+  - No business logic yet — implementations arrive in Phase 007.
+- Added unit tests (`test/video_model_test.dart`).
+  - 10 tests: JSON serialization, round-trip, defaults, unknown language fallback, copyWith, equality, toString, language labels.
+- Verified `flutter analyze` (No issues found) and `flutter test` (46 tests passed).
+
+## Files Created
+
+- `lib/models/transcript_language.dart` — transcript language enum.
+- `lib/models/video.dart` — immutable Video domain model.
+- `lib/repositories/video_repository.dart` — abstract repository contract.
+- `lib/services/video_service.dart` — service skeleton.
+- `test/video_model_test.dart` — Video model unit tests.
+
+## Files Modified
+
+- `docs/ARCHITECTURE.md` — Video domain marked as implemented.
+- `docs/ROADMAP.md` — Phase 006 marked Completed, Phase 007 marked Next.
+- `docs/CHANGELOG.md` — added 0.0.6 entry.
+- `docs/SESSION_REPORT.md` — this report.
+- `docs/PROJECT_STATE.md` — version 0.0.6, phase 006.
+- `docs/RELEASE_NOTES.md` — added 0.0.6 entry.
+- `pubspec.yaml` — version bumped to `0.0.6+1`.
+
+## Known Risks
+
+- `VideoService` methods throw `UnimplementedError`; callers must not invoke them yet.
+- The `Video` model is not yet persisted anywhere; the repository contract is not exercised end-to-end.
+- The `publishedAt` field is non-nullable; video metadata fetching (Phase 007) must handle cases where publication date is unavailable.
+
+## Next Phase
+
+Phase 007 — YouTube Metadata (status: Next on the roadmap).
+
+## Commit Placeholder
+
+```
+Phase 006 - Video domain foundation
+```
+
+The single commit for this phase will be created once all changes are verified.
+
+---
+
+## Self Review
+
+### Completed
+
+YES
+
+### Skipped
+
+None
+
+### Assumptions
+
+- `DateTime` (UTC) is the correct representation for all video timestamps, per architect constraint "keep all timestamps as DateTime".
+- `transcriptAvailable` defaults to `false` when missing in JSON, representing "unknown" until metadata is fetched.
+- The enum value `none` covers both "no transcript" and "unknown language" states; the distinction can be refined in Phase 008 if needed.
+- `delete(videoId)` in the repository contract deletes by YouTube video identifier, consistent with the history use case.
+- `toJson()` serializes `DateTime` values as UTC ISO-8601 strings, matching the Prompt model convention for storage interchange.
+
+### Potential Risks
+
+- The Video model has 10 fields; if YouTube metadata API responses vary, `fromJson` may need tolerant parsing (e.g., nullable channelName).
+- `hasBeenUsed()` in the service skeleton likely belongs to history logic; Phase 006/007 must decide whether history lives in VideoRepository or a separate VideoHistoryRepository.
+- `transcriptLanguage` on the Video model may overlap with future Transcript model state; the mapping must be kept consistent in Phase 008.
+- No storage implementation yet means the Video model is untested against real persistence.
+- If `publishedAt` can be absent in practice, the non-nullable field will need a design change (e.g., nullable or sentinel value).
 </content>
