@@ -356,4 +356,81 @@ None
 - The repository abstraction returns `null` for not-found `getById()`; callers must handle nullability carefully.
 - The Prompt model tests added in Phase 003 cover basic JSON/copyWith/equality cases; edge cases (malformed JSON, missing required fields) are not yet covered.
 - The public `repository` field in the service increases API surface; it could be made private once the service methods are implemented in Phase 005.
+
+---
+
+## Phase 004 — Prompt Local Storage
+
+## Phase
+
+004 — Prompt Local Storage
+
+## Status
+
+Completed
+
+## Completed Work
+
+- Implemented `JsonPromptStorage` service (`lib/services/json_prompt_storage.dart`).
+- Implemented `JsonPromptRepository` concrete repository (`lib/repositories/json_prompt_repository.dart`).
+- Added unit tests (`test/json_prompt_repository_test.dart`).
+- No new third-party packages added — storage uses Dart's built-in `dart:io` and `dart:convert`.
+- Verified `flutter analyze` (No issues found) and `flutter test` (17 tests passed).
+
+## Files Created
+
+- `lib/services/json_prompt_storage.dart` — JSON file storage service.
+- `lib/repositories/json_prompt_repository.dart` — concrete repository implementation.
+- `test/json_prompt_repository_test.dart` — storage/repository unit tests.
+
+## Files Modified
+
+- `pubspec.yaml`, `docs/ARCHITECTURE.md`, `docs/ROADMAP.md`, `docs/CHANGELOG.md`, `docs/SESSION_REPORT.md`, `docs/PROJECT_STATE.md`, `docs/RELEASE_NOTES.md`.
+
+## Known Risks
+
+- Storage errors are silently swallowed by design; callers receive empty defaults rather than error signals.
+- The default storage path uses `Platform.environment['HOME']`; app sandboxing may require adjustment.
+- JSON file growth is unbounded; no compaction or migration strategy yet.
+- Concurrent writes to `prompts.json` are not guarded.
+
+## Next Phase
+
+Phase 005 — Prompt CRUD (status: Next on the roadmap).
+
+## Commit Placeholder
+
+```
+Phase 004 - Prompt local storage
+```
+
+The single commit for this phase will be created once all changes are verified.
+
+---
+
+## Self Review
+
+### Completed
+
+YES
+
+### Skipped
+
+None
+
+### Assumptions
+
+- The platform application support directory on macOS is `~/Library/Application Support/context_forge`.
+- Silent swallowing of storage errors is acceptable per the spec ("return safe defaults", "do not throw uncaught exceptions").
+- `save()` covers both create and update semantics; storage overwrites by matching `id`.
+- The `directoryPath` override is the only intended seam for tests.
+- Human-readable indented JSON satisfies the "human-readable" format requirement.
+
+### Potential Risks
+
+- Silent storage failure could mask data loss; logging may be needed later.
+- App sandboxing could require a path change to the storage directory.
+- Unbounded file growth could slow loads as prompt count grows.
+- No locking/atomic writes; a crash mid-write could corrupt the JSON file.
+- Tests use real temp directories; they depend on host filesystem writability.
 </content>

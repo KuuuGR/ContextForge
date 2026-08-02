@@ -1,5 +1,24 @@
 # Release Notes — ContextForge
 
+## Version 0.0.4
+
+**Release Date:** 2026-02-08
+
+### What's New
+
+- Local JSON storage for prompt templates (`prompts.json` in the application support directory).
+- `JsonPromptStorage` service — human-readable, indented JSON; auto-creates missing files.
+- `JsonPromptRepository` — concrete implementation of the `PromptRepository` contract.
+- Graceful handling of missing, empty, and invalid JSON files.
+- Unit tests covering storage edge cases.
+
+### Notes
+
+- No third-party storage packages — uses Dart built-in `dart:io` and `dart:convert`.
+- Storage remains replaceable through the `PromptRepository` abstraction.
+
+---
+
 ## Version 0.0.3
 
 **Release Date:** 2026-02-08

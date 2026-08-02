@@ -50,16 +50,21 @@
 
 ## Phase 004 — Prompt Local Storage
 
-**Status: Next**
+**Status: Completed**
 
-- Persist prompt templates locally.
-- Local-first storage for prompts.
+- Local JSON-based storage for prompt templates in the platform application support directory.
+- Human-readable `prompts.json` (indented JSON, editable by hand).
+- `JsonPromptStorage` service owning filesystem paths.
+- `JsonPromptRepository` concrete implementation (getAll, getById, save, delete).
+- Graceful handling of missing files, empty files, and invalid JSON.
+- Unit tests covering missing file, empty file, invalid JSON, save, load, update, and delete.
+- No third-party storage packages — `dart:io` + `dart:convert` only.
 
 ---
 
 ## Phase 005 — Prompt CRUD
 
-**Status: Planned**
+**Status: Next**
 
 - Create, read, update, delete prompt templates.
 - Custom prompt authoring.

@@ -2,6 +2,32 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.0.4] — 2026-02-08
+
+### Added
+
+- `JsonPromptStorage` service (`lib/services/json_prompt_storage.dart`).
+  - Human-readable, indented JSON file (`prompts.json`) in the platform application support directory (`~/Library/Application Support/context_forge` on macOS).
+  - Auto-creates the file with `[]` when missing.
+  - Handles missing, empty, and corrupt files gracefully (returns empty list).
+  - Optional directory path override for tests.
+- `JsonPromptRepository` (`lib/repositories/json_prompt_repository.dart`).
+  - Concrete `PromptRepository` implementation backed by JSON storage.
+  - Implements `getAll()`, `getById()`, `save()`, and `delete()` asynchronously.
+  - Never crashes because of storage problems.
+- Unit tests (`test/json_prompt_repository_test.dart`).
+  - Missing file, empty file, invalid JSON, save, load, getById, update, delete, and delete-missing.
+
+### Changed
+
+- Project version updated to `0.0.4`.
+- Architecture documentation marks `JsonPromptStorage` and `JsonPromptRepository` as implemented.
+
+### Notes
+
+- No new dependencies added — storage uses Dart's built-in `dart:io` and `dart:convert` only.
+- Storage remains fully replaceable through the `PromptRepository` abstraction.
+
 ## [0.0.3] — 2026-02-08
 
 ### Added

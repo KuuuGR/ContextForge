@@ -109,6 +109,16 @@ lib/
 - Provides storage access to repositories.
 - Guarantees the local-first data model.
 
+### JsonPromptStorage — IMPLEMENTED (Phase 004)
+
+- Owns the `prompts.json` file path and platform application support directory.
+- macOS default: `~/Library/Application Support/context_forge/prompts.json`.
+- Reads and writes human-readable, indented JSON.
+- Auto-creates the file with an empty list (`[]`) when missing.
+- Returns empty defaults on empty or corrupt files.
+- Optional `directoryPath` override (used by tests).
+- No third-party storage packages used (dart:io + dart:convert only).
+
 ### SettingsService
 
 - Manages application-level settings.
@@ -130,6 +140,12 @@ lib/
 - Persists saved prompt templates locally.
 - Provides CRUD operations for prompts.
 - Defined as an abstract contract; no storage implementation yet.
+
+### JsonPromptRepository — IMPLEMENTED (Phase 004)
+
+- Concrete [`PromptRepository`] implementation backed by human-readable JSON.
+- Delegates all filesystem details to [JsonPromptStorage].
+- Handles missing, empty, and invalid JSON files gracefully (returns safe defaults).
 
 ### VideoHistoryRepository
 
