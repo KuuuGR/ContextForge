@@ -2,6 +2,25 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.0.7] — 2026-02-08
+
+### Added
+
+- `InvalidYouTubeUrlException` (`lib/exceptions/youtube_exceptions.dart`).
+- `YouTubeUrlParser` (`lib/services/youtube_url_parser.dart`).
+  - `isValidUrl()`, `extractVideoId()`, `normalizeUrl()`.
+  - Supports watch, short (youtu.be), mobile, and extra-query-parameter URLs.
+  - Normalizes to canonical `https://www.youtube.com/watch?v=VIDEO_ID` (ADR-007).
+  - Independent from Flutter UI and networking.
+- Unit tests (`test/youtube_url_parser_test.dart`).
+  - 36 tests covering standard, short, mobile, query-param, invalid, malformed, empty, and whitespace URLs.
+
+### Changed
+
+- Project version updated to `0.0.7`.
+- Added ADR-007: YouTube URLs are normalized before entering the domain layer.
+- Architecture documentation marks `YouTubeUrlParser` as implemented.
+
 ## [0.0.6] — 2026-02-08
 
 ### Added

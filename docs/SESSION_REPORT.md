@@ -629,4 +629,95 @@ None
 - `transcriptLanguage` on the Video model may overlap with future Transcript model state; the mapping must be kept consistent in Phase 008.
 - No storage implementation yet means the Video model is untested against real persistence.
 - If `publishedAt` can be absent in practice, the non-nullable field will need a design change (e.g., nullable or sentinel value).
+
+---
+
+## Phase 007 — YouTube URL Parser
+
+## Phase
+
+007 — YouTube URL Parser
+
+## Status
+
+Completed
+
+## Completed Work
+
+- Created `InvalidYouTubeUrlException` (`lib/exceptions/youtube_exceptions.dart`).
+- Implemented `YouTubeUrlParser` (`lib/services/youtube_url_parser.dart`).
+  - `isValidUrl()` — returns `true` only for supported YouTube URLs with a valid video ID.
+  - `extractVideoId()` — extracts the canonical 11-char video ID.
+  - `normalizeUrl()` — normalizes to `https://www.youtube.com/watch?v=VIDEO_ID` (ADR-007).
+  - Supported hosts: `www.youtube.com`, `youtube.com`, `m.youtube.com`, `youtu.be`.
+  - Handles additional query parameters and whitespace padding.
+  - Rejects empty, whitespace-only, malformed, non-http(s), and non-YouTube URLs.
+- Added unit tests (`test/youtube_url_parser_test.dart`).
+  - 36 tests: standard watch URLs, short URLs, mobile URLs, query parameters, invalid URLs, malformed URLs, empty strings, whitespace-only strings, http URLs, hyphen/underscore IDs.
+- Added ADR-007: YouTube URLs are normalized before entering the domain layer.
+- No networking, no metadata fetching, no UI integration.
+- Verified `flutter analyze` (No issues found) and `flutter test` (82 tests passed).
+
+## Files Created
+
+- `lib/exceptions/youtube_exceptions.dart` — YouTube URL domain exception.
+- `lib/services/youtube_url_parser.dart` — YouTube URL parser service.
+- `test/youtube_url_parser_test.dart` — parser unit tests.
+
+## Files Modified
+
+- `docs/DECISIONS.md` — added ADR-007.
+- `docs/ARCHITECTURE.md` — YouTubeUrlParser marked implemented; YouTubeService references parser.
+- `docs/ROADMAP.md` — Phase 007 marked Completed, Phase 008 marked Next.
+- `docs/CHANGELOG.md` — added 0.0.7 entry.
+- `docs/SESSION_REPORT.md` — this report.
+- `docs/PROJECT_STATE.md` — version 0.0.7, phase 007.
+- `docs/RELEASE_NOTES.md` — added 0.0.7 entry.
+- `pubspec.yaml` — version bumped to `0.0.7+1`.
+
+## Known Risks
+
+- The parser accepts only canonical 11-char video IDs; some legacy YouTube IDs may be longer/shorter and would be rejected.
+- `http://` URLs are accepted and normalized to `https://`; a strict policy may be desired later.
+- The parser does not perform any network verification — a syntactically valid ID for a non-existent video still passes validation.
+
+## Next Phase
+
+Phase 008 — Transcript Service (status: Next on the roadmap).
+
+## Commit Placeholder
+
+```
+Phase 007 - YouTube URL parser
+```
+
+The single commit for this phase will be created once all changes are verified.
+
+---
+
+## Self Review
+
+### Completed
+
+YES
+
+### Skipped
+
+None
+
+### Assumptions
+
+- Canonical YouTube video IDs are exactly 11 characters matching `[A-Za-z0-9_-]`.
+- `youtu.be` short URLs contain the video ID as the first (and only) path segment.
+- Query parameters beyond `v` (e.g., `t`, `feature`, `list`) are ignored during extraction and dropped during normalization.
+- Accepting `http://` URLs and normalizing them to `https://` is desirable for UX robustness.
+- `isValidUrl()` reuses `extractVideoId()` internally to avoid logic duplication.
+
+### Potential Risks
+
+- Some real YouTube IDs may not follow the 11-char convention; a more lenient pattern may be needed if users report valid URLs being rejected.
+- `Uri.tryParse` may normalize or reject URLs with unusual characters in ways that require further testing.
+- The parser currently rejects URLs without an explicit scheme; bare strings like `www.youtube.com/watch?v=...` are not accepted.
+- If YouTube introduces new URL formats (e.g., `youtube.com/shorts/VIDEO_ID`), the parser will need extension.
+- The parser does not validate that the video ID maps to an existing video; that is the responsibility of metadata fetching (later phase).
 </content>

@@ -1,5 +1,24 @@
 # Release Notes — ContextForge
 
+## Version 0.0.7
+
+**Release Date:** 2026-02-08
+
+### What's New
+
+- `YouTubeUrlParser` with `isValidUrl()`, `extractVideoId()`, `normalizeUrl()`.
+- Supports watch, youtu.be short, mobile, and extra-query-parameter URLs.
+- Canonical normalization to `https://www.youtube.com/watch?v=VIDEO_ID`.
+- `InvalidYouTubeUrlException` for unsupported/malformed URLs.
+- 36 unit tests covering valid and invalid URL cases.
+
+### Notes
+
+- URLs are normalized before entering the domain layer (ADR-007).
+- Independent from Flutter UI and networking.
+
+---
+
 ## Version 0.0.6
 
 **Release Date:** 2026-02-08

@@ -86,10 +86,19 @@ lib/
   - Keeps storage exceptions hidden behind domain exceptions.
 - The UI must never communicate directly with repositories — always via this service.
 
-### YouTubeService — PLANNED (VideoService skeleton in Phase 006)
+### YouTubeUrlParser — IMPLEMENTED (Phase 007)
 
-- Validates YouTube URLs (up to three per run).
-- Fetches video metadata, including publication date.
+- Validates supported YouTube URL formats.
+- Extracts canonical video IDs (11-char `[A-Za-z0-9_-]`).
+- Normalizes URLs to `https://www.youtube.com/watch?v=VIDEO_ID` (ADR-007).
+- Supports `www.youtube.com/watch`, `youtube.com/watch`, `m.youtube.com/watch`, `youtu.be/...`, and URLs with extra query parameters.
+- Rejects unsupported/malformed URLs with `InvalidYouTubeUrlException`.
+- Independent from Flutter UI and networking.
+
+### YouTubeService — PLANNED
+
+- Validates YouTube URLs (up to three per run) using `YouTubeUrlParser`.
+- Fetches video metadata, including publication date (Phase 007+).
 - Resolves the video identifier used for history tracking.
 
 ### VideoService — IMPLEMENTED (Phase 006, skeleton only)

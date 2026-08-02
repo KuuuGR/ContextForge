@@ -1,11 +1,11 @@
 # Project State — ContextForge
 
-| Field               | Value                      |
-| ------------------- | -------------------------- |
-| **Current Version** | 0.0.6                      |
-| **Current Phase**   | 006                        |
-| **Status**          | Video domain implemented   |
-| **Current Milestone** | Video Domain Foundation  |
+| Field               | Value                          |
+| ------------------- | ------------------------------ |
+| **Current Version** | 0.0.7                          |
+| **Current Phase**   | 007                            |
+| **Status**          | YouTube URL parser implemented |
+| **Current Milestone** | YouTube URL Parsing          |
 
 ## Phase Tracking
 
@@ -18,7 +18,8 @@
 | 004     | Prompt Local Storage               | Completed                 |
 | 005     | Prompt Service Implementation      | Completed                 |
 | 006     | Video Domain Foundation            | Completed                 |
-| 007     | YouTube Metadata                   | Next                      |
+| 007     | YouTube URL Parser                 | Completed                 |
+| 008     | Transcript Service                 | Next                      |
 
 ## Notes
 
@@ -29,5 +30,6 @@
 - Phase 004 delivered local JSON storage for prompts.
 - Phase 005 delivered full `PromptService` business logic with domain exceptions.
 - Phase 006 delivered the Video domain: immutable `Video` model, `TranscriptLanguage` enum, `VideoRepository` contract, and `VideoService` skeleton.
-- No networking, storage, history, or metadata fetching implemented yet (by design).
+- Phase 007 delivered `YouTubeUrlParser` with validation, video ID extraction, and URL normalization, plus `InvalidYouTubeUrlException`.
+- No networking, metadata fetching, or transcript downloading implemented yet (by design).
 - The repository is buildable and tests pass at the current state.

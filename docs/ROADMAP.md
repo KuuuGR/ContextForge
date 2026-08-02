@@ -87,18 +87,22 @@
 
 ---
 
-## Phase 007 — YouTube Metadata
+## Phase 007 — YouTube URL Parser
 
-**Status: Next**
+**Status: Completed**
 
-- Fetch publication date and video metadata from YouTube.
-- Validate up to three YouTube URLs.
+- `YouTubeUrlParser` implemented with `isValidUrl()`, `extractVideoId()`, `normalizeUrl()`.
+- Supports watch, short (youtu.be), mobile, and extra-query-parameter URLs.
+- Canonical normalization to `https://www.youtube.com/watch?v=VIDEO_ID` (ADR-007).
+- `InvalidYouTubeUrlException` domain exception.
+- 36 comprehensive unit tests covering valid, invalid, malformed, empty, and whitespace URLs.
+- No networking, no metadata fetching, no UI integration.
 
 ---
 
 ## Phase 008 — Transcript Service
 
-**Status: Planned**
+**Status: Next**
 
 - Download transcripts with preferred order:
   - manual Polish

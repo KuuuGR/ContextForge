@@ -69,3 +69,15 @@
 **Decision:** Never create fake UI models. Use production domain models everywhere, including in tests and UI state. The `Prompt` model is the single source of truth for prompt data throughout the application.
 
 **Consequences:** No duplication of domain state; the UI can never drift from the domain contract; tests exercise the real model behavior.
+
+---
+
+## ADR-007 — YouTube URLs Are Normalized Before Entering the Domain Layer
+
+**Status:** Accepted
+
+**Context:** Users may paste YouTube URLs in several formats (`www.youtube.com/watch`, `youtube.com/watch`, `m.youtube.com/watch`, `youtu.be/...`) with varying query parameters. Storing raw URLs in the domain layer would make history deduplication and video ID extraction unreliable.
+
+**Decision:** All YouTube URLs must be normalized to the canonical form `https://www.youtube.com/watch?v=VIDEO_ID` before entering the domain layer. The `YouTubeUrlParser` is the single entry point responsible for validation, video ID extraction, and normalization.
+
+**Consequences:** The domain layer always sees a canonical URL; duplicate detection by `videoId` is reliable; unsupported URLs are rejected early at the boundary.
