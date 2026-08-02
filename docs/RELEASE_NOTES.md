@@ -1,5 +1,25 @@
 # Release Notes — ContextForge
 
+## Version 0.0.5
+
+**Release Date:** 2026-02-08
+
+### What's New
+
+- `PromptService` fully implemented as the prompt API:
+  - `getAllPrompts()`, `getPrompt(id)`, `createPrompt()`, `updatePrompt()`, `deletePrompt()`.
+  - Title/content trimming and empty-value validation.
+  - Automatic `updatedAt` refresh and in-service UUID v4 generation.
+- Domain exceptions: `PromptValidationException`, `PromptNotFoundException`.
+- 18 new unit tests covering business rules.
+
+### Notes
+
+- The UI must go through services, never repositories directly.
+- Added ADR-006: never create fake UI models.
+
+---
+
 ## Version 0.0.4
 
 **Release Date:** 2026-02-08

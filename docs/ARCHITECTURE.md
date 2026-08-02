@@ -73,12 +73,18 @@ lib/
 
 ## Services
 
-### PromptService — IMPLEMENTED (Phase 003)
+### PromptService — IMPLEMENTED (Phase 005)
 
-- Loads available prompt templates for selection.
-- Provides the active prompt for output generation.
-- Supports custom prompt authoring during the workflow.
-- Depends on the `PromptRepository` abstraction; no storage details leak to callers.
+- Full prompt business logic implementation.
+- Public API: `getAllPrompts()`, `getPrompt(id)`, `createPrompt()`, `updatePrompt()`, `deletePrompt()`.
+- Business rules:
+  - Trims title and content.
+  - Rejects empty / whitespace-only title or content (`PromptValidationException`).
+  - Generates UUID v4 ids inside the service (repository never generates ids).
+  - Sets `createdAt`/`updatedAt` automatically; refreshes `updatedAt` on update.
+  - Throws `PromptNotFoundException` for missing ids.
+  - Keeps storage exceptions hidden behind domain exceptions.
+- The UI must never communicate directly with repositories — always via this service.
 
 ### YouTubeService
 

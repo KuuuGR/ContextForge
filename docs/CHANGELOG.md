@@ -2,6 +2,27 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.0.5] — 2026-02-08
+
+### Added
+
+- Domain exceptions (`lib/exceptions/prompt_exceptions.dart`).
+  - `PromptException` base class.
+  - `PromptValidationException` for invalid prompt input.
+  - `PromptNotFoundException` for missing prompts.
+- `PromptService` fully implemented (`lib/services/prompt_service.dart`).
+  - Public API: `getAllPrompts()`, `getPrompt(id)`, `createPrompt()`, `updatePrompt()`, `deletePrompt()`.
+  - Business rules: title/content trimming, empty-value rejection, auto `updatedAt`, in-service UUID v4 generation.
+  - Throws meaningful domain exceptions; storage exceptions never leak to callers.
+- Unit tests (`test/prompt_service_test.dart`).
+  - Creation, update, delete, validation, trimming, UUID v4 format, unique ids, updatedAt changes.
+
+### Changed
+
+- Project version updated to `0.0.5`.
+- `PromptService` marked fully implemented in architecture documentation.
+- Added ADR-006: never create fake UI models — use production domain models everywhere.
+
 ## [0.0.4] — 2026-02-08
 
 ### Added

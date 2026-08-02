@@ -433,4 +433,100 @@ None
 - Unbounded file growth could slow loads as prompt count grows.
 - No locking/atomic writes; a crash mid-write could corrupt the JSON file.
 - Tests use real temp directories; they depend on host filesystem writability.
+
+---
+
+## Phase 005 — Prompt Service Implementation
+
+## Phase
+
+005 — Prompt Service Implementation
+
+## Status
+
+Completed
+
+## Completed Work
+
+- Created domain exceptions (`lib/exceptions/prompt_exceptions.dart`).
+  - `PromptException` base class.
+  - `PromptValidationException` for invalid prompt input.
+  - `PromptNotFoundException` for missing prompts.
+- Implemented `PromptService` business logic (`lib/services/prompt_service.dart`).
+  - Public API: `getAllPrompts()`, `getPrompt(id)`, `createPrompt()`, `updatePrompt()`, `deletePrompt()`.
+  - Business rules:
+    - Trims title and content.
+    - Rejects empty / whitespace-only title or content (`PromptValidationException`).
+    - Generates UUID v4 ids inside the service (`Random.secure()`, no external package).
+    - Sets `createdAt`/`updatedAt`; refreshes `updatedAt` on update automatically.
+    - Throws `PromptNotFoundException` for missing ids.
+    - Storage exceptions never leak to callers.
+- Added unit tests (`test/prompt_service_test.dart`).
+  - 18 tests: creation, update, delete, validation, trimming, UUID v4 format, unique ids, updatedAt changes, no-persist-on-validation-failure.
+- Added ADR-006: never create fake UI models — use production domain models everywhere.
+- No UI modified; repositories remain persistence-only; storage remains filesystem-only.
+- Verified `flutter analyze` (No issues found) and `flutter test` (36 tests passed).
+
+## Files Created
+
+- `lib/exceptions/prompt_exceptions.dart` — domain exception classes.
+- `test/prompt_service_test.dart` — PromptService unit tests.
+
+## Files Modified
+
+- `lib/services/prompt_service.dart` — replaced skeleton with full implementation.
+- `docs/DECISIONS.md` — added ADR-006.
+- `docs/ARCHITECTURE.md` — PromptService marked fully implemented.
+- `docs/ROADMAP.md` — Phase 005 marked Completed, Phase 006 marked Next.
+- `docs/CHANGELOG.md` — added 0.0.5 entry.
+- `docs/SESSION_REPORT.md` — this report.
+- `docs/PROJECT_STATE.md` — version 0.0.5, phase 005.
+- `docs/RELEASE_NOTES.md` — added 0.0.5 entry.
+
+## Known Risks
+
+- `deletePrompt` performs a read-before-delete to verify existence; this adds one extra repository read per delete.
+- UUID generation uses `Random.secure()` — cryptographic but potentially slower than a non-secure random; acceptable for prompt counts.
+- `DateTime.now().toUtc()` has second-level precision in ISO-8601; two rapid successive updates in the same second could produce identical `updatedAt` timestamps.
+- Validation happens before save; if a repository write fails silently (Phase 004 behavior), the service returns a prompt that was not actually persisted.
+
+## Next Phase
+
+Phase 006 — Video History (status: Next on the roadmap).
+
+## Commit Placeholder
+
+```
+Phase 005 - Prompt service implementation
+```
+
+The single commit for this phase will be created once all changes are verified.
+
+---
+
+## Self Review
+
+### Completed
+
+YES
+
+### Skipped
+
+None
+
+### Assumptions
+
+- UUID v4 generation without a third-party package is acceptable per "do not introduce new packages unless absolutely necessary"; the implementation follows RFC 4122.
+- `deletePrompt` should throw `PromptNotFoundException` for a missing id (consistent with `getPrompt` and `updatePrompt`).
+- `updatedAt` auto-refresh only happens on successful validation (validation failure leaves the existing prompt untouched).
+- `createPrompt` initializes `rating` to `0` (unrated), consistent with the model default.
+- Exceptions are not exposed from the repository layer — only domain exceptions surface from the service.
+
+### Potential Risks
+
+- Silent repository write failure (Phase 004 design) means `createPrompt`/`updatePrompt` return a prompt that may not be persisted; a future phase may need write verification.
+- The in-service UUID generator is not the canonical `uuid` package; if the project later adopts the package, IDs remain compatible (UUID v4 format).
+- `updatedAt` precision at second granularity could be insufficient for audit trails; may need milliseconds in a future phase.
+- There is no pagination on `getAllPrompts()`; large prompt collections could cause memory pressure.
+- The service API may need additional methods (e.g., `getActivePrompt`) when the output builder phase lands.
 </content>

@@ -62,18 +62,21 @@
 
 ---
 
-## Phase 005 — Prompt CRUD
+## Phase 005 — Prompt Service Implementation
 
-**Status: Next**
+**Status: Completed**
 
-- Create, read, update, delete prompt templates.
-- Custom prompt authoring.
+- `PromptService` fully implemented as the application's prompt API.
+- Business rules: title/content trimming, empty-value rejection, automatic `updatedAt`, in-service UUID generation.
+- Domain exceptions: `PromptValidationException`, `PromptNotFoundException`.
+- Unit tests: creation, update, delete, validation, trimming, UUID v4, updatedAt changes.
+- UI must never talk to repositories directly — services are the public API.
 
 ---
 
 ## Phase 006 — Video History
 
-**Status: Planned**
+**Status: Next**
 
 - Track which videos have already been used.
 - Green indicator = new video; blue indicator = previously used.

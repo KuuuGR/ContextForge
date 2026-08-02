@@ -57,3 +57,15 @@
 **Decision:** Each phase corresponds to a single feature scope and is delivered as exactly one commit.
 
 **Consequences:** History stays linear and auditable; phases are independently revertible; the repository is always buildable at each commit.
+
+---
+
+## ADR-006 — Never Create Fake UI Models
+
+**Status:** Accepted
+
+**Context:** The project architecture separates presentation (widgets), application logic (services), data access (repositories), and domain data (models). There is a risk that UI layers could introduce parallel, "fake" view-model classes that drift from the production domain models.
+
+**Decision:** Never create fake UI models. Use production domain models everywhere, including in tests and UI state. The `Prompt` model is the single source of truth for prompt data throughout the application.
+
+**Consequences:** No duplication of domain state; the UI can never drift from the domain contract; tests exercise the real model behavior.

@@ -1,11 +1,11 @@
 # Project State — ContextForge
 
-| Field               | Value                        |
-| ------------------- | ---------------------------- |
-| **Current Version** | 0.0.4                        |
-| **Current Phase**   | 004                          |
-| **Status**          | Prompt storage implemented   |
-| **Current Milestone** | Prompt Local Storage       |
+| Field               | Value                          |
+| ------------------- | ------------------------------ |
+| **Current Version** | 0.0.5                          |
+| **Current Phase**   | 005                            |
+| **Status**          | Prompt service implemented     |
+| **Current Milestone** | Prompt Service Implementation |
 
 ## Phase Tracking
 
@@ -16,7 +16,8 @@
 | 002     | Main Window                        | Completed                 |
 | 003     | Prompt Domain Foundation           | Completed                 |
 | 004     | Prompt Local Storage               | Completed                 |
-| 005     | Prompt CRUD                        | Next                      |
+| 005     | Prompt Service Implementation      | Completed                 |
+| 006     | Video History                      | Next                      |
 
 ## Notes
 
@@ -25,6 +26,6 @@
 - Phase 002 delivered the application shell UI.
 - Phase 003 delivered the Prompt domain model, repository contract, and service skeleton.
 - Phase 004 delivered local JSON storage: `JsonPromptStorage` service and `JsonPromptRepository` concrete implementation.
-- Storage is human-readable, auto-creating `prompts.json`, and fully replaceable through the `PromptRepository` abstraction.
-- No third-party storage packages used (dart:io + dart:convert only).
+- Phase 005 delivered full `PromptService` business logic with domain exceptions and 18 new unit tests.
+- The UI must never communicate directly with repositories — services are the public API (ADR-006).
 - The repository is buildable and tests pass at the current state.
