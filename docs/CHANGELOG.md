@@ -2,6 +2,24 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.0.2] — 2026-02-08
+
+### Added
+
+- Main application window with header (title + subtitle).
+- Prompt section with dropdown selector, custom prompt option, and disabled-unless-custom editor.
+- Videos section with three video input cards (green/blue/gray status indicators).
+- Output section with read-only text area.
+- Bottom toolbar with disabled Generate, Copy, and Clear buttons.
+- Temporary mock prompt options: SEO Article, Newsletter, LinkedIn, Facebook, Custom Prompt.
+- Widget test covering main window section rendering and disabled buttons.
+- `docs/DEPENDENCIES.md` documenting current dependencies.
+
+### Changed
+
+- Replaced default Flutter counter application with the ContextForge application shell.
+- Project version updated to `0.0.2`.
+
 ## [0.0.1] — 2026-02-08
 
 ### Added

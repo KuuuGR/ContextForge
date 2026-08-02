@@ -26,17 +26,19 @@
 
 ## Phase 002 — Main Window
 
-**Status: Next**
+**Status: Completed**
 
-- Application shell with the main window layout.
-- Core navigation structure (sidebar + content area).
-- Root widget hierarchy and theming foundation.
+- Application shell with the full static UI implemented.
+- Root widget hierarchy and theming foundation (Material 3, light/dark mode via OS).
+- Widget test covering section rendering and disabled buttons.
+- `docs/DEPENDENCIES.md` created.
+- One commit created for the phase.
 
 ---
 
 ## Phase 003 — Prompt Manager
 
-**Status: Planned**
+**Status: Next**
 
 - Prompt selection UI.
 - Prompt list and basic prompt management.

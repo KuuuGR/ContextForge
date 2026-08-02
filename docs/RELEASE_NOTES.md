@@ -1,5 +1,26 @@
 # Release Notes — ContextForge
 
+## Version 0.0.2
+
+**Release Date:** 2026-02-08
+
+### What's New
+
+- Main application window and application shell:
+  - Header (title + subtitle).
+  - Prompt section (dropdown selector, custom prompt option, disabled-unless-custom editor).
+  - Videos section (three video input cards with green/blue/gray status indicators).
+  - Output section (read-only preview).
+  - Bottom toolbar (disabled Generate, Copy, Clear buttons).
+- `docs/DEPENDENCIES.md` created.
+
+### Notes
+
+- No business logic, networking, or storage implemented yet.
+- Static UI only; all buttons disabled by design.
+
+---
+
 ## Version 0.0.1
 
 **Release Date:** 2026-02-08

@@ -151,3 +151,109 @@ None
 - External YouTube metadata fetching may be throttled or require an API key.
 - The video history indicator semantics (green/blue) need precise definition to avoid confusion for users.
 - Timestamp removal may be lossy for transcripts where meaning depends on timing context.
+
+---
+
+## Phase 002 — Main Window & Application Shell
+
+## Phase
+
+002 — Main Window & Application Shell
+
+## Status
+
+Completed
+
+## Completed Work
+
+- Replaced the default Flutter counter application with the ContextForge application shell.
+- Implemented the header with title `ContextForge` and subtitle `Build AI-ready context from YouTube transcripts.`.
+- Implemented the Prompt section:
+  - Dropdown selector with mock prompts (SEO Article, Newsletter, LinkedIn, Facebook, Custom Prompt).
+  - Large multiline text area.
+  - Editing disabled unless "Custom Prompt" is selected (state lifted to HomePage).
+- Implemented the Videos section with three identical video input cards:
+  - Card 1: green status (New).
+  - Card 2: blue status (Previously Used).
+  - Card 3: gray status (Empty).
+  - Each card has a URL text field, status indicator, and metadata placeholder area.
+- Implemented the Output section with a large read-only text area (placeholder: "Generated output will appear here.").
+- Implemented the bottom toolbar with disabled Generate, Copy, and Clear buttons.
+- Applied Material 3 theming with automatic macOS light/dark mode support.
+- Used only the three required status colors (green, blue, gray); no other custom colors.
+- Created project structure per architecture: `lib/app/`, `lib/pages/`, `lib/widgets/`.
+- Created placeholder widgets matching the architecture: PromptSelector, PromptEditor, VideoInputCard, TranscriptStatusIndicator, OutputPreview, GenerateButton.
+- Created `docs/DEPENDENCIES.md` documenting current dependencies (Flutter SDK, cupertino_icons, flutter_test, flutter_lints).
+- Updated the widget test to verify section rendering and disabled buttons.
+- Updated pubspec version to `0.0.2`.
+- Verified `flutter analyze`, `flutter test`, and `flutter build macos --debug` all pass.
+
+## Files Created
+
+- `lib/app/app.dart` — root ContextForgeApp with Material 3 light/dark themes.
+- `lib/pages/home_page.dart` — main layout page (header, prompt, videos, output, toolbar).
+- `lib/widgets/prompt_selector.dart` — dropdown with mock prompt options.
+- `lib/widgets/prompt_editor.dart` — multiline prompt text area (disabled unless custom).
+- `lib/widgets/video_input_card.dart` — video URL input card with status indicator and metadata placeholder.
+- `lib/widgets/transcript_status_indicator.dart` — VideoStatus enum + colored status indicator.
+- `lib/widgets/output_preview.dart` — read-only output text area.
+- `lib/widgets/generate_button.dart` — disabled generate button placeholder.
+- `docs/DEPENDENCIES.md` — dependency documentation.
+
+## Files Modified
+
+- `lib/main.dart` — entry point now runs ContextForgeApp.
+- `test/widget_test.dart` — replaced counter test with main window rendering test.
+- `pubspec.yaml` — version bumped to `0.0.2+1`.
+- `docs/CHANGELOG.md` — added 0.0.2 entry.
+- `docs/ROADMAP.md` — Phase 002 marked Completed, Phase 003 marked Next.
+- `docs/SESSION_REPORT.md` — this report.
+
+## Known Risks
+
+- All prompt options are mock data; no storage or persistence exists yet.
+- The prompt editor content is not wired to a controller — it is purely visual in this phase.
+- Video URL fields are not validated and no networking occurs.
+- The three video cards use hardcoded status indicators; dynamic history status will come in Phase 006.
+- The Output section shows static placeholder text only.
+
+## Next Phase
+
+Phase 003 — Prompt Manager (status: Next on the roadmap).
+
+## Commit Placeholder
+
+```
+Phase 002 - Main window and application shell
+```
+
+The single commit for this phase will be created once all changes are verified.
+
+---
+
+## Self Review
+
+### Completed
+
+YES
+
+### Skipped
+
+None
+
+### Assumptions
+
+- The "Generate" button appears twice in the UI (once inside the Output section and once in the bottom toolbar); this follows the specified layout where a GenerateButton exists in the Output section and the toolbar contains Generate/Copy/Clear. Both are disabled in Phase 002.
+- The prompt editor is disabled unless "Custom Prompt" is selected; the selection state is managed in HomePage so that this behavior works without additional state management packages.
+- Material 3 with `useMaterial3: true` and `ColorScheme.fromSeed` with `Colors.blueGrey` was chosen as a neutral, minimal seed color to respect the "avoid custom colors" theme requirement.
+- The three video cards are rendered as a vertical stack within the Videos card; a column layout was chosen for desktop readability.
+- Status colors are used exactly as specified: green = New, blue = Previously Used, gray = Empty.
+
+### Potential Risks
+
+- DropdownButtonFormField uses `initialValue`; if Flutter's API changes in future versions, the selector may need migration to an alternative binding pattern.
+- The UI has no scrollable sections within cards yet; on smaller windows the whole page scrolls, which may need refinement in the UI polish phase.
+- No TextEditingControllers are wired yet; future phases will need to attach controllers to the URL fields, prompt editor, and output preview.
+- The window title currently uses the default macOS runner configuration; window metadata (title/size) may need adjustment in a later phase.
+- The mock prompt options are hardcoded constants in `prompt_selector.dart`; Phase 003/004 will replace these with service-backed data.
+</content>
