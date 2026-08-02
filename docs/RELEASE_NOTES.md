@@ -1,5 +1,23 @@
 # Release Notes — ContextForge
 
+## Version 0.0.8
+
+**Release Date:** 2026-02-08
+
+### What's New
+
+- Provider layer (`lib/providers/`).
+- Abstract `YoutubeProvider` interface: `getVideoMetadata()`, `getAvailableTranscripts()`, `downloadTranscript()`.
+- Immutable provider DTOs: `YoutubeVideoMetadata`, `YoutubeTranscriptInfo`, `YoutubeTranscript`, `YoutubeTranscriptSegment`.
+- DTOs support JSON serialization/deserialization, copyWith, equality, readable toString.
+
+### Notes
+
+- No networking or API integration — abstraction layer only.
+- ADR-008: external integrations isolated behind provider abstractions.
+
+---
+
 ## Version 0.0.7
 
 **Release Date:** 2026-02-08

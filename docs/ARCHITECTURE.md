@@ -18,6 +18,11 @@ lib/
 │   ├── output_document.dart
 │   ├── application_settings.dart
 │   └── video_history_entry.dart
+├── providers/
+│   ├── youtube_provider.dart
+│   ├── youtube_video_metadata.dart
+│   ├── youtube_transcript_info.dart
+│   └── youtube_transcript.dart
 ├── repositories/
 │   ├── prompt_repository.dart
 │   ├── video_history_repository.dart
@@ -68,6 +73,41 @@ lib/
 - Represent core business concepts.
 - Contain no UI or persistence logic.
 - Remain plain, serializable data structures.
+
+### Provider Layer (providers)
+
+- Encapsulate external integrations (YouTube metadata, transcripts).
+- Define abstract contracts for external communication.
+- Provider-specific DTOs stay separate from domain models.
+- Repositories never communicate directly with external services (ADR-008).
+
+---
+
+## Providers
+
+### YoutubeProvider — IMPLEMENTED (Phase 008, abstraction only)
+
+- Abstract contract for communication with YouTube.
+- Methods: `getVideoMetadata()`, `getAvailableTranscripts()`, `downloadTranscript()`.
+- No implementation, no networking.
+- Future concrete providers will implement this interface.
+
+### YoutubeVideoMetadata — IMPLEMENTED (Phase 008, DTO)
+
+- Provider-specific metadata DTO: videoId, title, channelName, publishedAt, duration, description.
+- Immutable; JSON serialization/deserialization, `copyWith()`, equality, readable `toString()`.
+
+### YoutubeTranscriptInfo — IMPLEMENTED (Phase 008, DTO)
+
+- Provider-specific transcript track DTO: language, isManual, languageName.
+- Reuses the domain `TranscriptLanguage` enum.
+- Immutable; JSON serialization/deserialization, `copyWith()`, equality, readable `toString()`.
+
+### YoutubeTranscript — IMPLEMENTED (Phase 008, DTO)
+
+- Provider-specific transcript DTO: videoId, info, timestamped segments.
+- Nested `YoutubeTranscriptSegment` DTO with offset, duration, text.
+- Immutable; JSON serialization/deserialization, `copyWith()`, equality, readable `toString()`.
 
 ---
 

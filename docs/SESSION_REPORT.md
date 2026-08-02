@@ -720,4 +720,101 @@ None
 - The parser currently rejects URLs without an explicit scheme; bare strings like `www.youtube.com/watch?v=...` are not accepted.
 - If YouTube introduces new URL formats (e.g., `youtube.com/shorts/VIDEO_ID`), the parser will need extension.
 - The parser does not validate that the video ID maps to an existing video; that is the responsibility of metadata fetching (later phase).
+
+---
+
+## Phase 008 — YouTube Provider Abstraction
+
+## Phase
+
+008 — YouTube Provider Abstraction
+
+## Status
+
+Completed
+
+## Completed Work
+
+- Created the Provider layer (`lib/providers/`).
+  - Abstract `YoutubeProvider` interface (`lib/providers/youtube_provider.dart`).
+    - `getVideoMetadata(String videoId)` → `Future<YoutubeVideoMetadata?>`.
+    - `getAvailableTranscripts(String videoId)` → `Future<List<YoutubeTranscriptInfo>>`.
+    - `downloadTranscript(String videoId, YoutubeTranscriptInfo info)` → `Future<YoutubeTranscript?>`.
+    - Interface only — no implementation, no networking.
+- Created provider DTOs.
+  - `YoutubeVideoMetadata` — videoId, title, channelName, publishedAt, duration, description.
+  - `YoutubeTranscriptInfo` — language (domain `TranscriptLanguage`), isManual, languageName.
+  - `YoutubeTranscript` — videoId, info, timestamped segments.
+  - `YoutubeTranscriptSegment` — offset, duration, text.
+  - All immutable with JSON serialization/deserialization, `copyWith()`, equality, readable `toString()`.
+- Added unit tests (`test/youtube_provider_dto_test.dart`).
+  - 19 tests: serialization, round-trip, defaults, unknown language fallback, copyWith, equality, toString.
+- Added ADR-008: external integrations are isolated behind provider abstractions.
+- No networking, no API integration, no metadata fetching, no transcript fetching.
+- Verified `flutter analyze` (No issues found) and `flutter test` (101 tests passed).
+
+## Files Created
+
+- `lib/providers/youtube_provider.dart` — abstract provider interface.
+- `lib/providers/youtube_video_metadata.dart` — metadata DTO.
+- `lib/providers/youtube_transcript_info.dart` — transcript track info DTO.
+- `lib/providers/youtube_transcript.dart` — transcript DTO + segment DTO.
+- `test/youtube_provider_dto_test.dart` — DTO unit tests.
+
+## Files Modified
+
+- `docs/DECISIONS.md` — added ADR-008.
+- `docs/ARCHITECTURE.md` — Provider layer documented.
+- `docs/ROADMAP.md` — Phase 008 marked Completed, Phase 009 marked Next.
+- `docs/CHANGELOG.md` — added 0.0.8 entry.
+- `docs/SESSION_REPORT.md` — this report.
+- `docs/PROJECT_STATE.md` — version 0.0.8, phase 008.
+- `docs/RELEASE_NOTES.md` — added 0.0.8 entry.
+- `pubspec.yaml` — version bumped to `0.0.8+1`.
+
+## Known Risks
+
+- `YoutubeTranscriptInfo` uses the domain `TranscriptLanguage` enum but falls back to `other` for unknown provider values; the semantic gap between "other" and "none" needs care in the transcript service phase.
+- Provider DTOs mirror common YouTube data shapes but have not been validated against real API responses.
+- The abstract `YoutubeProvider` signature may evolve once an actual provider implementation is written.
+
+## Next Phase
+
+Phase 009 — Transcript Cleanup (status: Next on the roadmap).
+
+## Commit Placeholder
+
+```
+Phase 008 - YouTube provider abstraction
+```
+
+The single commit for this phase will be created once all changes are verified.
+
+---
+
+## Self Review
+
+### Completed
+
+YES
+
+### Skipped
+
+None
+
+### Assumptions
+
+- `Duration` is the appropriate representation for transcript segment offsets and video duration.
+- Milliseconds are used in JSON serialization for segment offsets/durations to preserve precision.
+- `YoutubeTranscriptInfo.language` maps the provider language/origin into the domain `TranscriptLanguage` enum rather than introducing a parallel provider enum.
+- `getVideoMetadata` and `downloadTranscript` return `null` to represent "not found / unavailable" rather than throwing.
+- `getAvailableTranscripts` returns an empty list when no transcripts exist.
+
+### Potential Risks
+
+- The DTO shapes may not match real YouTube responses; a concrete provider implementation may require signature adjustments.
+- Mixing domain enum `TranscriptLanguage` with provider DTOs couples the provider layer to a domain type; acceptable per ADR-006/ADR-008 but worth revisiting if providers diverge in language granularity.
+- The provider layer currently has no way to signal distinct error states (rate limit, forbidden, network failure) beyond `null`/empty returns; a later phase may need exception types.
+- Without a concrete provider, the abstraction is untested against real-world input.
+- Segments stored in milliseconds assume a max resolution; `Duration.inMilliseconds` can overflow for extremely long values only in pathological cases.
 </content>

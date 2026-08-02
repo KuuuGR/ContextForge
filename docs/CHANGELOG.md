@@ -2,6 +2,24 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.0.8] — 2026-02-08
+
+### Added
+
+- Provider layer (`lib/providers/`).
+  - Abstract `YoutubeProvider` interface: `getVideoMetadata()`, `getAvailableTranscripts()`, `downloadTranscript()`.
+  - Provider DTOs: `YoutubeVideoMetadata`, `YoutubeTranscriptInfo`, `YoutubeTranscript`, `YoutubeTranscriptSegment`.
+  - DTOs are immutable with JSON serialization/deserialization, `copyWith()`, equality, and readable `toString()`.
+  - `YoutubeTranscriptInfo` reuses the domain `TranscriptLanguage` enum.
+- Unit tests (`test/youtube_provider_dto_test.dart`).
+  - DTO serialization, round-trip, defaults, copyWith, equality, toString.
+
+### Changed
+
+- Project version updated to `0.0.8`.
+- Added ADR-008: external integrations are isolated behind provider abstractions.
+- Architecture documentation adds the Provider layer; repositories never communicate directly with external services.
+
 ## [0.0.7] — 2026-02-08
 
 ### Added

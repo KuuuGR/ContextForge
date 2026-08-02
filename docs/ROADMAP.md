@@ -100,23 +100,22 @@
 
 ---
 
-## Phase 008 — Transcript Service
+## Phase 008 — YouTube Provider Abstraction
 
-**Status: Next**
+**Status: Completed**
 
-- Download transcripts with preferred order:
-  - manual Polish
-  - automatic Polish
-  - manual English
-  - automatic English
-  - any available transcript
-- Whisper transcription fallback prompt when no transcript exists.
+- Abstract `YoutubeProvider` interface in `lib/providers/`.
+- Provider DTOs: `YoutubeVideoMetadata`, `YoutubeTranscriptInfo`, `YoutubeTranscript` (+ segments).
+- Immutable DTOs with JSON serialization, copyWith, equality, readable toString.
+- ADR-008: external integrations isolated behind provider abstractions.
+- No networking, no API integration, no transcript fetching.
+- Unit tests for DTO serialization and equality.
 
 ---
 
 ## Phase 009 — Transcript Cleanup
 
-**Status: Planned**
+**Status: Next**
 
 - Remove timestamp markers whenever possible.
 - Normalize transcript text for clean output.

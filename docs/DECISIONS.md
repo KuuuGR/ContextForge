@@ -81,3 +81,15 @@
 **Decision:** All YouTube URLs must be normalized to the canonical form `https://www.youtube.com/watch?v=VIDEO_ID` before entering the domain layer. The `YouTubeUrlParser` is the single entry point responsible for validation, video ID extraction, and normalization.
 
 **Consequences:** The domain layer always sees a canonical URL; duplicate detection by `videoId` is reliable; unsupported URLs are rejected early at the boundary.
+
+---
+
+## ADR-008 — External Integrations Are Isolated Behind Provider Abstractions
+
+**Status:** Accepted
+
+**Context:** ContextForge will communicate with external services (YouTube metadata, transcripts). If services or repositories call external APIs directly, the persistence and business logic layers become coupled to external providers, making testing and replacement difficult.
+
+**Decision:** All external integrations are isolated behind provider abstractions in `lib/providers/`. The `YoutubeProvider` abstract interface defines how the application communicates with YouTube. Repositories never communicate directly with external services; services depend on provider abstractions, not on concrete implementations.
+
+**Consequences:** External integrations are replaceable; unit tests can exercise services without network access; the domain and persistence layers stay independent of third-party provider specifics. Provider-specific DTOs (e.g., `YoutubeVideoMetadata`, `YoutubeTranscriptInfo`, `YoutubeTranscript`) are kept separate from domain models.
