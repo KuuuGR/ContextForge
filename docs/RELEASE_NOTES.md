@@ -1,5 +1,24 @@
 # Release Notes — ContextForge
 
+## Version 0.0.9
+
+**Release Date:** 2026-02-08
+
+### What's New
+
+- `YoutubeExplodeProvider` — the first concrete metadata provider.
+- Fetches title, channel name, publication date, video ID, canonical URL, duration, and description.
+- Backed by `youtube_explode_dart` 3.1.0 (no API key required).
+- Domain exceptions: `YoutubeVideoUnavailableException`, `YoutubeNetworkException`.
+- External package types never leak from the provider layer (ADR-009).
+
+### Notes
+
+- Metadata only — no transcript fetching, no transcript selection, no UI integration.
+- Dependency rationale documented in `docs/DEPENDENCIES.md`.
+
+---
+
 ## Version 0.0.8
 
 **Release Date:** 2026-02-08

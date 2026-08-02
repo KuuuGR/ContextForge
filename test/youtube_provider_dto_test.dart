@@ -13,6 +13,7 @@ void main() {
       channelName: 'Tech Channel',
       publishedAt: DateTime.utc(2025, 1, 15, 12),
       duration: const Duration(minutes: 10, seconds: 30),
+      url: 'https://www.youtube.com/watch?v=abc123def45',
       description: 'A tutorial',
     );
 
@@ -23,6 +24,7 @@ void main() {
       expect(json['channelName'], 'Tech Channel');
       expect(json['publishedAt'], '2025-01-15T12:00:00.000Z');
       expect(json['durationSeconds'], 630);
+      expect(json['url'], 'https://www.youtube.com/watch?v=abc123def45');
       expect(json['description'], 'A tutorial');
     });
 
@@ -36,9 +38,11 @@ void main() {
         'title': 'T',
         'channelName': 'C',
         'publishedAt': '2025-01-15T12:00:00.000Z',
+        'url': 'https://www.youtube.com/watch?v=abc123def45',
       };
       final decoded = YoutubeVideoMetadata.fromJson(json);
       expect(decoded.duration, Duration.zero);
+      expect(decoded.url, 'https://www.youtube.com/watch?v=abc123def45');
       expect(decoded.description, isNull);
     });
 

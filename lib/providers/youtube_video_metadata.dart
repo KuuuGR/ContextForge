@@ -11,11 +11,15 @@ class YoutubeVideoMetadata {
     required this.channelName,
     required this.publishedAt,
     required this.duration,
+    required this.url,
     this.description,
   });
 
   /// Canonical YouTube video identifier.
   final String videoId;
+
+  /// Canonical URL for the video
+  final String url;
 
   /// Video title.
   final String title;
@@ -39,6 +43,7 @@ class YoutubeVideoMetadata {
     String? channelName,
     DateTime? publishedAt,
     Duration? duration,
+    String? url,
     String? description,
   }) {
     return YoutubeVideoMetadata(
@@ -47,6 +52,7 @@ class YoutubeVideoMetadata {
       channelName: channelName ?? this.channelName,
       publishedAt: publishedAt ?? this.publishedAt,
       duration: duration ?? this.duration,
+      url: url ?? this.url,
       description: description ?? this.description,
     );
   }
@@ -59,6 +65,7 @@ class YoutubeVideoMetadata {
       'channelName': channelName,
       'publishedAt': publishedAt.toUtc().toIso8601String(),
       'durationSeconds': duration.inSeconds,
+      'url': url,
       if (description != null) 'description': description,
     };
   }
@@ -71,6 +78,7 @@ class YoutubeVideoMetadata {
       channelName: json['channelName'] as String,
       publishedAt: DateTime.parse(json['publishedAt'] as String).toUtc(),
       duration: Duration(seconds: json['durationSeconds'] as int? ?? 0),
+      url: json['url'] as String,
       description: json['description'] as String?,
     );
   }
@@ -84,6 +92,7 @@ class YoutubeVideoMetadata {
         other.channelName == channelName &&
         other.publishedAt == publishedAt &&
         other.duration == duration &&
+        other.url == url &&
         other.description == description;
   }
 
@@ -95,6 +104,7 @@ class YoutubeVideoMetadata {
       channelName,
       publishedAt,
       duration,
+      url,
       description,
     );
   }
@@ -103,6 +113,6 @@ class YoutubeVideoMetadata {
   String toString() {
     return 'YoutubeVideoMetadata(videoId: $videoId, title: $title, '
         'channelName: $channelName, publishedAt: $publishedAt, '
-        'duration: $duration)';
+        'duration: $duration, url: $url)';
   }
 }

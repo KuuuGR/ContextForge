@@ -20,6 +20,7 @@ lib/
 │   └── video_history_entry.dart
 ├── providers/
 │   ├── youtube_provider.dart
+│   ├── youtube_explode_provider.dart
 │   ├── youtube_video_metadata.dart
 │   ├── youtube_transcript_info.dart
 │   └── youtube_transcript.dart
@@ -92,9 +93,18 @@ lib/
 - No implementation, no networking.
 - Future concrete providers will implement this interface.
 
+### YoutubeExplodeProvider — IMPLEMENTED (Phase 009)
+
+- Concrete [`YoutubeProvider`] implementation backed by `youtube_explode_dart` (3.1.0).
+- Implements `getVideoMetadata()` — fetches title, channel name, publication date, video id, canonical URL, duration, description.
+- Maps the external package's `Video` type into the `YoutubeVideoMetadata` DTO (ADR-009); external types never leak.
+- Error handling: `ArgumentError` → `InvalidYouTubeUrlException`, `VideoUnavailableException` → `YoutubeVideoUnavailableException`, other failures → `YoutubeNetworkException`.
+- Injectable `fetchVideo` seam for testing; networking stays isolated inside the provider.
+- Transcript methods (`getAvailableTranscripts`, `downloadTranscript`) remain unimplemented (later phases).
+
 ### YoutubeVideoMetadata — IMPLEMENTED (Phase 008, DTO)
 
-- Provider-specific metadata DTO: videoId, title, channelName, publishedAt, duration, description.
+- Provider-specific metadata DTO: videoId, title, channelName, publishedAt, duration, url, description.
 - Immutable; JSON serialization/deserialization, `copyWith()`, equality, readable `toString()`.
 
 ### YoutubeTranscriptInfo — IMPLEMENTED (Phase 008, DTO)

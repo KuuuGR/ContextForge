@@ -93,3 +93,15 @@
 **Decision:** All external integrations are isolated behind provider abstractions in `lib/providers/`. The `YoutubeProvider` abstract interface defines how the application communicates with YouTube. Repositories never communicate directly with external services; services depend on provider abstractions, not on concrete implementations.
 
 **Consequences:** External integrations are replaceable; unit tests can exercise services without network access; the domain and persistence layers stay independent of third-party provider specifics. Provider-specific DTOs (e.g., `YoutubeVideoMetadata`, `YoutubeTranscriptInfo`, `YoutubeTranscript`) are kept separate from domain models.
+
+---
+
+## ADR-009 — Provider DTOs Are Always Mapped Into Domain Models Before Entering the Application Layer
+
+**Status:** Accepted
+
+**Context:** Phase 009 introduces a concrete provider (`YoutubeExplodeProvider`) backed by the external `youtube_explode_dart` package. If external package types (`Video`, `VideoId`, etc.) were allowed to flow into services or the UI, the application would be coupled to a specific third-party library.
+
+**Decision:** Provider DTOs are always mapped into domain models before entering the application layer. External package types never leave the provider layer. `getVideoMetadata()` maps the package's `Video` into the provider DTO `YoutubeVideoMetadata`, which is the boundary type used by consumers.
+
+**Consequences:** The application layer depends only on own types; the external package can be replaced without touching services or UI; mapping logic is testable in isolation.

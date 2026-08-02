@@ -2,6 +2,30 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.0.9] — 2026-02-08
+
+### Added
+
+- `youtube_explode_dart` 3.1.0 dependency (Phase 009).
+  - Selected: actively maintained, reliable, no API key required, Flutter Desktop compatible.
+- `YoutubeExplodeProvider` (`lib/providers/youtube_explode_provider.dart`).
+  - Concrete `YoutubeProvider` implementation.
+  - `getVideoMetadata()` fetches title, channel name, publication date, video id, canonical URL, duration, description.
+  - Maps external package types to provider DTOs (ADR-009); no external types leak.
+  - Injectible `fetchVideo` seam for testability.
+- New exceptions (`lib/exceptions/youtube_exceptions.dart`).
+  - `YoutubeVideoUnavailableException`
+  - `YoutubeNetworkException`
+- `YoutubeVideoMetadata` DTO extended with `url` field.
+- Unit tests (`test/youtube_explode_provider_test.dart`).
+  - 8 tests: successful fetch, empty description, date fallback, invalid URL, unavailable video, network failure, cause propagation, rethrow.
+- ADR-009: provider DTOs are always mapped into domain models before entering the application layer.
+
+### Changed
+
+- Project version updated to `0.0.9`.
+- `docs/DEPENDENCIES.md` documents `youtube_explode_dart` and its rationale.
+
 ## [0.0.8] — 2026-02-08
 
 ### Added

@@ -1,11 +1,11 @@
 # Project State — ContextForge
 
-| Field               | Value                              |
-| ------------------- | ---------------------------------- |
-| **Current Version** | 0.0.8                              |
-| **Current Phase**   | 008                                |
-| **Status**          | Provider abstraction implemented   |
-| **Current Milestone** | YouTube Provider Abstraction     |
+| Field               | Value                          |
+| ------------------- | ------------------------------ |
+| **Current Version** | 0.0.9                          |
+| **Current Phase**   | 009                            |
+| **Status**          | Metadata provider implemented  |
+| **Current Milestone** | YouTube Metadata Provider    |
 
 ## Phase Tracking
 
@@ -20,7 +20,8 @@
 | 006     | Video Domain Foundation            | Completed                 |
 | 007     | YouTube URL Parser                 | Completed                 |
 | 008     | YouTube Provider Abstraction       | Completed                 |
-| 009     | Transcript Cleanup                 | Next                      |
+| 009     | YouTube Metadata Provider          | Completed                 |
+| 010     | Output Builder                     | Next                      |
 
 ## Notes
 
@@ -33,5 +34,6 @@
 - Phase 006 delivered the Video domain: immutable `Video` model, `TranscriptLanguage` enum, `VideoRepository` contract, and `VideoService` skeleton.
 - Phase 007 delivered `YouTubeUrlParser` with validation, video ID extraction, and URL normalization.
 - Phase 008 delivered the provider layer: abstract `YoutubeProvider` interface and immutable provider DTOs.
-- No networking, API integration, or transcript fetching implemented yet (by design).
+- Phase 009 delivered `YoutubeExplodeProvider` — the first concrete metadata provider backed by `youtube_explode_dart` 3.1.0, with domain exception mapping (ADR-009).
+- No transcript downloading, transcript selection, or UI integration yet (by design).
 - The repository is buildable and tests pass at the current state.

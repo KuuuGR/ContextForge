@@ -817,4 +817,104 @@ None
 - The provider layer currently has no way to signal distinct error states (rate limit, forbidden, network failure) beyond `null`/empty returns; a later phase may need exception types.
 - Without a concrete provider, the abstraction is untested against real-world input.
 - Segments stored in milliseconds assume a max resolution; `Duration.inMilliseconds` can overflow for extremely long values only in pathological cases.
+
+---
+
+## Phase 009 — YouTube Metadata Provider
+
+## Phase
+
+009 — YouTube Metadata Provider
+
+## Status
+
+Completed
+
+## Completed Work
+
+- Selected and added `youtube_explode_dart` 3.1.0 dependency.
+  - Actively maintained, reliable, no API key required, Flutter Desktop compatible.
+  - Rationale documented in `docs/DEPENDENCIES.md`.
+- Implemented `YoutubeExplodeProvider` (`lib/providers/youtube_explode_provider.dart`).
+  - Concrete `YoutubeProvider` implementation.
+  - `getVideoMetadata()` fetches title, channel name, publication date, video id, canonical URL, duration, description.
+  - Maps the external package's `Video` type to the `YoutubeVideoMetadata` DTO (ADR-009); external types never leak.
+  - Injectable `fetchVideo` seam for testability (no network calls in tests).
+- Extended domain exceptions (`lib/exceptions/youtube_exceptions.dart`).
+  - `YoutubeVideoUnavailableException` — video unavailable/deleted/private.
+  - `YoutubeNetworkException` — network failures, with optional cause.
+  - `ArgumentError` → `InvalidYouTubeUrlException`.
+- Extended `YoutubeVideoMetadata` DTO with `url` field (canonical URL).
+- Added unit tests (`test/youtube_explode_provider_test.dart`).
+  - 8 tests: successful fetch/mapping, empty description, uploadDate→publishDate fallback, invalid URL, unavailable video, network failure, cause propagation, rethrow.
+- Added ADR-009: provider DTOs are always mapped into domain models before entering the application layer.
+- No transcript downloading, no transcript selection, no UI integration.
+- Verified `flutter analyze` (No issues found) and `flutter test` (109 tests passed).
+
+## Files Created
+
+- `lib/providers/youtube_explode_provider.dart` — concrete provider implementation.
+- `test/youtube_explode_provider_test.dart` — provider unit tests.
+
+## Files Modified
+
+- `pubspec.yaml` — added `youtube_explode_dart: ^3.1.0`; version bumped to `0.0.9+1`.
+- `lib/providers/youtube_video_metadata.dart` — added `url` field.
+- `lib/exceptions/youtube_exceptions.dart` — added unavailable + network exceptions.
+- `test/youtube_provider_dto_test.dart` — updated for `url` field.
+- `docs/DEPENDENCIES.md` — documented `youtube_explode_dart`.
+- `docs/DECISIONS.md` — added ADR-009.
+- `docs/ARCHITECTURE.md` — YouTubeExplodeProvider marked implemented.
+- `docs/ROADMAP.md` — Phase 009 marked Completed, Phase 010 marked Next.
+- `docs/CHANGELOG.md` — added 0.0.9 entry.
+- `docs/SESSION_REPORT.md` — this report.
+- `docs/PROJECT_STATE.md` — version 0.0.9, phase 009.
+- `docs/RELEASE_NOTES.md` — added 0.0.9 entry.
+
+## Known Risks
+
+- `youtube_explode_dart` scrapes watch pages; YouTube HTML changes may require package updates.
+- The provider has not been exercised against a live network in automated tests (tests use injected fakes).
+- `publishedAt` falls back to `DateTime.now()` when both uploadDate and publishDate are null — this is a last-resort default that could be inaccurate.
+- The optional `fetchVideo` seam increases constructor API surface; kept internal for now.
+
+## Next Phase
+
+Phase 010 — Output Builder (status: Next on the roadmap).
+
+## Commit Placeholder
+
+```
+Phase 009 - Metadata provider implementation
+```
+
+The single commit for this phase will be created once all changes are verified.
+
+---
+
+## Self Review
+
+### Completed
+
+YES
+
+### Skipped
+
+None
+
+### Assumptions
+
+- `youtube_explode_dart` 3.1.0 is the most suitable package: pure Dart, no API key, actively maintained.
+- `video.uploadDate` is preferred over `video.publishDate` for the publication date; if both are absent, a fallback to `DateTime.now()` is acceptable for now.
+- `video.url` (computed as `https://www.youtube.com/watch?v=$id`) satisfies the canonical URL requirement.
+- Empty descriptions are mapped to `null` in the DTO; non-empty descriptions are preserved.
+- `ArgumentError` (thrown by `VideoId`) represents an invalid URL and is mapped to `InvalidYouTubeUrlException`.
+
+### Potential Risks
+
+- YouTube page-structure changes can break `youtube_explode_dart` scraping; the package must be kept up to date.
+- The `fetchVideo` injection seam is the only testability hook; a future refactor may prefer an interface-based transport.
+- Network error classification is coarse: any non-`VideoUnavailableException`/non-`ArgumentError` failure becomes `YoutubeNetworkException`; HTTP-specific status handling could be refined later.
+- The `publishedAt` fallback to `DateTime.now()` could surface an incorrect date if the provider ever returns a video with no date fields.
+- The provider's transcript methods are `UnimplementedError`; callers must not invoke them yet.
 </content>

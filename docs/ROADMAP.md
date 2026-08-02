@@ -113,18 +113,23 @@
 
 ---
 
-## Phase 009 — Transcript Cleanup
+## Phase 009 — YouTube Metadata Provider
 
-**Status: Next**
+**Status: Completed**
 
-- Remove timestamp markers whenever possible.
-- Normalize transcript text for clean output.
+- `YoutubeExplodeProvider` — concrete provider backed by `youtube_explode_dart` (3.1.0).
+- `getVideoMetadata()` fetches title, channel, publication date, video id, canonical URL, duration, description.
+- External package types never leak; mapped to provider DTOs (ADR-009).
+- Domain exception mapping: `InvalidYouTubeUrlException`, `YoutubeVideoUnavailableException`, `YoutubeNetworkException`.
+- No API key required; package selected and documented in DEPENDENCIES.md.
+- Unit tests: successful retrieval, invalid URL, unavailable video, network failure, mapping.
+- No transcripts, no UI integration.
 
 ---
 
 ## Phase 010 — Output Builder
 
-**Status: Planned**
+**Status: Next**
 
 - Assemble copy-ready text block:
   - selected prompt

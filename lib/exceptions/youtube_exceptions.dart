@@ -10,3 +10,27 @@ class InvalidYouTubeUrlException implements Exception {
   @override
   String toString() => 'InvalidYouTubeUrlException: $message';
 }
+
+/// Thrown when a YouTube video cannot be found or is unavailable.
+class YoutubeVideoUnavailableException implements Exception {
+  const YoutubeVideoUnavailableException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'YoutubeVideoUnavailableException: $message';
+}
+
+/// Thrown when a network failure prevents communication with YouTube.
+class YoutubeNetworkException implements Exception {
+  const YoutubeNetworkException(this.message, {this.cause});
+
+  final String message;
+
+  /// Underlying cause, when available.
+  final Object? cause;
+
+  @override
+  String toString() => 'YoutubeNetworkException: $message'
+      '${cause != null ? ' (cause: $cause)' : ''}';
+}
