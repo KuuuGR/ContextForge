@@ -11,79 +11,162 @@
 
 ---
 
-## Phase 002 — Application Shell & Navigation
+## Phase 001A — Documentation Alignment
+
+**Status: Completed**
+
+- Specification rewritten to describe the real ContextForge workflow (prompt + YouTube transcripts → copy-ready output).
+- Roadmap corrected to match the actual planned implementation phases.
+- Architecture expanded with planned services, repositories, models, and widgets.
+- New documentation created: TECH_DEBT.md, RELEASE_NOTES.md, TESTING.md.
+- Session report and project state updated.
+- One commit created for the phase.
+
+---
+
+## Phase 002 — Main Window
 
 **Status: Next**
 
-- Set up the application window shell with a proper title and window metadata.
-- Establish the core navigation structure (sidebar + content area).
-- Define the root widget hierarchy and theming foundation.
-- Add workspace-level empty state placeholders.
+- Application shell with the main window layout.
+- Core navigation structure (sidebar + content area).
+- Root widget hierarchy and theming foundation.
 
 ---
 
-## Phase 003 — Workspace Management
+## Phase 003 — Prompt Manager
 
 **Status: Planned**
 
-- Create, open, and persist local workspaces.
-- Workspace metadata storage (local-first).
-- Recent workspaces list.
+- Prompt selection UI.
+- Prompt list and basic prompt management.
 
 ---
 
-## Phase 004 — Context Authoring
+## Phase 004 — Prompt Local Storage
 
 **Status: Planned**
 
-- Markdown-based context document editor.
-- Document tree / list view.
-- Basic metadata: title, description, tags.
+- Persist prompt templates locally.
+- Local-first storage for prompts.
 
 ---
 
-## Phase 005 — Context Organization
+## Phase 005 — Prompt CRUD
 
 **Status: Planned**
 
-- Tagging system for context items.
-- Folder/category grouping.
-- Search and filtering.
+- Create, read, update, delete prompt templates.
+- Custom prompt authoring.
 
 ---
 
-## Phase 006 — Context Packages
+## Phase 006 — Video History
 
 **Status: Planned**
 
-- Package context items into reusable bundles.
-- Export/copy bundles for AI-assisted workflows.
-- Import bundles from external sources.
+- Track which videos have already been used.
+- Green indicator = new video; blue indicator = previously used.
 
 ---
 
-## Phase 007 — Settings & Preferences
+## Phase 007 — YouTube Metadata
 
 **Status: Planned**
 
-- Application preferences (theme, editor options).
-- Workspace defaults.
+- Fetch publication date and video metadata from YouTube.
+- Validate up to three YouTube URLs.
 
 ---
 
-## Phase 008 — Polish & Release
+## Phase 008 — Transcript Service
 
 **Status: Planned**
 
-- Performance and UX polish.
-- Error handling and edge cases.
-- First public release (0.1.0).
+- Download transcripts with preferred order:
+  - manual Polish
+  - automatic Polish
+  - manual English
+  - automatic English
+  - any available transcript
+- Whisper transcription fallback prompt when no transcript exists.
+
+---
+
+## Phase 009 — Transcript Cleanup
+
+**Status: Planned**
+
+- Remove timestamp markers whenever possible.
+- Normalize transcript text for clean output.
+
+---
+
+## Phase 010 — Output Builder
+
+**Status: Planned**
+
+- Assemble copy-ready text block:
+  - selected prompt
+  - inspiration section
+  - transcript section
+
+---
+
+## Phase 011 — Clipboard Support
+
+**Status: Planned**
+
+- Copy generated output to clipboard.
+- Copy interaction in the output preview.
+
+---
+
+## Phase 012 — UI Polish
+
+**Status: Planned**
+
+- Visual polish of the main window and workflow.
+- Empty states, loading states, and error states.
+
+---
+
+## Phase 013 — Prompt Ratings
+
+**Status: Planned**
+
+- Rate and rank saved prompt templates.
+- Feedback loop for prompt quality.
+
+---
+
+## Phase 014 — Transcript Cache
+
+**Status: Planned**
+
+- Cache downloaded transcripts locally.
+- Avoid redundant transcript downloads.
+
+---
+
+## Phase 015 — Milestone 1 Audit
+
+**Status: Planned**
+
+- Full audit of MVP milestone 1.
+- Update AUDIT_REPORT.md and close out remaining issues.
 
 ---
 
 ## Future Phases (Placeholders)
 
-- Phase 009 — Optional cloud sync.
-- Phase 010 — Plugin system / integrations.
-- Phase 011 — Collaboration features.
-- Phase 012 — Cross-platform desktop support.
+- Phase 016 — Vimeo support.
+- Phase 017 — PDF sources.
+- Phase 018 — RSS feed sources.
+- Phase 019 — Website sources.
+- Phase 020 — Local file support.
+- Phase 021 — Audio file support.
+- Phase 022 — Optional cloud sync.
+- Phase 023 — Plugin system / integrations.
+- Phase 024 — Collaboration features.
+- Phase 025 — Cross-platform desktop support.
