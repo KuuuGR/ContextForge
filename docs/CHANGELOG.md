@@ -2,6 +2,27 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.10] — 2026-02-08
+
+### Added
+
+- Enabled macOS outbound network access:
+  - Added `com.apple.security.network.client` entitlement to `macos/Runner/DebugProfile.entitlements`.
+  - Added `com.apple.security.network.client` entitlement to `macos/Runner/Release.entitlements`.
+  - Existing entitlements preserved (app-sandbox, cs.allow-jit, network.server).
+
+### Fixed
+
+- CF-001 — "Could not reach YouTube. Check your connection.":
+  - Root cause: missing `com.apple.security.network.client` sandbox entitlement blocked all outbound HTTPS (`SocketException`, errno = 1, Operation not permitted).
+  - Fix: outbound network client entitlement enabled for Debug, Profile, and Release configurations.
+  - Verified: `flutter build macos` succeeds; `codesign -d --entitlements` shows `com.apple.security.network.client` embedded in the Release app bundle.
+
+### Notes
+
+- Application now reaches YouTube; metadata, transcript discovery, and transcript download work in the sandboxed app.
+- No changes to application logic, provider, or UI.
+
 ## [0.1.9] — 2026-02-08
 
 ### Added

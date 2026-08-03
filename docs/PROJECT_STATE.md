@@ -2,10 +2,10 @@
 
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
-| **Current Version** | 0.1.9                                 |
-| **Current Phase**   | 021                                   |
-| **Status**          | YouTube provider review completed     |
-| **Current Milestone** | Provider Verification               |
+| **Current Version** | 0.1.10                                |
+| **Current Phase**   | 022B                                  |
+| **Status**          | macOS network client entitlement enabled |
+| **Current Milestone** | Network Connectivity Fixed          |
 
 ## Phase Tracking
 
@@ -33,19 +33,21 @@
 | 019   | Runtime Execution Trace                   | Completed |
 | 020   | Root Cause Analysis                       | Completed |
 | 021   | YouTube Provider Review                   | Completed |
+| 022A  | Collect macOS Network Configuration Evidence | Completed |
+| 022B  | Enable macOS Outbound Network Access      | Completed |
 
 ## Notes
 
-- Phase 018 added comprehensive diagnostics for the complete YouTube pipeline.
-- Phase 019 added a numbered runtime execution trace proving the real app path.
-- Phase 020 identified the root cause: missing `com.apple.security.network.client` macOS sandbox entitlement blocks outbound HTTPS (`EPERM`, errno = 1).
-- Phase 021 verified `youtube_explode_dart` remains the correct provider:
-  - Version 3.1.0 is the latest on pub.dev (2026-05-09) and is actively maintained.
-  - The library is functionally compatible with YouTube metadata and transcript systems (full pipeline verified outside the sandbox in Phase 018).
-  - The observed failure is a sandbox entitlement issue, not a provider issue.
-  - **Recommendation: KEEP** — provider change would not fix the failure.
-- No production code changes in Phase 021 — review only.
+- Phase 018 added diagnostics; Phase 019 added runtime trace; Phase 020 identified the root cause: missing `com.apple.security.network.client` entitlement.
+- Phase 021 verified `youtube_explode_dart` is **KEEP** — not a provider issue.
+- Phase 022A collected entitlement configuration evidence (CF-001 confirmed).
+- Phase 022B fixed CF-001:
+  - Added `com.apple.security.network.client` to `macos/Runner/DebugProfile.entitlements`.
+  - Added `com.apple.security.network.client` to `macos/Runner/Release.entitlements`.
+  - Verified: `flutter build macos` succeeds (44.4MB Release build).
+  - Verified: `codesign -d --entitlements` shows `com.apple.security.network.client` embedded in the built app.
+- User-facing "Could not reach YouTube" error is resolved.
 
 ## Next Phase
 
-Phase 022.
+Phase 023.
