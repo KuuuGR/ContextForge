@@ -34,3 +34,13 @@ class YoutubeNetworkException implements Exception {
   String toString() => 'YoutubeNetworkException: $message'
       '${cause != null ? ' (cause: $cause)' : ''}';
 }
+
+/// Thrown when transcripts are disabled or none are available for a video.
+class TranscriptsUnavailableException implements Exception {
+  const TranscriptsUnavailableException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'TranscriptsUnavailableException: $message';
+}

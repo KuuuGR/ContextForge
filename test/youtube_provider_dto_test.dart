@@ -68,6 +68,7 @@ void main() {
       language: TranscriptLanguage.polish,
       isManual: true,
       languageName: 'Polish',
+      languageCode: 'pl',
     );
 
     test('serializes to JSON', () {
@@ -144,6 +145,7 @@ void main() {
         language: TranscriptLanguage.polish,
         isManual: true,
         languageName: 'Polish',
+        languageCode: 'pl',
       ),
       segments: const [
         YoutubeTranscriptSegment(

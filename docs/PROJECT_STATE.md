@@ -1,11 +1,11 @@
 # Project State — ContextForge
 
-| Field               | Value                                    |
-| ------------------- | ---------------------------------------- |
-| **Current Version** | 0.1.1                                    |
-| **Current Phase**   | 011                                      |
-| **Status**          | Prompt selection workflow implemented    |
-| **Current Milestone** | Prompt Selection Workflow              |
+| Field               | Value                             |
+| ------------------- | --------------------------------- |
+| **Current Version** | 0.1.2                             |
+| **Current Phase**   | 012                               |
+| **Status**          | Transcript discovery implemented  |
+| **Current Milestone** | Transcript Discovery             |
 
 ## Phase Tracking
 
@@ -23,19 +23,20 @@
 | 009   | YouTube Metadata Provider                 | Completed |
 | 010   | Video Card Controller + Metadata Workflow | Completed |
 | 011   | Prompt Selection Workflow                 | Completed |
-| 012   | Clipboard Support                        | Next      |
+| 012   | Transcript Discovery                      | Completed |
+| 013   | Clipboard Support                        | Next      |
 
 ## Notes
 
-- Phase 010 delivered the video presentation layer and the first vertical slice (metadata workflow); retained as authoritative.
-- Phase 011 delivered the first complete prompt workflow:
-  - Saved prompts load automatically on startup; default prompts (SEO Article, Newsletter, LinkedIn, Facebook) are seeded once and never overwrite user prompts.
-  - `PromptSelector` shows real prompts + "Custom Prompt"; friendly empty state when none exist.
-  - `PromptEditor` displays selected content read-only; editing enabled only for Custom Prompt (not persisted).
-  - `ContextForgeApp`/`HomePage` accept injected `PromptService`/`VideoService` for testability; `InMemoryPromptRepository` added.
-- No editing, deleting, creation UI, ratings, or prompt persistence for custom prompts (by design).
-- 139 tests pass; `flutter analyze` clean; macOS debug build succeeds.
+- Phase 012 implemented transcript discovery (metadata only):
+  - `TranscriptTrack` domain model; `YoutubeTranscriptInfo` DTO extended with `languageCode` + `isTranslatable`.
+  - `YoutubeExplodeProvider.getAvailableTranscripts` via `yt.videos.closedCaptions.getManifest`; injectable `fetchManifest` seam.
+  - `TranscriptService.getAvailableTranscripts` + `discoverTranscriptTracks` (throws `TranscriptsUnavailableException` when empty).
+  - Domain exceptions: unavailable video, network failure, transcripts disabled/none.
+  - Unit tests (6): mapping, auto-generated, manual, no transcripts, unavailable, network failure.
+- No transcript text downloading, selection, cleaning, or Whisper integration (by design).
+- 145 tests pass; flutter analyze clean; macOS debug build succeeds.
 
 ## Next Phase
 
-Phase 012 — Clipboard Support.
+Phase 013 — Clipboard Support.

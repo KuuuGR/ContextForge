@@ -2,6 +2,22 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.2] — 2026-02-08
+
+### Added
+
+- Transcript discovery (metadata only — no transcript download):
+  - `TranscriptTrack` domain model (`lib/models/transcript_track.dart`).
+  - `YoutubeTranscriptInfo` DTO extended with `languageCode` and `isTranslatable`.
+  - `YoutubeExplodeProvider.getAvailableTranscripts` via `yt.videos.closedCaptions.getManifest`; injectable `fetchManifest` seam.
+  - `TranscriptService` maps DTOs → domain `TranscriptTrack` (ADR-009); `discoverTranscriptTracks` throws when empty.
+  - `TranscriptsUnavailableException`.
+- Unit tests (`test/transcript_service_test.dart`): mapping, auto, manual, no transcripts, unavailable, network failure.
+
+### Notes
+
+- No transcript text downloading, selection, cleaning, or Whisper integration.
+
 ## [0.1.1] — 2026-02-08
 
 ### Added

@@ -152,7 +152,19 @@
 
 ---
 
-## Phase 012 — Clipboard Support
+## Phase 012 — Transcript Discovery
+
+**Status: Completed**
+
+- Provider: `YoutubeExplodeProvider.getAvailableTranscripts` via `yt.videos.closedCaptions.getManifest` (metadata only).
+- Domain: `TranscriptTrack` model; `YoutubeTranscriptInfo` DTO extended with `languageCode` + `isTranslatable`.
+- Service: `TranscriptService.getAvailableTranscripts` + `discoverTranscriptTracks` (throws `TranscriptsUnavailableException` when empty).
+- Error handling: unavailable video, network failure, transcripts disabled/none.
+- Unit tests (6) covering mapping, auto, manual, no transcripts, unavailable, network failure.
+
+---
+
+## Phase 013 — Clipboard Support
 
 **Status: Next**
 
@@ -161,7 +173,7 @@
 
 ---
 
-## Phase 013 — UI Polish
+## Phase 014 — UI Polish
 
 **Status: Planned**
 
@@ -170,7 +182,7 @@
 
 ---
 
-## Phase 014 — Prompt Ratings
+## Phase 015 — Prompt Ratings
 
 **Status: Planned**
 
@@ -179,7 +191,7 @@
 
 ---
 
-## Phase 015 — Transcript Cache
+## Phase 016 — Transcript Cache
 
 **Status: Planned**
 
@@ -188,7 +200,7 @@
 
 ---
 
-## Phase 016 — Milestone 1 Audit
+## Phase 017 — Milestone 1 Audit
 
 **Status: Planned**
 
@@ -199,13 +211,13 @@
 
 ## Future Phases (Placeholders)
 
-- Phase 017 — Vimeo support.
-- Phase 018 — PDF sources.
-- Phase 019 — RSS feed sources.
-- Phase 020 — Website sources.
-- Phase 021 — Local file support.
-- Phase 022 — Audio file support.
-- Phase 023 — Optional cloud sync.
-- Phase 024 — Plugin system / integrations.
-- Phase 025 — Collaboration features.
-- Phase 026 — Cross-platform desktop support.
+- Phase 018 — Vimeo support.
+- Phase 019 — PDF sources.
+- Phase 020 — RSS feed sources.
+- Phase 021 — Website sources.
+- Phase 022 — Local file support.
+- Phase 023 — Audio file support.
+- Phase 024 — Optional cloud sync.
+- Phase 025 — Plugin system / integrations.
+- Phase 026 — Collaboration features.
+- Phase 027 — Cross-platform desktop support.
