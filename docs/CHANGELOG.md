@@ -6,6 +6,23 @@ All notable changes to ContextForge will be documented in this file.
 
 ### Added
 
+- Presentation layer (`lib/presentation/`).
+  - `VideoCardState` typed state model: `empty`, `editing`, `valid`, `invalid`.
+  - `VideoCardController` presentation-layer controller owning URL, state, validation status, and extracted videoId.
+  - Public API: `setUrl()`, `clear()`, `validate()`; state changes via `ChangeNotifier`.
+  - Communicates only with `YouTubeUrlParser` and `VideoService`; no UI logic, no provider access, no networking.
+- Unit tests (`test/presentation_video_card_controller_test.dart`).
+  - Empty state, editing transition, valid URL extraction (watch + youtu.be), invalid URL, whitespace URL, clear(), listener notifications, re-validate after editing.
+
+### Notes
+
+- This phase intentionally does NOT perform metadata fetching.
+- No metadata or loading states yet — those belong to later phases.
+
+## [0.1.0] — 2026-02-08 (Video Metadata Workflow)
+
+### Added
+
 - First complete vertical slice: video metadata workflow.
 - `VideoStatus` domain enum (`lib/models/video_status.dart`) with gray/green/red/blue semantics.
 - `VideoService.fetchVideoMetadata(url)` — validates URL via `YouTubeUrlParser`, fetches metadata via `YoutubeProvider`, maps DTO → domain `Video` (ADR-009).

@@ -1008,4 +1008,89 @@ None
 - `fetchVideoMetadata` regenerates a `Video` model each call (new `createdAt`/`updatedAt`); idempotency depends on usage.
 - The mapper sets `transcriptLanguage` heuristically (none/other based on description presence) — transcript availability will refine this in Phase 011+.
 - The `HomePage` constructs real `YoutubeExplodeProvider` by default; widget tests must inject a fake service to avoid network access.
+
+---
+
+## Phase 010 — Video Card Controller (Presentation Layer)
+
+## Phase
+
+010 — Video Card Controller
+
+## Status
+
+Completed
+
+## Completed Work
+
+- Established the presentation layer (`lib/presentation/`).
+- Created `VideoCardState` typed state model (`lib/presentation/video_card_state.dart`):
+  - `empty`, `editing`, `valid`, `invalid`.
+  - No metadata or loading states yet (by design).
+- Created `VideoCardController` (`lib/presentation/video_card_controller.dart`):
+  - Owns entered URL, current state, validation status, and extracted videoId.
+  - Public API: `setUrl()`, `clear()`, `validate()`.
+  - State changes exposed via `ChangeNotifier` — Flutter-friendly and consistent with the existing architecture.
+  - Communicates only with `YouTubeUrlParser` and `VideoService`; no UI logic, no provider access, no networking.
+  - Reusable and fully testable in isolation.
+- Added unit tests (`test/presentation_video_card_controller_test.dart`):
+  - empty URL, valid URL (watch + youtu.be), invalid URL, clear(), state transitions, listener notifications, re-validate after editing.
+- Verified `flutter analyze` (clean) and `flutter test` (130 tests passed).
+
+## Files Created
+
+- `lib/presentation/video_card_state.dart`
+- `lib/presentation/video_card_controller.dart`
+- `test/presentation_video_card_controller_test.dart`
+
+## Files Modified
+
+- `docs/CHANGELOG.md` — 0.1.0 presentation-layer entry added.
+- `docs/ROADMAP.md` — Phase 010 = Video Card Controller, Completed.
+- `docs/PROJECT_STATE.md` — phase 010, status "Video presentation layer established".
+- `docs/SESSION_REPORT.md` — this report.
+
+## Known Risks
+
+- `validate()` ignores which exception was thrown (treats any failure as invalid); a more detailed validation-status may be needed later.
+- The controller stores the URL as typed; normalize-on-validate is intentionally deferred to metadata phase.
+- `videoService` is a public field but never invoked in this phase; callers must not rely on it yet.
+
+## Next Phase
+
+Phase 011 — Clipboard Support (status: Next on the roadmap).
+
+## Commit Placeholder
+
+```
+Phase 010 - Video card controller
+```
+
+---
+
+## Self Review
+
+### Completed
+
+YES
+
+### Skipped
+
+None
+
+### Assumptions
+
+- A `lib/presentation/` layer is the appropriate home for the controller, distinct from the existing viewmodels.
+- Typed state (`VideoCardState`) with four values (empty/editing/valid/invalid) matches the phase scope; metadata/loading states come later.
+- `ChangeNotifier` is consistent with the existing architecture.
+- The controller should validate via `YouTubeUrlParser.extractVideoId` and delegate future metadata work to `VideoService` — no direct provider access.
+- The existing vertical-slice viewmodel (`lib/viewmodels/video_card_controller.dart`) remains untouched; the new presentation controller is additive and reusable.
+
+### Potential Risks
+
+- Two controllers now exist for the video card (viewmodel + presentation); consolidation should happen when the presentation controller gains metadata/loading states.
+- `validate()` treats all exceptions uniformly; error taxonomy may be needed for UI messaging later.
+- `setUrl` always clears the previous videoId even if the new URL is identical; acceptable for editing semantics.
+- The presentation controller is not yet wired to any widget; wiring belongs to a UI phase, not this one.
+- No normalization is exposed (`normalizeUrl` exists on the parser) — canonical form will be used by the metadata phase.
 </content>

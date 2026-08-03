@@ -1,28 +1,28 @@
 # Project State — ContextForge
 
-| Field               | Value                                     |
-| ------------------- | ----------------------------------------- |
-| **Current Version** | 0.1.0                                     |
-| **Current Phase**   | 010                                       |
-| **Status**          | First complete user workflow implemented  |
-| **Current Milestone** | Video Metadata Workflow [Vertical Slice] |
+| Field               | Value                                 |
+| ------------------- | ------------------------------------- |
+| **Current Version** | 0.1.0                                 |
+| **Current Phase**   | 010                                   |
+| **Status**          | Video presentation layer established  |
+| **Current Milestone** | Video Card Controller (Presentation) |
 
 ## Phase Tracking
 
-| Phase   | Title                                      | Status                    |
-| ------- | ------------------------------------------ | ------------------------- |
-| 001     | Project Bootstrap & Documentation          | Completed                 |
-| 001A    | Documentation Alignment                    | Completed                 |
-| 002     | Main Window                                | Completed                 |
-| 003     | Prompt Domain Foundation                   | Completed                 |
-| 004     | Prompt Local Storage                       | Completed                 |
-| 005     | Prompt Service Implementation              | Completed                 |
-| 006     | Video Domain Foundation                    | Completed                 |
-| 007     | YouTube URL Parser                         | Completed                 |
-| 008     | YouTube Provider Abstraction               | Completed                 |
-| 009     | YouTube Metadata Provider                  | Completed                 |
-| 010     | Video Metadata Workflow                    | Completed                 |
-| 011     | Clipboard Support                          | Next                      |
+| Phase   | Title                              | Status                    |
+| ------- | ---------------------------------- | ------------------------- |
+| 001     | Project Bootstrap & Documentation  | Completed                 |
+| 001A    | Documentation Alignment            | Completed                 |
+| 002     | Main Window                        | Completed                 |
+| 003     | Prompt Domain Foundation           | Completed                 |
+| 004     | Prompt Local Storage               | Completed                 |
+| 005     | Prompt Service Implementation      | Completed                 |
+| 006     | Video Domain Foundation            | Completed                 |
+| 007     | YouTube URL Parser                 | Completed                 |
+| 008     | YouTube Provider Abstraction       | Completed                 |
+| 009     | YouTube Metadata Provider          | Completed                 |
+| 010     | Video Card Controller              | Completed                 |
+| 011     | Clipboard Support                  | Next                      |
 
 ## Notes
 
@@ -36,6 +36,6 @@
 - Phase 007 delivered `YouTubeUrlParser`.
 - Phase 008 delivered the provider layer abstraction.
 - Phase 009 delivered `YoutubeExplodeProvider` (metadata provider).
-- Phase 010 delivered the first complete vertical slice: URL → validation → metadata fetch → display, with loading and friendly error states.
-- No transcript functionality or history support yet (by design). Blue indicator reserved for history.
+- Phase 010 established the video presentation layer: `VideoCardState` typed state model and `VideoCardController` (URL, state, validation, videoId; `setUrl`/`clear`/`validate`).
+- Metadata fetching, loading states, and history are intentionally deferred to later phases.
 - The repository is buildable and tests pass at the current state.

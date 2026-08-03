@@ -127,17 +127,17 @@
 
 ---
 
-## Phase 010 — Video Metadata Workflow (First Vertical Slice)
+## Phase 010 — Video Card Controller
 
 **Status: Completed**
 
-- First complete user-facing workflow: URL → validation → metadata fetch → display.
-- `VideoService.fetchVideoMetadata(url)` orchestrates parser + provider + DTO→domain mapping.
-- `VideoCardController` presentation-layer controller with status/loading/error state.
-- Three controller-driven `VideoInputCard`s with loading indicator and friendly error banner.
-- Status colors: gray (no URL), green (loaded), red (error), blue (reserved for history).
-- Unit + widget tests covering success, invalid URL, unavailable video, loading state.
-- Blue indicator remains reserved for future history support.
+- Presentation layer established (`lib/presentation/`).
+- `VideoCardState` typed state model: empty, editing, valid, invalid (no metadata/loading states yet).
+- `VideoCardController` owns URL, state, validation status, and extracted videoId.
+- Public API: `setUrl()`, `clear()`, `validate()`; Flutter-friendly `ChangeNotifier` exposure.
+- Communicates only with `YouTubeUrlParser` and `VideoService` — no UI logic, no provider access, no networking.
+- Unit tests covering empty, valid, invalid, clear, and state transitions.
+- Intentionally does NOT perform metadata fetching.
 
 ---
 
