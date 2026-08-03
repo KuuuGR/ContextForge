@@ -2,10 +2,10 @@
 
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
-| **Current Version** | 0.1.4                                 |
-| **Current Phase**   | 014                                   |
-| **Status**          | Transcript download implemented       |
-| **Current Milestone** | Transcript Download                 |
+| **Current Version** | 0.1.6                                 |
+| **Current Phase**   | 016                                   |
+| **Status**          | Output Builder implemented            |
+| **Current Milestone** | Output Builder                      |
 
 ## Phase Tracking
 
@@ -26,20 +26,20 @@
 | 012   | Transcript Discovery                      | Completed |
 | 013   | Transcript Selection Strategy             | Completed |
 | 014   | Transcript Download                       | Completed |
-| 015   | Clipboard Support                        | Next      |
+| 015   | Transcript Cleanup                        | Completed |
+| 016   | Output Builder                            | Completed |
 
 ## Notes
 
-- Phase 014 implemented transcript download:
-  - `TranscriptService.downloadTranscript(videoId, track)` — downloads the selected transcript track via `YoutubeProvider.downloadTranscript`, maps provider DTOs → domain `TranscriptDownload` (videoId, track, plain text, raw segments).
-  - Plain text returned without timestamps: segment texts joined with a single space. Raw timestamped segments preserved for later cleaning.
-  - `YoutubeExplodeProvider.downloadTranscript` — fetches manifest, matches the requested track by language code and auto/manual, downloads caption track, maps to `YoutubeTranscript` DTO.
-  - Error handling: provider returns `null` → `TranscriptsUnavailableException`; `VideoUnavailableException` → `YoutubeVideoUnavailableException`; other failures → `YoutubeNetworkException`.
-  - Domain model (`lib/models/transcript_download.dart`): `TranscriptDownload` (videoId, track, text, segments) + `TranscriptSegment` (offset, duration, text).
-  - Unit tests (5 new): successful download (plain text + metadata), provider-null → unavailable, video unavailable, network failure, generic provider failure.
-- No Whisper, no transcript cleanup, no UI changes.
-- 159 tests pass; flutter analyze clean; macOS debug build succeeds.
+- Phase 016 implemented the output builder:
+  - `OutputBuilderService.build({selectedPrompt, videos, transcripts})` — generates the final output text block for copying into an external LLM.
+  - Deterministic string assembly: no AI processing, no randomness, no UI dependencies.
+  - Output format: separator, selected prompt, Inspiration section (`YYYY-MM-DD -> URL` per existing video), numbered Transcript sections with preserved cleaned transcript text.
+  - Skips videos with empty URLs and transcripts with empty text; no empty Inspiration entries or Transcript sections.
+  - Transcript text preserved exactly from `TranscriptCleanupService` (only leading/trailing whitespace trimmed).
+  - Unit tests (3 new): complete output, one missing transcript, empty video list.
+- No Clipboard, no UI changes, no Whisper, no transcript cleanup changes.
 
 ## Next Phase
 
-Phase 015 — Clipboard Support.
+Phase 017.

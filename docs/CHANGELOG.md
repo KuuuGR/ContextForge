@@ -2,6 +2,37 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.6] — 2026-02-08
+
+### Added
+
+- Output builder (`lib/services/output_builder_service.dart`).
+  - `OutputBuilderService.build({selectedPrompt, videos, transcripts})` — generates the final output text block for copying into an external LLM.
+  - Deterministic string assembly: no AI processing, no randomness, no UI dependencies.
+  - Output format: separator, selected prompt, Inspiration section (`YYYY-MM-DD -> URL` per existing video), numbered Transcript sections with preserved cleaned transcript text.
+  - Skips videos with empty URLs and transcripts with empty text; no empty Inspiration entries or Transcript sections.
+  - Transcript text preserved exactly from `TranscriptCleanupService` (only leading/trailing whitespace trimmed).
+- Unit tests (`test/output_builder_service_test.dart`): complete output, one missing transcript, empty video list.
+
+### Notes
+
+- No Clipboard, no UI changes, no Whisper, no transcript cleanup changes.
+
+## [0.1.5] — 2026-02-08
+
+### Added
+
+- Transcript cleanup (`lib/services/transcript_cleanup_service.dart`).
+  - `TranscriptCleanupService.clean(download)` — transforms a downloaded `TranscriptDownload` into clean AI-ready text.
+  - Removes timestamp-only lines, empty lines; normalizes whitespace within lines; preserves paragraph breaks.
+  - Preserves the original `TranscriptDownload` on the result for future debugging.
+  - Domain model (`lib/models/clean_transcript.dart`): `CleanTranscript` (videoId, track, text, original).
+- Unit tests (`test/transcript_cleanup_service_test.dart`).
+
+### Notes
+
+- No Whisper, no output generation, no UI changes.
+
 ## [0.1.4] — 2026-02-08
 
 ### Added
