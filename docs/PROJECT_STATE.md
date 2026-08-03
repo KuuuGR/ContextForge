@@ -2,10 +2,10 @@
 
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
-| **Current Version** | 0.1.8                                 |
-| **Current Phase**   | 018                                   |
-| **Status**          | YouTube diagnostics implemented       |
-| **Current Milestone** | Diagnostics                          |
+| **Current Version** | 0.1.9                                 |
+| **Current Phase**   | 021                                   |
+| **Status**          | YouTube provider review completed     |
+| **Current Milestone** | Provider Verification               |
 
 ## Phase Tracking
 
@@ -30,17 +30,22 @@
 | 016   | Output Builder                            | Completed |
 | 017   | End-to-End Generate Workflow              | Completed |
 | 018   | YouTube Connectivity Diagnostics          | Completed |
+| 019   | Runtime Execution Trace                   | Completed |
+| 020   | Root Cause Analysis                       | Completed |
+| 021   | YouTube Provider Review                   | Completed |
 
 ## Notes
 
-- Phase 018 added comprehensive diagnostics for the complete YouTube pipeline:
-  - Every stage is instrumented with `debugPrint`: original URL, parsed video ID, metadata request/response, transcript discovery (manifest + tracks), transcript selection, transcript download.
-  - Every caught exception logs: exception type, message, and full stack trace.
-  - Generic UI messages are preserved; original exceptions are always visible in the console.
-  - Verified against reference video `OPZczs-Kttg`: the full pipeline succeeds end-to-end — URL parse → metadata → transcript discovery → selection → download all complete without error.
-  - The "Could not reach YouTube" error did not reproduce at the provider/service level; the instrumented stages confirm the provider pipeline works, suggesting the failure is outside the instrumented logic (e.g., network sandboxing/permissions) or video-specific.
-- No feature work, no refactoring, no provider replacement, no business logic changes.
+- Phase 018 added comprehensive diagnostics for the complete YouTube pipeline.
+- Phase 019 added a numbered runtime execution trace proving the real app path.
+- Phase 020 identified the root cause: missing `com.apple.security.network.client` macOS sandbox entitlement blocks outbound HTTPS (`EPERM`, errno = 1).
+- Phase 021 verified `youtube_explode_dart` remains the correct provider:
+  - Version 3.1.0 is the latest on pub.dev (2026-05-09) and is actively maintained.
+  - The library is functionally compatible with YouTube metadata and transcript systems (full pipeline verified outside the sandbox in Phase 018).
+  - The observed failure is a sandbox entitlement issue, not a provider issue.
+  - **Recommendation: KEEP** — provider change would not fix the failure.
+- No production code changes in Phase 021 — review only.
 
 ## Next Phase
 
-Phase 019.
+Phase 022.

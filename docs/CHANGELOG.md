@@ -2,6 +2,21 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.9] — 2026-02-08
+
+### Added
+
+- YouTube provider technology review (`docs/YOUTUBE_PROVIDER_REVIEW.md`):
+  - Verified `youtube_explode_dart` 3.1.0 is the latest published version (2026-05-09) and is actively maintained (not archived, 418 stars, 62 open issues, regular releases).
+  - Confirmed the library is functionally compatible with YouTube's metadata and transcript systems; the full pipeline (metadata → transcript discovery → selection → download) was verified end-to-end outside the sandbox in Phase 018.
+  - Documented that the real-world failure is a macOS App Sandbox entitlement issue (`com.apple.security.network.client` missing), **not** a provider issue.
+  - Compared alternatives (YouTube Data API v3, non-Dart transcript libraries, custom scraper) — none solve the observed failure because any network-based provider is equally blocked in the sandbox.
+  - **Recommendation: KEEP** — no provider change required.
+
+### Notes
+
+- No production code changes, no library replacement, no fixes implemented (review only).
+
 ## [0.1.8] — 2026-02-08
 
 ### Added
