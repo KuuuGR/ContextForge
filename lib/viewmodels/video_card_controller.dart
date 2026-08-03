@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../exceptions/youtube_exceptions.dart';
 import '../models/video.dart';
 import '../models/video_status.dart';
+import '../services/runtime_trace.dart';
 import '../services/video_service.dart';
 
 /// Presentation-layer controller for one video input card.
@@ -38,7 +39,11 @@ class VideoCardController extends ChangeNotifier {
     notifyListeners();
 
     try {
+      RuntimeTrace.step('VideoCardController.loadMetadata called (url="$trimmed")');
+      RuntimeTrace.step('VideoService.fetchVideoMetadata entered');
       final video = await service.fetchVideoMetadata(trimmed);
+      RuntimeTrace.step('VideoService.fetchVideoMetadata completed '
+          '(title="${video.title}")');
       _setState(status: VideoStatus.loaded, video: video, errorMessage: null);
     } on InvalidYouTubeUrlException catch (e) {
       debugPrint('[VideoCardController] InvalidYouTubeUrlException: '

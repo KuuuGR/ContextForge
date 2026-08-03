@@ -10,6 +10,7 @@ import '../repositories/in_memory_prompt_repository.dart';
 import '../repositories/in_memory_video_repository.dart';
 import '../services/output_builder_service.dart';
 import '../services/prompt_service.dart';
+import '../services/runtime_trace.dart';
 import '../services/transcript_cleanup_service.dart';
 import '../services/transcript_selection_service.dart';
 import '../services/transcript_service.dart';
@@ -126,8 +127,11 @@ class _HomePageState extends State<HomePage> {
   /// Videos that fail at any step are collected as failures and do not abort
   /// processing of the remaining videos.
   Future<void> _generate() async {
+    RuntimeTrace.reset();
+    RuntimeTrace.step('HomePage.generate entered');
     final prompt = _selectedPromptContent;
     if (prompt.isEmpty) {
+      RuntimeTrace.boundary('Aborted: prompt is empty');
       setState(() {
         _generationFailures = const ['Enter a prompt before generating.'];
       });
@@ -145,49 +149,70 @@ class _HomePageState extends State<HomePage> {
 
     for (var i = 0; i < _videoControllers.length; i++) {
       final controller = _videoControllers[i];
+      RuntimeTrace.step('URL validation (video ${i + 1})');
       final url = _urlControllers[i].text.trim();
-      if (url.isEmpty) continue;
+      if (url.isEmpty) {
+        RuntimeTrace.step('URL skipped (empty or blank)');
+        continue;
+      }
 
       await controller.loadMetadata(url);
       final video = controller.video;
       if (video == null) {
+        RuntimeTrace.boundary('Video ${i + 1} metadata load failed');
         failures.add(
           'Video ${i + 1}: ${controller.errorMessage ?? 'Could not load video.'}',
         );
         continue;
       }
+      RuntimeTrace.step('Video ${i + 1} metadata available: '
+          'title="${video.title}"');
 
       try {
+        RuntimeTrace.step('Transcript discovery start (videoId='
+            '"${video.videoId}")');
         final tracks =
             await _transcriptService.getAvailableTranscripts(video.videoId);
+        RuntimeTrace.step('Transcript discovery complete '
+            '(${tracks.length} track(s))');
         final selection = _selectionService.select(tracks);
         if (selection is! TranscriptSelected) {
+          RuntimeTrace.boundary('No transcript selected for video ${i + 1}');
           failures.add('Video ${i + 1}: no transcript available.');
           continue;
         }
+        RuntimeTrace.step('Transcript download start (videoId='
+            '"${video.videoId}")');
         final download = await _transcriptService.downloadTranscript(
           video.videoId,
           selection.track,
         );
+        RuntimeTrace.step('Transcript download complete '
+            '(${download.segments.length} segment(s))');
         final clean = _cleanupService.clean(download);
         if (clean.text.trim().isEmpty) {
+          RuntimeTrace.boundary('Cleaned transcript empty for video ${i + 1}');
           failures.add('Video ${i + 1}: transcript is empty.');
           continue;
         }
         videos.add(video);
         transcripts.add(clean);
       } catch (e, stack) {
+        RuntimeTrace.boundary('Video ${i + 1} failed with exception');
         debugPrint('[HomePage._generate] Video ${i + 1} failed: '
             'type=${e.runtimeType}, message=$e\n$stack');
         failures.add('Video ${i + 1}: $e');
       }
     }
 
+    RuntimeTrace.step('OutputBuilderService.build entered');
     final output = _outputBuilderService.build(
       selectedPrompt: prompt,
       videos: videos,
       transcripts: transcripts,
     );
+    RuntimeTrace.step('OutputBuilderService.build complete '
+        '(${output.length} chars)');
 
     if (!mounted) return;
     setState(() {

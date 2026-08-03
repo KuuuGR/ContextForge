@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/video.dart';
 import '../models/video_status.dart';
+import '../services/runtime_trace.dart';
 import '../viewmodels/video_card_controller.dart';
 import 'transcript_status_indicator.dart';
 
@@ -60,8 +61,11 @@ class _VideoInputCardState extends State<VideoInputCard> {
                     Expanded(
                       child: TextField(
                         controller: _textController,
-                        onSubmitted: (value) =>
-                            widget.controller.loadMetadata(value),
+                        onSubmitted: (value) {
+                          RuntimeTrace.step(
+                              'VideoInputCard.onSubmitted ("$value")');
+                          widget.controller.loadMetadata(value);
+                        },
                         decoration: const InputDecoration(
                           labelText: 'YouTube URL',
                           hintText: 'https://www.youtube.com/watch?v=...',

@@ -3,6 +3,7 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../exceptions/youtube_exceptions.dart';
 import '../models/transcript_language.dart';
+import '../services/runtime_trace.dart';
 import 'youtube_provider.dart';
 import 'youtube_transcript.dart';
 import 'youtube_transcript_info.dart';
@@ -70,6 +71,8 @@ class YoutubeExplodeProvider implements YoutubeProvider {
   @override
   Future<YoutubeVideoMetadata?> getVideoMetadata(String videoId) async {
     debugPrint('[YoutubeExplodeProvider] Metadata request: videoId="$videoId"');
+    RuntimeTrace.step('YoutubeExplodeProvider.getVideoMetadata calling '
+        'yt.videos.get (network)');
     try {
       final video = await _fetchVideo(_youtube, videoId);
       debugPrint('[YoutubeExplodeProvider] Metadata fetch succeeded: '
@@ -105,6 +108,8 @@ class YoutubeExplodeProvider implements YoutubeProvider {
   ) async {
     debugPrint('[YoutubeExplodeProvider] Transcript discovery: '
         'videoId="$videoId"');
+    RuntimeTrace.step('YoutubeExplodeProvider.getAvailableTranscripts calling '
+        'closedCaptions.getManifest (network)');
     try {
       final manifest = await _fetchManifest(_youtube, videoId);
       debugPrint('[YoutubeExplodeProvider] Manifest received: '
@@ -142,6 +147,8 @@ class YoutubeExplodeProvider implements YoutubeProvider {
     debugPrint('[YoutubeExplodeProvider] Transcript download: '
         'videoId="$videoId", languageCode="${info.languageCode}", '
         'manual=${info.isManual}');
+    RuntimeTrace.step('YoutubeExplodeProvider.downloadTranscript calling '
+        'closedCaptions.getManifest (network)');
     try {
       final manifest = await _fetchManifest(_youtube, videoId);
       final track = _findTrack(manifest, info);

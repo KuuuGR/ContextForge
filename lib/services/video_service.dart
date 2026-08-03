@@ -6,6 +6,7 @@ import '../models/video.dart';
 import '../providers/youtube_provider.dart';
 import '../providers/youtube_video_metadata.dart';
 import '../repositories/video_repository.dart';
+import 'runtime_trace.dart';
 import 'youtube_url_parser.dart';
 
 /// Application service for video domain workflows.
@@ -61,7 +62,10 @@ class VideoService {
   /// - [YoutubeNetworkException] on network failures.
   /// Raw provider / storage exceptions are never exposed to callers.
   Future<Video> fetchVideoMetadata(String url) async {
+    RuntimeTrace.step('URL validation (YouTubeUrlParser.extractVideoId)');
     final videoId = _parser.extractVideoId(url);
+    RuntimeTrace.step('Parsed video ID: "$videoId"');
+    RuntimeTrace.step('YoutubeExplodeProvider.getVideoMetadata called');
     debugPrint('[VideoService] Metadata request: videoId="$videoId"');
     try {
       final metadata = await provider.getVideoMetadata(videoId);
@@ -70,10 +74,13 @@ class VideoService {
           'Video "$videoId" is unavailable.',
         );
       }
+      RuntimeTrace.step('YoutubeExplodeProvider.getVideoMetadata completed');
       debugPrint('[VideoService] Metadata received: '
           'title="${metadata.title}", url="${metadata.url}"');
       return _mapToDomain(metadata);
     } catch (e, stack) {
+      RuntimeTrace.boundary('Metadata fetch failed: '
+          'type=${e.runtimeType}, message=$e');
       debugPrint('[VideoService] Metadata request failed: '
           'type=${e.runtimeType}, message=$e\n$stack');
       rethrow;
