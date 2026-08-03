@@ -9,6 +9,7 @@ class PromptEditor extends StatefulWidget {
     super.key,
     required this.content,
     required this.enabled,
+    this.controller,
   });
 
   /// Content to display (the selected prompt's content).
@@ -16,6 +17,11 @@ class PromptEditor extends StatefulWidget {
 
   /// Whether editing is allowed (true only for "Custom Prompt").
   final bool enabled;
+
+  /// Optional external controller. When provided, the widget does not manage
+  /// its own controller and never overwrites its text on content changes —
+  /// the owner is responsible for keeping it in sync.
+  final TextEditingController? controller;
 
   @override
   State<PromptEditor> createState() => _PromptEditorState();
@@ -29,13 +35,13 @@ class _PromptEditorState extends State<PromptEditor> {
   void initState() {
     super.initState();
     _content = widget.content;
-    _controller = TextEditingController(text: _content);
+    _controller = widget.controller ?? TextEditingController(text: _content);
   }
 
   @override
   void didUpdateWidget(PromptEditor oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.content != _content) {
+    if (widget.controller == null && widget.content != _content) {
       _content = widget.content;
       _controller.text = _content;
     }
@@ -43,7 +49,9 @@ class _PromptEditorState extends State<PromptEditor> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    if (widget.controller == null) {
+      _controller.dispose();
+    }
     super.dispose();
   }
 

@@ -10,6 +10,7 @@ import 'package:context_forge/repositories/in_memory_prompt_repository.dart';
 import 'package:context_forge/repositories/in_memory_video_repository.dart';
 import 'package:context_forge/services/prompt_service.dart';
 import 'package:context_forge/services/video_service.dart';
+import 'package:context_forge/widgets/generate_button.dart';
 
 /// No-op provider so widget tests never create a real HttpClient.
 class _NoopProvider implements YoutubeProvider {
@@ -70,15 +71,22 @@ void main() {
     expect(
         find.text('Generated output will appear here.'), findsOneWidget);
 
-    // Bottom toolbar buttons are disabled
+    // The output Generate button is enabled; the bottom toolbar still disabled.
     expect(find.text('Generate'), findsNWidgets(2));
     expect(find.text('Copy'), findsOneWidget);
     expect(find.text('Clear'), findsOneWidget);
 
-    final filledButtons =
-        tester.widgetList<FilledButton>(find.byType(FilledButton));
-    for (final button in filledButtons) {
-      expect(button.onPressed, isNull);
-    }
+    final generateButton =
+        tester.widget<GenerateButton>(find.byType(GenerateButton));
+    expect(generateButton.onPressed, isNotNull);
+
+    final copyButton = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Copy'),
+    );
+    expect(copyButton.onPressed, isNull);
+    final clearButton = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Clear'),
+    );
+    expect(clearButton.onPressed, isNull);
   });
 }

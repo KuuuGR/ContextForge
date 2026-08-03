@@ -2,6 +2,28 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.7] — 2026-02-08
+
+### Added
+
+- End-to-end generate workflow:
+  - `HomePage._generate()` — orchestrates the full pipeline: reads the selected prompt, reads all entered YouTube URLs, ignores empty fields, and for each valid URL: loads metadata → discovers transcripts → selects the preferred track → downloads it → cleans it.
+  - All successful results are passed to `OutputBuilderService` and the generated text is displayed in the existing Output area.
+  - Partial failures are handled gracefully: one failing video does not abort processing of the remaining videos; failures are shown in a banner.
+  - `GenerateButton` now accepts `onPressed` and `isLoading` and displays a spinner while generating.
+  - `OutputPreview` now accepts an optional `TextEditingController` for displaying generated text.
+  - `PromptEditor` and `VideoInputCard` now accept optional external text controllers so the workflow can read entered values.
+- Integration-style widget test (`test/generate_workflow_test.dart`): enters a YouTube URL, taps Generate, and asserts the final output contains the prompt, the inspiration entry, and the cleaned transcript.
+
+### Changed
+
+- `HomePage` wires `TranscriptService` (via the same provider as `VideoService`), `TranscriptSelectionService`, `TranscriptCleanupService`, and `OutputBuilderService`.
+- The output-section Generate button is now enabled and triggers the workflow.
+
+### Notes
+
+- No Clipboard, no Whisper, no transcript cleanup changes, no UI redesign.
+
 ## [0.1.6] — 2026-02-08
 
 ### Added

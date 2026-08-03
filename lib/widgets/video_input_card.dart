@@ -10,20 +10,36 @@ import 'transcript_status_indicator.dart';
 /// Pure presentation: owns local text entry state and reads [controller]
 /// state; calls `loadMetadata` on submit. No business logic here.
 class VideoInputCard extends StatefulWidget {
-  const VideoInputCard({super.key, required this.controller});
+  const VideoInputCard({
+    super.key,
+    required this.controller,
+    this.textController,
+  });
 
   final VideoCardController controller;
+
+  /// Optional external text controller. When provided, the widget does not
+  /// create its own — the owner is responsible for keeping it in sync.
+  final TextEditingController? textController;
 
   @override
   State<VideoInputCard> createState() => _VideoInputCardState();
 }
 
 class _VideoInputCardState extends State<VideoInputCard> {
-  final _textController = TextEditingController();
+  late final TextEditingController _textController;
+
+  @override
+  void initState() {
+    super.initState();
+    _textController = widget.textController ?? TextEditingController();
+  }
 
   @override
   void dispose() {
-    _textController.dispose();
+    if (widget.textController == null) {
+      _textController.dispose();
+    }
     super.dispose();
   }
 

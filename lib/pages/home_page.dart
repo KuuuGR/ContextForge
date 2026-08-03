@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../models/clean_transcript.dart';
 import '../models/prompt.dart';
+import '../models/transcript_selection.dart';
+import '../models/video.dart';
 import '../presentation/prompt_constants.dart';
 import '../providers/youtube_explode_provider.dart';
 import '../repositories/in_memory_prompt_repository.dart';
 import '../repositories/in_memory_video_repository.dart';
+import '../services/output_builder_service.dart';
 import '../services/prompt_service.dart';
+import '../services/transcript_cleanup_service.dart';
+import '../services/transcript_selection_service.dart';
+import '../services/transcript_service.dart';
 import '../services/video_service.dart';
 import '../viewmodels/video_card_controller.dart';
 import '../widgets/generate_button.dart';
@@ -29,19 +36,35 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  static const _videoCount = 3;
+
   late final VideoService _videoService;
+  late final TranscriptService _transcriptService;
   late final List<VideoCardController> _videoControllers;
+  late final List<TextEditingController> _urlControllers;
+
+  final TextEditingController _outputController = TextEditingController();
+  final TextEditingController _promptEditorController = TextEditingController();
 
   late final PromptService _promptService = widget.promptService ??
       PromptService(repository: InMemoryPromptRepository());
 
+  final TranscriptSelectionService _selectionService =
+      const TranscriptSelectionService();
+  final TranscriptCleanupService _cleanupService =
+      const TranscriptCleanupService();
+  final OutputBuilderService _outputBuilderService =
+      const OutputBuilderService();
+
   List<Prompt> _prompts = const [];
   String _selectedPrompt = '';
+  bool _isGenerating = false;
+  List<String> _generationFailures = const [];
 
   bool get _isCustomPrompt => _selectedPrompt == customPromptOption;
 
   String get _selectedPromptContent {
-    if (_isCustomPrompt) return '';
+    if (_isCustomPrompt) return _promptEditorController.text.trim();
     for (final prompt in _prompts) {
       if (prompt.title == _selectedPrompt) return prompt.content;
     }
@@ -56,10 +79,13 @@ class _HomePageState extends State<HomePage> {
           repository: InMemoryVideoRepository(),
           provider: YoutubeExplodeProvider(),
         );
+    _transcriptService = TranscriptService(provider: _videoService.provider);
     _videoControllers = [
-      VideoCardController(service: _videoService),
-      VideoCardController(service: _videoService),
-      VideoCardController(service: _videoService),
+      for (var i = 0; i < _videoCount; i++)
+        VideoCardController(service: _videoService),
+    ];
+    _urlControllers = [
+      for (var i = 0; i < _videoCount; i++) TextEditingController(),
     ];
     _loadPrompts();
   }
@@ -68,9 +94,104 @@ class _HomePageState extends State<HomePage> {
     await _promptService.ensureDefaultPrompts();
     final prompts = await _promptService.getAllPrompts();
     if (!mounted) return;
+    if (prompts.isNotEmpty) {
+      _promptEditorController.text = prompts.first.content;
+    }
     setState(() {
       _prompts = prompts;
       _selectedPrompt = prompts.isEmpty ? customPromptOption : prompts.first.title;
+    });
+  }
+
+  void _onPromptChanged(String value) {
+    setState(() => _selectedPrompt = value);
+    if (value == customPromptOption) {
+      _promptEditorController.text = '';
+    } else {
+      for (final prompt in _prompts) {
+        if (prompt.title == value) {
+          _promptEditorController.text = prompt.content;
+          break;
+        }
+      }
+    }
+  }
+
+  /// Executes the end-to-end generation workflow.
+  ///
+  /// For each non-empty URL:
+  /// 1. Validate + fetch metadata via [VideoCardController.loadMetadata].
+  /// 2. Discover, select, download, and clean the transcript.
+  ///
+  /// Videos that fail at any step are collected as failures and do not abort
+  /// processing of the remaining videos.
+  Future<void> _generate() async {
+    final prompt = _selectedPromptContent;
+    if (prompt.isEmpty) {
+      setState(() {
+        _generationFailures = const ['Enter a prompt before generating.'];
+      });
+      return;
+    }
+
+    setState(() {
+      _isGenerating = true;
+      _generationFailures = const [];
+    });
+
+    final videos = <Video>[];
+    final transcripts = <CleanTranscript>[];
+    final failures = <String>[];
+
+    for (var i = 0; i < _videoControllers.length; i++) {
+      final controller = _videoControllers[i];
+      final url = _urlControllers[i].text.trim();
+      if (url.isEmpty) continue;
+
+      await controller.loadMetadata(url);
+      final video = controller.video;
+      if (video == null) {
+        failures.add(
+          'Video ${i + 1}: ${controller.errorMessage ?? 'Could not load video.'}',
+        );
+        continue;
+      }
+
+      try {
+        final tracks =
+            await _transcriptService.getAvailableTranscripts(video.videoId);
+        final selection = _selectionService.select(tracks);
+        if (selection is! TranscriptSelected) {
+          failures.add('Video ${i + 1}: no transcript available.');
+          continue;
+        }
+        final download = await _transcriptService.downloadTranscript(
+          video.videoId,
+          selection.track,
+        );
+        final clean = _cleanupService.clean(download);
+        if (clean.text.trim().isEmpty) {
+          failures.add('Video ${i + 1}: transcript is empty.');
+          continue;
+        }
+        videos.add(video);
+        transcripts.add(clean);
+      } catch (e) {
+        failures.add('Video ${i + 1}: $e');
+      }
+    }
+
+    final output = _outputBuilderService.build(
+      selectedPrompt: prompt,
+      videos: videos,
+      transcripts: transcripts,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _outputController.text = output;
+      _isGenerating = false;
+      _generationFailures = failures;
     });
   }
 
@@ -79,6 +200,11 @@ class _HomePageState extends State<HomePage> {
     for (final c in _videoControllers) {
       c.dispose();
     }
+    for (final c in _urlControllers) {
+      c.dispose();
+    }
+    _outputController.dispose();
+    _promptEditorController.dispose();
     super.dispose();
   }
 
@@ -105,14 +231,13 @@ class _HomePageState extends State<HomePage> {
                       PromptSelector(
                         prompts: _prompts,
                         value: _selectedPrompt,
-                        onChanged: (value) {
-                          setState(() => _selectedPrompt = value);
-                        },
+                        onChanged: _onPromptChanged,
                       ),
                       const SizedBox(height: 16),
                       PromptEditor(
                         content: _selectedPromptContent,
                         enabled: _isCustomPrompt,
+                        controller: _promptEditorController,
                       ),
                     ],
                   ),
@@ -122,8 +247,11 @@ class _HomePageState extends State<HomePage> {
                   title: 'Videos',
                   child: Column(
                     children: [
-                      for (final controller in _videoControllers) ...[
-                        VideoInputCard(controller: controller),
+                      for (var i = 0; i < _videoControllers.length; i++) ...[
+                        VideoInputCard(
+                          controller: _videoControllers[i],
+                          textController: _urlControllers[i],
+                        ),
                         const SizedBox(height: 16),
                       ],
                     ],
@@ -134,12 +262,19 @@ class _HomePageState extends State<HomePage> {
                   title: 'Output',
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      OutputPreview(),
-                      SizedBox(height: 16),
+                    children: [
+                      if (_generationFailures.isNotEmpty) ...[
+                        _FailureBanner(failures: _generationFailures),
+                        const SizedBox(height: 12),
+                      ],
+                      OutputPreview(controller: _outputController),
+                      const SizedBox(height: 16),
                       Align(
                         alignment: Alignment.centerRight,
-                        child: GenerateButton(),
+                        child: GenerateButton(
+                          onPressed: _generate,
+                          isLoading: _isGenerating,
+                        ),
                       ),
                     ],
                   ),
@@ -150,6 +285,43 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Banner listing per-video failures that did not abort generation.
+class _FailureBanner extends StatelessWidget {
+  const _FailureBanner({required this.failures});
+
+  final List<String> failures;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Some videos could not be processed:',
+            style: TextStyle(
+              color: colorScheme.onErrorContainer,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          for (final failure in failures)
+            Text(
+              '• $failure',
+              style: TextStyle(color: colorScheme.onErrorContainer),
+            ),
+        ],
       ),
     );
   }
