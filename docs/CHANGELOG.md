@@ -2,6 +2,24 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.1] — 2026-02-08
+
+### Added
+
+- Prompt selection workflow (read-only):
+  - `PromptService.ensureDefaultPrompts()` — seeds SEO Article, Newsletter, LinkedIn, Facebook once when storage is empty; never overwrites user prompts.
+  - `PromptSelector` now loads real prompts from `PromptService` and shows a friendly empty state.
+  - `PromptEditor` displays the selected prompt's content read-only; editing enabled only for "Custom Prompt".
+  - `HomePage` loads and seeds prompts on startup; default selected prompt is the first saved one.
+  - `ContextForgeApp` and `HomePage` accept injected `PromptService`/`VideoService` for testability.
+  - `InMemoryPromptRepository` added for tests and lightweight wiring.
+- Unit tests: default seeding, no-reseed, no-overwrite, prompt content loading.
+- Widget tests: dropdown population, empty state, prompt content display, custom editing, read-only saved content.
+
+### Notes
+
+- No editing, deleting, creation UI, ratings, or persistence of custom prompts (by design).
+
 ## [0.1.0] — 2026-02-08
 
 ### Added

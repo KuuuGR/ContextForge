@@ -23,9 +23,54 @@ class PromptService {
   /// Repository abstraction used for prompt persistence.
   final PromptRepository repository;
 
-  /// Returns all available prompt templates.
+  /// Default prompt templates created automatically on first run.
+  static const defaultPrompts = <({String title, String content})>[
+    (
+      title: 'SEO Article',
+      content: 'Write a comprehensive SEO-optimized article based on the transcript.',
+    ),
+    (
+      title: 'Newsletter',
+      content: 'Write a newsletter summarizing the key points from the transcript.',
+    ),
+    (
+      title: 'LinkedIn',
+      content: 'Write a LinkedIn post inspired by the transcript.',
+    ),
+    (
+      title: 'Facebook',
+      content: 'Write a Facebook post inspired by the transcript.',
+    ),
+  ];
+
+  /// Loads all saved prompts.
+  ///
+  /// Pure read — does not seed defaults. Use [ensureDefaultPrompts] to seed
+  /// on first run.
   Future<List<Prompt>> getAllPrompts() {
     return repository.getAll();
+  }
+
+  /// Seeds the default prompt templates when storage is empty.
+  ///
+  /// Only runs once — never overwrites existing user prompts.
+  Future<void> ensureDefaultPrompts() async {
+    final prompts = await repository.getAll();
+    if (prompts.isNotEmpty) return;
+
+    final now = _nowIso8601();
+    for (final d in defaultPrompts) {
+      await repository.save(
+        Prompt(
+          id: _generateUuid(),
+          title: d.title,
+          content: d.content,
+          rating: 0,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
   }
 
   /// Returns a single prompt by [id].

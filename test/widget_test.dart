@@ -2,10 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:context_forge/app/app.dart';
+import 'package:context_forge/providers/youtube_provider.dart';
+import 'package:context_forge/providers/youtube_transcript.dart';
+import 'package:context_forge/providers/youtube_transcript_info.dart';
+import 'package:context_forge/providers/youtube_video_metadata.dart';
+import 'package:context_forge/repositories/in_memory_prompt_repository.dart';
+import 'package:context_forge/repositories/in_memory_video_repository.dart';
+import 'package:context_forge/services/prompt_service.dart';
+import 'package:context_forge/services/video_service.dart';
+
+/// No-op provider so widget tests never create a real HttpClient.
+class _NoopProvider implements YoutubeProvider {
+  @override
+  Future<YoutubeVideoMetadata?> getVideoMetadata(String videoId) async => null;
+
+  @override
+  Future<List<YoutubeTranscriptInfo>> getAvailableTranscripts(
+    String videoId,
+  ) async {
+    return const [];
+  }
+
+  @override
+  Future<YoutubeTranscript?> downloadTranscript(
+    String videoId,
+    YoutubeTranscriptInfo info,
+  ) async {
+    return null;
+  }
+}
 
 void main() {
   testWidgets('Main window renders all sections', (WidgetTester tester) async {
-    await tester.pumpWidget(const ContextForgeApp());
+    final promptService = PromptService(
+      repository: InMemoryPromptRepository(),
+    );
+    await promptService.ensureDefaultPrompts();
+
+    await tester.pumpWidget(
+      ContextForgeApp(
+        promptService: promptService,
+        videoService: VideoService(
+          repository: InMemoryVideoRepository(),
+          provider: _NoopProvider(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
 
     // Header
     expect(find.text('ContextForge'), findsOneWidget);
@@ -15,9 +58,9 @@ void main() {
 
     // Prompt section
     expect(find.text('Prompt'), findsOneWidget);
-    expect(find.text('SEO Article'), findsOneWidget);
+    expect(find.text('SEO Article'), findsWidgets);
 
-    // Videos section: 3 cards, all initially Empty
+    // Videos section: 3 cards, initially Empty
     expect(find.text('Videos'), findsOneWidget);
     expect(find.text('YouTube URL'), findsNWidgets(3));
     expect(find.text('Empty'), findsNWidgets(3));
@@ -28,7 +71,7 @@ void main() {
         find.text('Generated output will appear here.'), findsOneWidget);
 
     // Bottom toolbar buttons are disabled
-    expect(find.text('Generate'), findsNWidgets(2)); // output section + toolbar
+    expect(find.text('Generate'), findsNWidgets(2));
     expect(find.text('Copy'), findsOneWidget);
     expect(find.text('Clear'), findsOneWidget);
 

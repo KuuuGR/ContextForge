@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../models/prompt.dart';
+import '../presentation/prompt_constants.dart';
 import '../providers/youtube_explode_provider.dart';
+import '../repositories/in_memory_prompt_repository.dart';
 import '../repositories/in_memory_video_repository.dart';
+import '../services/prompt_service.dart';
 import '../services/video_service.dart';
 import '../viewmodels/video_card_controller.dart';
 import '../widgets/generate_button.dart';
@@ -12,10 +16,13 @@ import '../widgets/video_input_card.dart';
 
 /// Main application page containing the full ContextForge workflow UI.
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, this.videoService});
+  const HomePage({super.key, this.videoService, this.promptService});
 
   /// Optional injected service; defaults to the production wiring.
   final VideoService? videoService;
+
+  /// Optional injected prompt service; defaults to JSON storage.
+  final PromptService? promptService;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -25,9 +32,21 @@ class _HomePageState extends State<HomePage> {
   late final VideoService _videoService;
   late final List<VideoCardController> _videoControllers;
 
-  String _selectedPrompt = mockPromptOptions.first;
+  late final PromptService _promptService = widget.promptService ??
+      PromptService(repository: InMemoryPromptRepository());
 
-  bool get _isCustomPrompt => _selectedPrompt == 'Custom Prompt';
+  List<Prompt> _prompts = const [];
+  String _selectedPrompt = '';
+
+  bool get _isCustomPrompt => _selectedPrompt == customPromptOption;
+
+  String get _selectedPromptContent {
+    if (_isCustomPrompt) return '';
+    for (final prompt in _prompts) {
+      if (prompt.title == _selectedPrompt) return prompt.content;
+    }
+    return '';
+  }
 
   @override
   void initState() {
@@ -42,6 +61,17 @@ class _HomePageState extends State<HomePage> {
       VideoCardController(service: _videoService),
       VideoCardController(service: _videoService),
     ];
+    _loadPrompts();
+  }
+
+  Future<void> _loadPrompts() async {
+    await _promptService.ensureDefaultPrompts();
+    final prompts = await _promptService.getAllPrompts();
+    if (!mounted) return;
+    setState(() {
+      _prompts = prompts;
+      _selectedPrompt = prompts.isEmpty ? customPromptOption : prompts.first.title;
+    });
   }
 
   @override
@@ -73,13 +103,17 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       PromptSelector(
+                        prompts: _prompts,
                         value: _selectedPrompt,
                         onChanged: (value) {
                           setState(() => _selectedPrompt = value);
                         },
                       ),
                       const SizedBox(height: 16),
-                      PromptEditor(enabled: _isCustomPrompt),
+                      PromptEditor(
+                        content: _selectedPromptContent,
+                        enabled: _isCustomPrompt,
+                      ),
                     ],
                   ),
                 ),

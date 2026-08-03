@@ -9,7 +9,12 @@ Manual testing covers workflows that require a human reviewer to verify behavior
 ### Scope
 
 - Verify the main window renders and behaves correctly on macOS.
-- Verify prompt selection and custom prompt authoring.
+- Verify the prompt selection workflow:
+  - Saved prompts load automatically on startup.
+  - Default prompts (SEO Article, Newsletter, LinkedIn, Facebook) are seeded only when storage is empty and never overwrite user prompts.
+  - Selecting a prompt displays its content read-only.
+  - "Custom Prompt" enables the editor; changes are not persisted.
+  - A friendly empty state is shown when no prompts exist.
 - Verify YouTube URL input (up to three URLs) and validation.
 - Verify video metadata loading completes for each card:
   - gray = no URL entered

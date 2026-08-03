@@ -1,4 +1,3 @@
-
 ## Phase 001 — Project Bootstrap & Documentation
 
 ## Phase
@@ -1093,4 +1092,88 @@ None
 - `setUrl` always clears the previous videoId even if the new URL is identical; acceptable for editing semantics.
 - The presentation controller is not yet wired to any widget; wiring belongs to a UI phase, not this one.
 - No normalization is exposed (`normalizeUrl` exists on the parser) — canonical form will be used by the metadata phase.
+
+---
+
+## Phase 011 — Prompt Selection Workflow
+
+## Phase
+
+011 — Prompt Selection Workflow
+
+## Status
+
+Completed
+
+## Completed Work
+
+- Implemented the first complete read-only prompt workflow.
+- `PromptService.ensureDefaultPrompts()` — seeds default templates once when storage is empty; never overwrites user prompts.
+- `PromptSelector` rewritten to load real prompts from `PromptService` (no mock data), include a "Custom Prompt" option, and show a friendly empty state.
+- `PromptEditor` displays the selected prompt's content read-only; editing is enabled only when "Custom Prompt" is selected (changes not persisted).
+- `HomePage` seeds and loads prompts on startup; the first saved prompt is selected by default; selecting any prompt updates the editor content.
+- `ContextForgeApp` and `HomePage` accept injected `PromptService`/`VideoService` for testability.
+- Added `InMemoryPromptRepository` for tests and lightweight wiring.
+- Fixed widget-test deadlocks: app no longer defaults to file I/O/HttpClient in tests (in-memory repos + noop provider).
+- Unit tests: default creation once, no-reseed, no-overwrite, prompt content loading.
+- Widget tests: dropdown population, empty state, prompt content display, Custom Prompt editing, read-only saved content.
+- Verified `flutter analyze` (clean), `flutter test` (139 passed), `flutter build macos --debug` (succeeds).
+
+## Files Created
+
+- `lib/repositories/in_memory_prompt_repository.dart`
+- `lib/presentation/prompt_constants.dart`
+- `test/prompt_workflow_test.dart`
+
+## Files Modified
+
+- `lib/services/prompt_service.dart` — `getAllPrompts` pure; added `ensureDefaultPrompts`.
+- `lib/widgets/prompt_selector.dart` — real prompts + empty state.
+- `lib/widgets/prompt_editor.dart` — read-only display + custom editing.
+- `lib/pages/home_page.dart` — load/seed prompts, selection drives editor, injectables.
+- `lib/app/app.dart` — injectable prompt/video services; in-memory defaults.
+- `test/widget_test.dart` — injectable in-memory services + noop provider.
+- `docs/CHANGELOG.md`, `docs/ROADMAP.md`, `docs/PROJECT_STATE.md`, `docs/SESSION_REPORT.md` (this file).
+
+## Known Risks
+
+- Default prompts are created via in-memory repo by default in the app; persistence via JSON storage is available but not wired by default.
+- Custom prompt content is not persisted (by design for this phase).
+- Selecting a saved prompt always resets custom text.
+
+## Next Phase
+
+Phase 012 — Clipboard Support (status: Next on the roadmap).
+
+## Commit Placeholder
+
+```
+Phase 011 - Prompt selection workflow
+```
+
+---
+
+## Self Review
+
+### Completed
+
+YES
+
+### Skipped
+
+None
+
+### Assumptions
+
+- Seeding should be explicit (`ensureDefaultPrompts`) rather than implicit in `getAllPrompts`, keeping reads pure and avoiding surprises for existing service tests.
+- In-memory repositories are acceptable default wiring so widget tests do not perform real file I/O or network calls.
+- "Custom Prompt" is a sentinel value; editing it is enabled but changes are not saved.
+- The first saved prompt is the default selection when storage has prompts; Custom Prompt is the fallback when empty.
+
+### Potential Risks
+
+- Default prompt content is a placeholder; user-facing wording may need tuning in a later phase.
+- Editing saved prompts is intentionally disabled; users may expect the editor to be editable and a later CRUD phase must clarify.
+- `InMemoryPromptRepository` means prompts are not persisted across app restarts until JSON storage is wired as default.
+- Seeding happens on every app start via `ensureDefaultPrompts`; it is idempotent but performs a read each time.
 </content>

@@ -127,21 +127,32 @@
 
 ---
 
-## Phase 010 — Video Card Controller
+## Phase 010 — Video Card Controller + Video Metadata Workflow (Rebased to Current Implementation)
 
 **Status: Completed**
 
-- Presentation layer established (`lib/presentation/`).
-- `VideoCardState` typed state model: empty, editing, valid, invalid (no metadata/loading states yet).
-- `VideoCardController` owns URL, state, validation status, and extracted videoId.
-- Public API: `setUrl()`, `clear()`, `validate()`; Flutter-friendly `ChangeNotifier` exposure.
-- Communicates only with `YouTubeUrlParser` and `VideoService` — no UI logic, no provider access, no networking.
-- Unit tests covering empty, valid, invalid, clear, and state transitions.
-- Intentionally does NOT perform metadata fetching.
+- Presentation layer (`lib/presentation/`): `VideoCardState` (empty/editing/valid/invalid) and `VideoCardController` (setUrl/clear/validate).
+- First vertical slice: metadata workflow (URL → validate → fetch → display) delivered earlier in Phase 010; retained as the authoritative implementation.
+- Video service + provider/repository wiring retained; prompt selector/editor wired to real services in Phase 011.
 
 ---
 
-## Phase 011 — Clipboard Support
+## Phase 011 — Prompt Selection Workflow
+
+**Status: Completed**
+
+- Read-only prompt workflow:
+  - `PromptService.ensureDefaultPrompts()` seeds SEO Article, Newsletter, LinkedIn, Facebook once; never overwrites user prompts.
+  - `PromptSelector` loads real prompts, includes "Custom Prompt", shows friendly empty state.
+  - `PromptEditor` shows selected content read-only; editing enabled only for Custom Prompt (not persisted).
+  - `HomePage` seeds + loads prompts on startup; first saved prompt selected by default.
+  - `ContextForgeApp`/`HomePage` accept injected services for testability; `InMemoryPromptRepository` added.
+- Unit + widget tests: seeding, no-reseed, no-overwrite, load, dropdown population, empty state, content display, custom editing, read-only saved content.
+- 139 tests passing; macOS debug build succeeds.
+
+---
+
+## Phase 012 — Clipboard Support
 
 **Status: Next**
 
@@ -150,7 +161,7 @@
 
 ---
 
-## Phase 012 — UI Polish
+## Phase 013 — UI Polish
 
 **Status: Planned**
 
@@ -159,7 +170,7 @@
 
 ---
 
-## Phase 013 — Prompt Ratings
+## Phase 014 — Prompt Ratings
 
 **Status: Planned**
 
@@ -168,7 +179,7 @@
 
 ---
 
-## Phase 014 — Transcript Cache
+## Phase 015 — Transcript Cache
 
 **Status: Planned**
 
@@ -177,7 +188,7 @@
 
 ---
 
-## Phase 015 — Milestone 1 Audit
+## Phase 016 — Milestone 1 Audit
 
 **Status: Planned**
 
@@ -188,13 +199,13 @@
 
 ## Future Phases (Placeholders)
 
-- Phase 016 — Vimeo support.
-- Phase 017 — PDF sources.
-- Phase 018 — RSS feed sources.
-- Phase 019 — Website sources.
-- Phase 020 — Local file support.
-- Phase 021 — Audio file support.
-- Phase 022 — Optional cloud sync.
-- Phase 023 — Plugin system / integrations.
-- Phase 024 — Collaboration features.
-- Phase 025 — Cross-platform desktop support.
+- Phase 017 — Vimeo support.
+- Phase 018 — PDF sources.
+- Phase 019 — RSS feed sources.
+- Phase 020 — Website sources.
+- Phase 021 — Local file support.
+- Phase 022 — Audio file support.
+- Phase 023 — Optional cloud sync.
+- Phase 024 — Plugin system / integrations.
+- Phase 025 — Collaboration features.
+- Phase 026 — Cross-platform desktop support.
