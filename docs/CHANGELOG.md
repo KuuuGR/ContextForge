@@ -2,6 +2,39 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.4] — 2026-02-08
+
+### Added
+
+- Transcript download:
+  - `TranscriptService.downloadTranscript(videoId, track)` — downloads the selected transcript track via `YoutubeProvider.downloadTranscript`, maps provider DTOs → domain `TranscriptDownload`.
+  - Plain text returned without timestamps: segment texts joined with a single space. Raw timestamped segments preserved for later cleaning.
+  - `YoutubeExplodeProvider.downloadTranscript` — fetches manifest, matches requested track by language code and auto/manual, downloads caption track via `yt.videos.closedCaptions.get(trackInfo)`.
+  - Injectable `fetchCaptionTrack` seam for testability.
+  - Domain model (`lib/models/transcript_download.dart`): `TranscriptDownload` + `TranscriptSegment`.
+  - Error handling: provider `null` → `TranscriptsUnavailableException`; `VideoUnavailableException` → `YoutubeVideoUnavailableException`; other failures → `YoutubeNetworkException`.
+- Unit tests (`test/transcript_service_test.dart`): successful download (plain text + metadata), provider-null → unavailable, video unavailable, network failure, generic provider failure.
+
+### Notes
+
+- No Whisper, no transcript cleanup, no UI changes.
+
+## [0.1.3] — 2026-02-08
+
+### Added
+
+- Transcript selection strategy:
+  - Domain types (`lib/models/transcript_selection.dart`):
+    - `TranscriptSelectionResult` sealed result.
+    - `TranscriptSelected` (track + reason + priority) / `TranscriptUnavailable` (Whisper may be required).
+    - `TranscriptSelectionReason` and `TranscriptPriority` enums — no magic strings.
+  - `TranscriptSelectionService` (`lib/services/transcript_selection_service.dart`) — pure, deterministic, works only with domain models. Priority: manual Polish → auto Polish → manual English → auto English → other manual → other auto.
+- Unit tests (`test/transcript_selection_service_test.dart`): manual Polish, auto Polish, manual English, auto English, other-manual fallback, other-auto fallback, no transcripts, mixed lists, deterministic behaviour.
+
+### Notes
+
+- No transcript download, no Whisper invocation, no networking, no UI changes.
+
 ## [0.1.2] — 2026-02-08
 
 ### Added

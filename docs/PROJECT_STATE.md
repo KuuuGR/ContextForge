@@ -1,11 +1,11 @@
 # Project State — ContextForge
 
-| Field               | Value                             |
-| ------------------- | --------------------------------- |
-| **Current Version** | 0.1.2                             |
-| **Current Phase**   | 012                               |
-| **Status**          | Transcript discovery implemented  |
-| **Current Milestone** | Transcript Discovery             |
+| Field               | Value                                 |
+| ------------------- | ------------------------------------- |
+| **Current Version** | 0.1.4                                 |
+| **Current Phase**   | 014                                   |
+| **Status**          | Transcript download implemented       |
+| **Current Milestone** | Transcript Download                 |
 
 ## Phase Tracking
 
@@ -24,19 +24,22 @@
 | 010   | Video Card Controller + Metadata Workflow | Completed |
 | 011   | Prompt Selection Workflow                 | Completed |
 | 012   | Transcript Discovery                      | Completed |
-| 013   | Clipboard Support                        | Next      |
+| 013   | Transcript Selection Strategy             | Completed |
+| 014   | Transcript Download                       | Completed |
+| 015   | Clipboard Support                        | Next      |
 
 ## Notes
 
-- Phase 012 implemented transcript discovery (metadata only):
-  - `TranscriptTrack` domain model; `YoutubeTranscriptInfo` DTO extended with `languageCode` + `isTranslatable`.
-  - `YoutubeExplodeProvider.getAvailableTranscripts` via `yt.videos.closedCaptions.getManifest`; injectable `fetchManifest` seam.
-  - `TranscriptService.getAvailableTranscripts` + `discoverTranscriptTracks` (throws `TranscriptsUnavailableException` when empty).
-  - Domain exceptions: unavailable video, network failure, transcripts disabled/none.
-  - Unit tests (6): mapping, auto-generated, manual, no transcripts, unavailable, network failure.
-- No transcript text downloading, selection, cleaning, or Whisper integration (by design).
-- 145 tests pass; flutter analyze clean; macOS debug build succeeds.
+- Phase 014 implemented transcript download:
+  - `TranscriptService.downloadTranscript(videoId, track)` — downloads the selected transcript track via `YoutubeProvider.downloadTranscript`, maps provider DTOs → domain `TranscriptDownload` (videoId, track, plain text, raw segments).
+  - Plain text returned without timestamps: segment texts joined with a single space. Raw timestamped segments preserved for later cleaning.
+  - `YoutubeExplodeProvider.downloadTranscript` — fetches manifest, matches the requested track by language code and auto/manual, downloads caption track, maps to `YoutubeTranscript` DTO.
+  - Error handling: provider returns `null` → `TranscriptsUnavailableException`; `VideoUnavailableException` → `YoutubeVideoUnavailableException`; other failures → `YoutubeNetworkException`.
+  - Domain model (`lib/models/transcript_download.dart`): `TranscriptDownload` (videoId, track, text, segments) + `TranscriptSegment` (offset, duration, text).
+  - Unit tests (5 new): successful download (plain text + metadata), provider-null → unavailable, video unavailable, network failure, generic provider failure.
+- No Whisper, no transcript cleanup, no UI changes.
+- 159 tests pass; flutter analyze clean; macOS debug build succeeds.
 
 ## Next Phase
 
-Phase 013 — Clipboard Support.
+Phase 015 — Clipboard Support.
