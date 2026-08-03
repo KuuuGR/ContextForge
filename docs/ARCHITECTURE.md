@@ -151,11 +151,11 @@ lib/
 - Fetches video metadata, including publication date (Phase 007+).
 - Resolves the video identifier used for history tracking.
 
-### VideoService — IMPLEMENTED (Phase 006, skeleton only)
+### VideoService — IMPLEMENTED (Phase 010)
 
-- Public API established: `getAllVideos()`, `getVideoByVideoId()`, `hasBeenUsed()`.
-- Depends on `VideoRepository` abstraction.
-- No business logic yet — implementations arrive in Phase 007.
+- Public API: `getAllVideos()`, `getVideoByVideoId()`, `hasBeenUsed()`.
+- `fetchVideoMetadata(url)` — orchestrates URL validation (`YouTubeUrlParser`), provider metadata fetch, and DTO→domain mapping (ADR-009). Thrown domain exceptions are never raw provider/storage exceptions.
+- Depends on `VideoRepository` and `YoutubeProvider` abstractions.
 
 ### TranscriptService
 
@@ -299,7 +299,19 @@ lib/
 ### VideoInputCard
 
 - Collects YouTube URLs (up to three).
-- Dispatches URL validation to YouTubeService.
+- Controller-driven: reads `VideoCardController` state (status, metadata, loading, error) and submits URL for metadata loading.
+- Displays Title, Channel, Publication Date when loaded; friendly error banner on failure.
+
+---
+
+## ViewModels
+
+### VideoCardController — IMPLEMENTED (Phase 010)
+
+- Presentation-layer controller per video card.
+- Owns card state: `VideoStatus` (noUrl/loaded/error/previouslyUsed), `video`, `isLoading`, `errorMessage`.
+- Delegates metadata workflows to `VideoService`; never contains persistence/provider logic.
+- Maps domain exceptions to user-friendly messages (raw exceptions never surface in the UI).
 
 ### TranscriptStatusIndicator
 

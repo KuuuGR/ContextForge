@@ -2,6 +2,28 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.0] — 2026-02-08
+
+### Added
+
+- First complete vertical slice: video metadata workflow.
+- `VideoStatus` domain enum (`lib/models/video_status.dart`) with gray/green/red/blue semantics.
+- `VideoService.fetchVideoMetadata(url)` — validates URL via `YouTubeUrlParser`, fetches metadata via `YoutubeProvider`, maps DTO → domain `Video` (ADR-009).
+- `InMemoryVideoRepository` (`lib/repositories/in_memory_video_repository.dart`) for wiring.
+- `VideoCardController` (`lib/viewmodels/video_card_controller.dart`) — presentation-layer state: status, metadata, loading, friendly error messages.
+- `VideoInputCard` rewritten as controller-driven with loading indicator, metadata view, and error banner.
+- Unit tests (`test/video_card_controller_test.dart`) — success, empty URL, loading, invalid URL, unavailable, network, unexpected errors.
+- Widget tests (`test/video_metadata_widget_test.dart`) — metadata displayed, loading indicator, friendly error states.
+
+### Changed
+
+- Project version bumped to `0.1.0`.
+- `VideoInputCard` no longer takes status/label; it takes a `VideoCardController`.
+- `TranscriptStatusIndicator` uses the domain `VideoStatus` with red error state.
+- `HomePage` wires a `VideoService` + three `VideoCardController`s (injectable for tests).
+- `TESTING.md` updated with metadata workflow manual-test scope.
+- Blue indicator remains reserved for future history support.
+
 ## [0.0.9] — 2026-02-08
 
 ### Added

@@ -11,7 +11,14 @@ Manual testing covers workflows that require a human reviewer to verify behavior
 - Verify the main window renders and behaves correctly on macOS.
 - Verify prompt selection and custom prompt authoring.
 - Verify YouTube URL input (up to three URLs) and validation.
-- Verify green (new) and blue (previously used) status indicators.
+- Verify video metadata loading completes for each card:
+  - gray = no URL entered
+  - green = metadata successfully loaded
+  - red = invalid URL or metadata unavailable
+  - blue = reserved for future history support
+- Verify loading indicator is shown while metadata is being retrieved.
+- Verify user-friendly error messages (never raw exceptions).
+- Verify video metadata displays Title, Channel, and Publication Date.
 - Verify transcript fetching follows the preferred order:
   1. manual Polish
   2. automatic Polish

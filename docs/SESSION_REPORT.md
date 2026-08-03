@@ -1,4 +1,3 @@
-# Session Report — ContextForge
 
 ## Phase 001 — Project Bootstrap & Documentation
 
@@ -917,4 +916,96 @@ None
 - Network error classification is coarse: any non-`VideoUnavailableException`/non-`ArgumentError` failure becomes `YoutubeNetworkException`; HTTP-specific status handling could be refined later.
 - The `publishedAt` fallback to `DateTime.now()` could surface an incorrect date if the provider ever returns a video with no date fields.
 - The provider's transcript methods are `UnimplementedError`; callers must not invoke them yet.
+
+---
+
+## Phase 010 — Video Metadata Workflow (First Vertical Slice)
+
+## Phase
+
+010 — Video Metadata Workflow
+
+## Status
+
+Completed
+
+## Completed Work
+
+- Delivered the first complete vertical slice: user pastes a YouTube URL → URL validated → metadata fetched → Title/Channel/Publication Date displayed.
+- Added `VideoStatus` domain enum (`lib/models/video_status.dart`) with gray (no URL), green (loaded), red (error), blue (reserved for history).
+- Implemented `VideoService.fetchVideoMetadata(url)` — orchestrates `YouTubeUrlParser` validation, provider metadata fetch, and DTO→domain mapping (ADR-009).
+- Created `InMemoryVideoRepository` for wiring the slice (video persistence arrives later).
+- Created `VideoCardController` (`lib/viewmodels/video_card_controller.dart`) — presentation-layer state: status, video, isLoading, errorMessage. Maps domain exceptions to user-friendly messages; never exposes raw exceptions.
+- Rewrote `VideoInputCard` as controller-driven: input text field, status indicator, loading `LinearProgressIndicator`, metadata view (title/channel/date), friendly error banner.
+- Rewired `HomePage` to construct a `VideoService` + three `VideoCardController`s (injectable for tests).
+- Unit tests (8): success, empty URL, loading flag, invalid URL, unavailable, network, unexpected errors.
+- Widget tests (4): metadata displayed, loading indicator, invalid-URL error, unavailable-video error.
+- UI remains responsive during fetch (async async + loading indicator).
+- No transcript functionality or history implemented (by design).
+- Verified `flutter analyze` (clean) and `flutter test` (121 tests passed).
+
+## Files Created
+
+- `lib/models/video_status.dart`
+- `lib/viewmodels/video_card_controller.dart`
+- `lib/repositories/in_memory_video_repository.dart`
+- `test/video_card_controller_test.dart`
+- `test/video_metadata_widget_test.dart`
+
+## Files Modified
+
+- `lib/services/video_service.dart` (fetchVideoMetadata + mapping)
+- `lib/widgets/transcript_status_indicator.dart` (uses domain VideoStatus + red state)
+- `lib/widgets/video_input_card.dart` (controller-driven)
+- `lib/pages/home_page.dart` (controller wiring)
+- `test/widget_test.dart` (initial Empty states)
+- `pubspec.yaml` (0.1.0+1)
+- `docs/TESTING.md`, `docs/CHANGELOG.md`, `docs/ROADMAP.md`, `docs/PROJECT_STATE.md`, `docs/RELEASE_NOTES.md`, `docs/ARCHITECTURE.md`, `docs/SESSION_REPORT.md`
+
+## Known Risks
+
+- `InMemoryVideoRepository` means metadata is not persisted across launches; video persistence must come before a released workflow.
+- Three controllers share one `VideoService`; high-concurrency loads are not rate-limited (network provider could be throttled by YouTube).
+- `TextField` submission triggers `loadMetadata` without debounce; rapid submissions may overlap, though the controller's loading flag guards visually.
+- Blue status is reserved but unused until video history is implemented.
+
+## Next Phase
+
+Phase 011 — Clipboard Support (status: Next on the roadmap).
+
+## Commit Placeholder
+
+```
+Phase 010 - Video metadata workflow
+```
+
+The single commit for this phase will be created once all changes are verified.
+
+---
+
+## Self Review
+
+### Completed
+
+YES
+
+### Skipped
+
+None
+
+### Assumptions
+
+- The presentation layer object (`VideoCardController`) is the right place for card state and user-facing messages; widgets stay pure.
+- Gray = no URL, green = loaded, red = error, blue = reserved for history (temporary semantics per spec).
+- A `LinearProgressIndicator` satisfies the "loading indicator" requirement and keeps the UI responsive.
+- The video metadata use case belongs in `VideoService` (not `YouTubeService` which is still planned); it reuses existing parser + provider + model layers.
+- In-memory repository is acceptable for this vertical slice; persistence arrives in a later phase.
+
+### Potential Risks
+
+- Sharing one `VideoService` across three controllers means simultaneous network requests; consider a queue/limit if throttling surfaces.
+- No debounce on URL submit; users can trigger overlapping fetches.
+- `fetchVideoMetadata` regenerates a `Video` model each call (new `createdAt`/`updatedAt`); idempotency depends on usage.
+- The mapper sets `transcriptLanguage` heuristically (none/other based on description presence) — transcript availability will refine this in Phase 011+.
+- The `HomePage` constructs real `YoutubeExplodeProvider` by default; widget tests must inject a fake service to avoid network access.
 </content>

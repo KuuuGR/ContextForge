@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// Status of a video in the workflow.
-enum VideoStatus {
-  newVideo,
-  previouslyUsed,
-  empty,
-}
+import '../models/video_status.dart';
 
-/// Indicator showing the status color and label for a video.
+/// Indicator showing the status color and label for a video card.
 class TranscriptStatusIndicator extends StatelessWidget {
   const TranscriptStatusIndicator({
     super.key,
@@ -21,9 +16,10 @@ class TranscriptStatusIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color color = switch (status) {
-      VideoStatus.newVideo => Colors.green,
+      VideoStatus.noUrl => Colors.grey,
+      VideoStatus.loaded => Colors.green,
+      VideoStatus.error => Colors.red,
       VideoStatus.previouslyUsed => Colors.blue,
-      VideoStatus.empty => Colors.grey,
     };
 
     return Row(
@@ -32,10 +28,7 @@ class TranscriptStatusIndicator extends StatelessWidget {
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
         Text(label, style: Theme.of(context).textTheme.bodySmall),

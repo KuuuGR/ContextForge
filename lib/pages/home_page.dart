@@ -1,24 +1,56 @@
 import 'package:flutter/material.dart';
 
+import '../providers/youtube_explode_provider.dart';
+import '../repositories/in_memory_video_repository.dart';
+import '../services/video_service.dart';
+import '../viewmodels/video_card_controller.dart';
 import '../widgets/generate_button.dart';
 import '../widgets/output_preview.dart';
 import '../widgets/prompt_editor.dart';
 import '../widgets/prompt_selector.dart';
-import '../widgets/transcript_status_indicator.dart';
 import '../widgets/video_input_card.dart';
 
 /// Main application page containing the full ContextForge workflow UI.
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, this.videoService});
+
+  /// Optional injected service; defaults to the production wiring.
+  final VideoService? videoService;
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  late final VideoService _videoService;
+  late final List<VideoCardController> _videoControllers;
+
   String _selectedPrompt = mockPromptOptions.first;
 
   bool get _isCustomPrompt => _selectedPrompt == 'Custom Prompt';
+
+  @override
+  void initState() {
+    super.initState();
+    _videoService = widget.videoService ??
+        VideoService(
+          repository: InMemoryVideoRepository(),
+          provider: YoutubeExplodeProvider(),
+        );
+    _videoControllers = [
+      VideoCardController(service: _videoService),
+      VideoCardController(service: _videoService),
+      VideoCardController(service: _videoService),
+    ];
+  }
+
+  @override
+  void dispose() {
+    for (final c in _videoControllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,12 +87,11 @@ class _HomePageState extends State<HomePage> {
                 _SectionCard(
                   title: 'Videos',
                   child: Column(
-                    children: const [
-                      VideoInputCard(status: VideoStatus.newVideo, statusLabel: 'New'),
-                      SizedBox(height: 16),
-                      VideoInputCard(status: VideoStatus.previouslyUsed, statusLabel: 'Previously Used'),
-                      SizedBox(height: 16),
-                      VideoInputCard(status: VideoStatus.empty, statusLabel: 'Empty'),
+                    children: [
+                      for (final controller in _videoControllers) ...[
+                        VideoInputCard(controller: controller),
+                        const SizedBox(height: 16),
+                      ],
                     ],
                   ),
                 ),
@@ -108,11 +139,13 @@ class _Header extends StatelessWidget {
           children: [
             Text(
               'ContextForge',
-              style: textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+              style:
+                  textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
               'Build AI-ready context from YouTube transcripts.',
-              style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant),
+              style: textTheme.bodyMedium
+                  ?.copyWith(color: colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -139,7 +172,10 @@ class _SectionCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
             child,

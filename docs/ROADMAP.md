@@ -127,20 +127,23 @@
 
 ---
 
-## Phase 010 — Output Builder
+## Phase 010 — Video Metadata Workflow (First Vertical Slice)
 
-**Status: Next**
+**Status: Completed**
 
-- Assemble copy-ready text block:
-  - selected prompt
-  - inspiration section
-  - transcript section
+- First complete user-facing workflow: URL → validation → metadata fetch → display.
+- `VideoService.fetchVideoMetadata(url)` orchestrates parser + provider + DTO→domain mapping.
+- `VideoCardController` presentation-layer controller with status/loading/error state.
+- Three controller-driven `VideoInputCard`s with loading indicator and friendly error banner.
+- Status colors: gray (no URL), green (loaded), red (error), blue (reserved for history).
+- Unit + widget tests covering success, invalid URL, unavailable video, loading state.
+- Blue indicator remains reserved for future history support.
 
 ---
 
 ## Phase 011 — Clipboard Support
 
-**Status: Planned**
+**Status: Next**
 
 - Copy generated output to clipboard.
 - Copy interaction in the output preview.

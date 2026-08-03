@@ -1,5 +1,25 @@
 # Release Notes — ContextForge
 
+## Version 0.1.0
+
+**Release Date:** 2026-02-08
+
+### What's New
+
+- First complete vertical slice: paste a YouTube URL → validate → fetch metadata → display Title, Channel, Publication Date.
+- Three controller-driven video cards with status indicators (gray = empty, green = loaded, red = error, blue reserved for history).
+- Loading indicator while metadata is being retrieved.
+- Friendly, user-facing error messages (raw exceptions never shown).
+- `VideoService.fetchVideoMetadata()` orchestrates URL validation, provider fetch, and DTO→domain mapping.
+- `VideoCardController` presentation-layer controller for card state.
+
+### Notes
+
+- No transcript functionality or history support yet.
+- Video persistence uses an in-memory repository in this phase (persistence arrives later).
+
+---
+
 ## Version 0.0.9
 
 **Release Date:** 2026-02-08
