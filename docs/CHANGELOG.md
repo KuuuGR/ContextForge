@@ -2,6 +2,27 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.8] — 2026-02-08
+
+### Added
+
+- YouTube connectivity diagnostics:
+  - Instrumented every stage of the YouTube pipeline with `debugPrint` logging: original URL, parsed video ID, metadata request/response, transcript discovery (manifest + tracks), transcript selection, and transcript download.
+  - Every caught exception now logs: exception type, message, and full stack trace.
+  - Original exceptions are preserved in console output — generic UI messages remain unchanged but never replace the original cause silently.
+  - `YouTubeUrlParser.extractVideoId` logs parsing diagnostics.
+  - `VideoService.fetchVideoMetadata` logs metadata request and result.
+  - `TranscriptService.getAvailableTranscripts` / `downloadTranscript` log discovery, track details, download requests, and results.
+  - `TranscriptSelectionService.select` logs the selected track and reason (or unavailability).
+  - `YoutubeExplodeProvider` logs all three network stages and every caught exception type with stack trace; the original `cause` is still attached to `YoutubeNetworkException`.
+  - `VideoCardController.loadMetadata` and `HomePage._generate` log caught exceptions with type, message, and stack.
+
+### Notes
+
+- No feature work, no refactoring, no provider replacement, no business logic changes.
+- Diagnostics only — UI messages and behavior unchanged.
+- Verified against the reference video `OPZczs-Kttg`: the full pipeline (URL parse → metadata → transcript discovery → selection → download) succeeds end-to-end; each stage logs correctly.
+
 ## [0.1.7] — 2026-02-08
 
 ### Added

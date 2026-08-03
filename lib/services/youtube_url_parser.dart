@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../exceptions/youtube_exceptions.dart';
 
 /// Parses YouTube URLs into canonical form.
@@ -41,31 +43,42 @@ class YouTubeUrlParser {
   ///
   /// Throws [InvalidYouTubeUrlException] for unsupported or malformed URLs.
   String extractVideoId(String url) {
-    if (url.trim().isEmpty) {
-      throw const InvalidYouTubeUrlException('URL must not be empty.');
+    debugPrint('[YouTubeUrlParser] Original URL: "$url"');
+    try {
+      if (url.trim().isEmpty) {
+        throw const InvalidYouTubeUrlException('URL must not be empty.');
+      }
+
+      final normalized = url.trim();
+      final Uri? uri = Uri.tryParse(normalized);
+      if (uri == null) {
+        throw InvalidYouTubeUrlException('Malformed URL: "$url".');
+      }
+
+      if (!_isHttpScheme(uri)) {
+        throw InvalidYouTubeUrlException('Only http/https URLs are supported.');
+      }
+
+      final host = uri.host.toLowerCase();
+
+      final videoId = _extractVideoIdForHost(uri, url, host);
+      debugPrint('[YouTubeUrlParser] Parsed video ID: "$videoId"');
+      return videoId;
+    } catch (e, stack) {
+      debugPrint('[YouTubeUrlParser] Parsing failed: '
+          'type=${e.runtimeType}, message=$e\n$stack');
+      rethrow;
     }
+  }
 
-    final normalized = url.trim();
-    final Uri? uri = Uri.tryParse(normalized);
-    if (uri == null) {
-      throw InvalidYouTubeUrlException('Malformed URL: "$url".');
-    }
-
-    if (!_isHttpScheme(uri)) {
-      throw InvalidYouTubeUrlException('Only http/https URLs are supported.');
-    }
-
-    final host = uri.host.toLowerCase();
-
+  String _extractVideoIdForHost(Uri uri, String original, String host) {
     if (_isShortHost(host)) {
-      return _extractFromShortUrl(uri, url);
+      return _extractFromShortUrl(uri, original);
     }
-
     if (_isWatchHost(host) && uri.path == _canonicalPath) {
-      return _extractFromQuery(uri, url);
+      return _extractFromQuery(uri, original);
     }
-
-    throw InvalidYouTubeUrlException('Unsupported YouTube URL: "$url".');
+    throw InvalidYouTubeUrlException('Unsupported YouTube URL: "$original".');
   }
 
   /// Normalizes a supported YouTube URL to its canonical form:

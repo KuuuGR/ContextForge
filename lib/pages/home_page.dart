@@ -176,7 +176,9 @@ class _HomePageState extends State<HomePage> {
         }
         videos.add(video);
         transcripts.add(clean);
-      } catch (e) {
+      } catch (e, stack) {
+        debugPrint('[HomePage._generate] Video ${i + 1} failed: '
+            'type=${e.runtimeType}, message=$e\n$stack');
         failures.add('Video ${i + 1}: $e');
       }
     }

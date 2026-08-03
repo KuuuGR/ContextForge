@@ -40,23 +40,34 @@ class VideoCardController extends ChangeNotifier {
     try {
       final video = await service.fetchVideoMetadata(trimmed);
       _setState(status: VideoStatus.loaded, video: video, errorMessage: null);
-    } on InvalidYouTubeUrlException {
+    } on InvalidYouTubeUrlException catch (e) {
+      debugPrint('[VideoCardController] InvalidYouTubeUrlException: '
+          'message="${e.message}"');
       _setState(
           status: VideoStatus.error,
           video: null,
           errorMessage: 'Invalid YouTube URL. Please check the link.');
-    } on YoutubeVideoUnavailableException {
+    } on YoutubeVideoUnavailableException catch (e) {
+      debugPrint('[VideoCardController] YoutubeVideoUnavailableException: '
+          'message="${e.message}"');
       _setState(
           status: VideoStatus.error,
           video: null,
           errorMessage: 'This video is unavailable. It may be private or deleted.');
-    } on YoutubeNetworkException {
+    } on YoutubeNetworkException catch (e) {
+      debugPrint('[VideoCardController] YoutubeNetworkException: '
+          'message="${e.message}"');
+      if (e.cause != null) {
+        debugPrint('[VideoCardController] Original cause: '
+            '${e.cause!.runtimeType}, message=${e.cause!}');
+      }
       _setState(
           status: VideoStatus.error,
           video: null,
           errorMessage: 'Could not reach YouTube. Check your connection.');
-    } catch (e) {
-      debugPrint('VideoCardController: unexpected error: $e');
+    } catch (e, stack) {
+      debugPrint('[VideoCardController] Unexpected error: '
+          'type=${e.runtimeType}, message=$e\n$stack');
       _setState(
           status: VideoStatus.error,
           video: null,

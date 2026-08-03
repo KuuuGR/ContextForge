@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../exceptions/youtube_exceptions.dart';
@@ -68,20 +69,29 @@ class YoutubeExplodeProvider implements YoutubeProvider {
 
   @override
   Future<YoutubeVideoMetadata?> getVideoMetadata(String videoId) async {
+    debugPrint('[YoutubeExplodeProvider] Metadata request: videoId="$videoId"');
     try {
       final video = await _fetchVideo(_youtube, videoId);
+      debugPrint('[YoutubeExplodeProvider] Metadata fetch succeeded: '
+          'title="${video.title}"');
       return _mapVideo(video);
-    } on VideoUnavailableException catch (e) {
+    } on VideoUnavailableException catch (e, stack) {
+      debugPrint('[YoutubeExplodeProvider] VideoUnavailableException: '
+          'message="${e.message}"\n$stack');
       throw YoutubeVideoUnavailableException(
         'Video "$videoId" is unavailable: ${e.message}',
       );
-    } on ArgumentError catch (e) {
+    } on ArgumentError catch (e, stack) {
+      debugPrint('[YoutubeExplodeProvider] ArgumentError: '
+          'message="$e"\n$stack');
       throw InvalidYouTubeUrlException(
         'Invalid YouTube video ID or URL: "$videoId" (${e.message}).',
       );
     } on InvalidYouTubeUrlException {
       rethrow;
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('[YoutubeExplodeProvider] Metadata failed: '
+          'type=${e.runtimeType}, message=$e\n$stack');
       throw YoutubeNetworkException(
         'Failed to fetch metadata for video "$videoId".',
         cause: e,
@@ -93,20 +103,30 @@ class YoutubeExplodeProvider implements YoutubeProvider {
   Future<List<YoutubeTranscriptInfo>> getAvailableTranscripts(
     String videoId,
   ) async {
+    debugPrint('[YoutubeExplodeProvider] Transcript discovery: '
+        'videoId="$videoId"');
     try {
       final manifest = await _fetchManifest(_youtube, videoId);
+      debugPrint('[YoutubeExplodeProvider] Manifest received: '
+          '${manifest.tracks.length} track(s)');
       return [
         for (final track in manifest.tracks) _mapTranscriptInfo(track),
       ];
-    } on VideoUnavailableException catch (e) {
+    } on VideoUnavailableException catch (e, stack) {
+      debugPrint('[YoutubeExplodeProvider] VideoUnavailableException: '
+          'message="${e.message}"\n$stack');
       throw YoutubeVideoUnavailableException(
         'Video "$videoId" is unavailable: ${e.message}',
       );
-    } on ArgumentError catch (e) {
+    } on ArgumentError catch (e, stack) {
+      debugPrint('[YoutubeExplodeProvider] ArgumentError: '
+          'message="$e"\n$stack');
       throw InvalidYouTubeUrlException(
         'Invalid YouTube video ID or URL: "$videoId" (${e.message}).',
       );
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('[YoutubeExplodeProvider] Transcript discovery failed: '
+          'type=${e.runtimeType}, message=$e\n$stack');
       throw YoutubeNetworkException(
         'Failed to discover transcripts for video "$videoId".',
         cause: e,
@@ -119,21 +139,36 @@ class YoutubeExplodeProvider implements YoutubeProvider {
     String videoId,
     YoutubeTranscriptInfo info,
   ) async {
+    debugPrint('[YoutubeExplodeProvider] Transcript download: '
+        'videoId="$videoId", languageCode="${info.languageCode}", '
+        'manual=${info.isManual}');
     try {
       final manifest = await _fetchManifest(_youtube, videoId);
       final track = _findTrack(manifest, info);
-      if (track == null) return null;
+      if (track == null) {
+        debugPrint('[YoutubeExplodeProvider] Track not found in manifest: '
+            'languageCode="${info.languageCode}", manual=${info.isManual}');
+        return null;
+      }
       final captionTrack = await _fetchCaptionTrack(_youtube, track);
+      debugPrint('[YoutubeExplodeProvider] Caption track received: '
+          '${captionTrack.captions.length} caption(s)');
       return _mapTranscript(videoId, info, captionTrack);
-    } on VideoUnavailableException catch (e) {
+    } on VideoUnavailableException catch (e, stack) {
+      debugPrint('[YoutubeExplodeProvider] VideoUnavailableException: '
+          'message="${e.message}"\n$stack');
       throw YoutubeVideoUnavailableException(
         'Video "$videoId" is unavailable: ${e.message}',
       );
-    } on ArgumentError catch (e) {
+    } on ArgumentError catch (e, stack) {
+      debugPrint('[YoutubeExplodeProvider] ArgumentError: '
+          'message="$e"\n$stack');
       throw InvalidYouTubeUrlException(
         'Invalid YouTube video ID or URL: "$videoId" (${e.message}).',
       );
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('[YoutubeExplodeProvider] Transcript download failed: '
+          'type=${e.runtimeType}, message=$e\n$stack');
       throw YoutubeNetworkException(
         'Failed to download transcript for video "$videoId".',
         cause: e,

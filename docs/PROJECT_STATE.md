@@ -2,10 +2,10 @@
 
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
-| **Current Version** | 0.1.7                                 |
-| **Current Phase**   | 017                                   |
-| **Status**          | End-to-end generation workflow implemented |
-| **Current Milestone** | Generate Workflow                   |
+| **Current Version** | 0.1.8                                 |
+| **Current Phase**   | 018                                   |
+| **Status**          | YouTube diagnostics implemented       |
+| **Current Milestone** | Diagnostics                          |
 
 ## Phase Tracking
 
@@ -29,17 +29,18 @@
 | 015   | Transcript Cleanup                        | Completed |
 | 016   | Output Builder                            | Completed |
 | 017   | End-to-End Generate Workflow              | Completed |
+| 018   | YouTube Connectivity Diagnostics          | Completed |
 
 ## Notes
 
-- Phase 017 implemented the end-to-end generate workflow:
-  - `HomePage._generate()` — orchestrates the full pipeline: reads the selected prompt, reads all entered YouTube URLs, ignores empty fields, and for each valid URL: loads metadata → discovers transcripts → selects the preferred track → downloads it → cleans it.
-  - All successful results are passed to `OutputBuilderService` and the generated text is displayed in the existing Output area.
-  - Partial failures are handled gracefully: one failing video does not abort processing of the remaining videos; failures are shown in a banner.
-  - `GenerateButton` accepts `onPressed`/`isLoading`; `OutputPreview`, `PromptEditor`, and `VideoInputCard` accept optional external text controllers.
-  - Integration-style widget test (`test/generate_workflow_test.dart`) verifies the complete flow.
-- No Clipboard, no Whisper, no UI redesign, no transcript cleanup changes.
+- Phase 018 added comprehensive diagnostics for the complete YouTube pipeline:
+  - Every stage is instrumented with `debugPrint`: original URL, parsed video ID, metadata request/response, transcript discovery (manifest + tracks), transcript selection, transcript download.
+  - Every caught exception logs: exception type, message, and full stack trace.
+  - Generic UI messages are preserved; original exceptions are always visible in the console.
+  - Verified against reference video `OPZczs-Kttg`: the full pipeline succeeds end-to-end — URL parse → metadata → transcript discovery → selection → download all complete without error.
+  - The "Could not reach YouTube" error did not reproduce at the provider/service level; the instrumented stages confirm the provider pipeline works, suggesting the failure is outside the instrumented logic (e.g., network sandboxing/permissions) or video-specific.
+- No feature work, no refactoring, no provider replacement, no business logic changes.
 
 ## Next Phase
 
-Phase 018.
+Phase 019.

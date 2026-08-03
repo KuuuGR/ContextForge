@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../exceptions/youtube_exceptions.dart';
 import '../models/transcript_language.dart';
 import '../models/video.dart';
@@ -60,13 +62,22 @@ class VideoService {
   /// Raw provider / storage exceptions are never exposed to callers.
   Future<Video> fetchVideoMetadata(String url) async {
     final videoId = _parser.extractVideoId(url);
-    final metadata = await provider.getVideoMetadata(videoId);
-    if (metadata == null) {
-      throw YoutubeVideoUnavailableException(
-        'Video "$videoId" is unavailable.',
-      );
+    debugPrint('[VideoService] Metadata request: videoId="$videoId"');
+    try {
+      final metadata = await provider.getVideoMetadata(videoId);
+      if (metadata == null) {
+        throw YoutubeVideoUnavailableException(
+          'Video "$videoId" is unavailable.',
+        );
+      }
+      debugPrint('[VideoService] Metadata received: '
+          'title="${metadata.title}", url="${metadata.url}"');
+      return _mapToDomain(metadata);
+    } catch (e, stack) {
+      debugPrint('[VideoService] Metadata request failed: '
+          'type=${e.runtimeType}, message=$e\n$stack');
+      rethrow;
     }
-    return _mapToDomain(metadata);
   }
 
   Video _mapToDomain(YoutubeVideoMetadata metadata) {
