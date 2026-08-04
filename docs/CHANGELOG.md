@@ -2,6 +2,29 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.17] — 2026-08-04 (029D Final)
+
+### Verified
+
+- **Keyboard consistency:**
+  - ⌘V Smart Paste — inserts clipboard YouTube URL into first empty slot.
+  - ⌘C — native copy when text selected; full-output copy when no selection.
+  - ⌘R — runs Generate, reusing the exact same action as the Generate button.
+- **Button state consistency:**
+  - Clipboard buttons enabled only when clipboard contains a valid YouTube URL.
+  - Generate enabled only when generation is possible.
+  - Copy enabled only when generated output exists.
+  - ⚡ remains disabled until Quick Workflow is implemented.
+- **Prompt Library consistency:**
+  - Create, edit, delete, favorite, default, and Quick Access assignment all refresh immediately.
+- **Command Bar consistency:**
+  - Equal spacing, visually centered ⚡, identical button sizing, native hover feedback.
+- **Complete workflow validation:** Clipboard → Paste → Prompt selection → Generate → Copy behaves naturally.
+
+### Notes
+
+- No new functionality — workflow finalization only.
+
 ## [0.1.17] — 2026-08-04 (029D)
 
 ### Added
