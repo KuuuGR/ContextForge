@@ -24,6 +24,9 @@ class VideoCardController extends ChangeNotifier {
   Video? _video;
   Video? get video => _video;
 
+  /// The canonical full URL of the loaded video, or `null`.
+  String? get fullUrl => _video?.url;
+
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
@@ -43,17 +46,12 @@ class VideoCardController extends ChangeNotifier {
 
   /// Refreshes the history indicator for the current URL.
   ///
-  /// Consults the history service synchronously (in-memory lookup — no disk
-  /// I/O) so typing feels instantaneous. Non-valid URLs and URLs that have
-  /// never been processed are treated as "not previously processed".
+  /// When a video has been loaded (status [VideoStatus.loaded]), the lookup
+  /// is keyed on the canonical `videoId` so the green/neutral dot survives
+  /// the compact URL display. Otherwise the user-entered [url] is parsed.
+  ///
+  /// Synchronous in-memory lookup — no disk I/O.
   void refreshHistoryStatus(String url) {
-    if (url.trim().isEmpty) {
-      if (_historyEntry != null) {
-        _historyEntry = null;
-        notifyListeners();
-      }
-      return;
-    }
     final history = historyService;
     if (history == null) {
       if (_historyEntry != null) {
@@ -62,7 +60,14 @@ class VideoCardController extends ChangeNotifier {
       }
       return;
     }
-    final entry = history.getEntryByUrl(url);
+
+    VideoHistoryEntry? entry;
+    if (_video != null) {
+      entry = history.getEntry(_video!.videoId);
+    } else if (url.trim().isNotEmpty) {
+      entry = history.getEntryByUrl(url);
+    }
+
     if (entry != _historyEntry) {
       _historyEntry = entry;
       notifyListeners();

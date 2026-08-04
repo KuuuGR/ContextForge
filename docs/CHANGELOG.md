@@ -2,6 +2,28 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.16] — 2026-08-04
+
+### Added
+
+- Smart Clipboard Workflow:
+  - **⌘V Smart Paste** — when the clipboard contains a valid YouTube URL, automatically inserts it into the first empty URL field, does not overwrite existing URLs, and immediately validates the URL.
+  - **Duplicate detection** — if the same video ID already exists in any slot, the Smart Paste is rejected and a lightweight `Already added` notification appears (auto-dismisses after 2 seconds).
+  - **Clipboard button** — each URL field now includes a small clipboard icon (`Icons.content_paste`) that performs the same Smart Paste action. The button is enabled only when the clipboard currently contains a valid YouTube URL; disabled otherwise. The clipboard state is refreshed on startup and after Clear.
+- Compact URL presentation:
+  - After successful validation, the URL field displays a compact representation: `▶ VIDEO_ID` (e.g. `▶ BLsQ1RhVRAQ`) in monospace bold.
+  - The complete original URL is kept internally via `VideoCardController.fullUrl` and is used for all pipeline operations (Generate, Enter navigation, duplicate checks).
+  - Hovering over the field shows the complete original URL via a Tooltip.
+- Existing behaviour unchanged:
+  - Manual typing and pasting into URL fields still works normally.
+  - Manual URL entry still validates through `loadMetadata`.
+- `VideoCardController.refreshHistoryStatus` now keys on the canonical `videoId` when a video is loaded, so the green/neutral history dot survives the compact display.
+
+### Notes
+
+- No background clipboard monitoring — the clipboard is only read on user-initiated actions (Smart Paste, startup, Clear).
+- No automatic notifications without user action.
+
 ## [0.1.15] — 2026-08-04
 
 ### Added

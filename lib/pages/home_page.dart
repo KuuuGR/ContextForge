@@ -19,6 +19,7 @@ import '../services/transcript_selection_service.dart';
 import '../services/transcript_service.dart';
 import '../services/video_history_service.dart';
 import '../services/video_service.dart';
+import '../services/youtube_url_parser.dart';
 import '../viewmodels/video_card_controller.dart';
 import '../widgets/generate_button.dart';
 import '../widgets/output_preview.dart';
@@ -80,11 +81,16 @@ class _HomePageState extends State<HomePage> {
       const OutputBuilderService();
   final MarkdownExportService _markdownExportService =
       MarkdownExportService();
+  final YouTubeUrlParser _urlParser = const YouTubeUrlParser();
 
   List<Prompt> _prompts = const [];
   String _selectedPrompt = '';
   bool _isGenerating = false;
   List<String> _generationFailures = const [];
+
+  /// Whether the clipboard currently contains a valid YouTube URL.
+  bool _clipboardHasValidUrl = false;
+  String _clipboardUrl = '';
 
   bool get _isCustomPrompt => _selectedPrompt == customPromptOption;
 
@@ -140,6 +146,7 @@ class _HomePageState extends State<HomePage> {
     _outputController.addListener(_onSessionStateChanged);
     _loadPrompts();
     _loadHistory();
+    _refreshClipboardState();
   }
 
   void _onSessionStateChanged() {
@@ -233,13 +240,111 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  /// Handles Enter in a URL field: moves to the next URL field, or triggers
-  /// Generate on the last URL.
+  /// Handles Enter in a URL field.
+  ///
+  /// When the field has been validated (compact display), it uses the
+  /// canonical full URL. Otherwise it uses the raw text field value.
+  /// Moves focus to the next URL field, or triggers Generate on the last.
   void _handleUrlSubmitted(int index, String value) {
+    final controller = _videoControllers[index];
+    final url = controller.fullUrl ?? value.trim();
+    if (url.isNotEmpty) {
+      controller.loadMetadata(url);
+    }
     if (index < _urlControllers.length - 1) {
       _urlFocusNodes[index + 1].requestFocus();
     } else {
       _generate();
+    }
+  }
+
+  /// Reads the system clipboard and updates the clipboard-button state.
+  Future<void> _refreshClipboardState() async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    final text = data?.text?.trim() ?? '';
+    final isValid = text.isNotEmpty && _urlParser.isValidUrl(text);
+    if (isValid != _clipboardHasValidUrl || text != _clipboardUrl) {
+      if (mounted) {
+        setState(() {
+          _clipboardHasValidUrl = isValid;
+          _clipboardUrl = isValid ? text : '';
+        });
+      }
+    }
+  }
+
+  /// Smart Paste: inserts the clipboard URL into the first empty slot.
+  ///
+  /// - Does not overwrite existing URLs.
+  /// - Rejects duplicates by video ID (shows "Already added").
+  /// - Immediately validates the inserted URL.
+  Future<void> _smartPaste() async {
+    await _refreshClipboardState();
+    if (!_clipboardHasValidUrl || _clipboardUrl.isEmpty) return;
+
+    final candidate = _clipboardUrl;
+    String candidateVideoId;
+    try {
+      candidateVideoId = _urlParser.extractVideoId(candidate);
+    } catch (_) {
+      return;
+    }
+
+    // Duplicate check: the same video ID in any validated slot.
+    for (final controller in _videoControllers) {
+      final video = controller.video;
+      if (video != null && video.videoId == candidateVideoId) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Already added'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        return;
+      }
+    }
+    // Also check non-empty text fields that have not been validated yet.
+    for (final textController in _urlControllers) {
+      final text = textController.text.trim();
+      if (text.isEmpty) continue;
+      try {
+        if (_urlParser.extractVideoId(text) == candidateVideoId) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Already added'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+          return;
+        }
+      } catch (_) {
+        // Ignore invalid text in other slots.
+      }
+    }
+
+    // Find the first empty slot and insert the URL.
+    for (var i = 0; i < _urlControllers.length; i++) {
+      if (_urlControllers[i].text.trim().isEmpty) {
+        _urlControllers[i].text = candidate;
+        _videoControllers[i].refreshHistoryStatus(candidate);
+        _videoControllers[i].loadMetadata(candidate);
+        _urlFocusNodes[i].requestFocus();
+        return;
+      }
+    }
+
+    // All slots are full.
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All video slots are full.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -294,6 +399,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _generationFailures = const [];
     });
+    _refreshClipboardState();
   }
 
   /// Executes the end-to-end generation workflow.
@@ -330,13 +436,16 @@ class _HomePageState extends State<HomePage> {
     for (var i = 0; i < _videoControllers.length; i++) {
       final controller = _videoControllers[i];
       RuntimeTrace.step('URL validation (video ${i + 1})');
-      final url = _urlControllers[i].text.trim();
-      if (url.isEmpty) {
+      // Use the canonical full URL when available (compact display case),
+      // otherwise the raw text field value.
+      final fieldText = _urlControllers[i].text.trim();
+      final url = controller.fullUrl ?? fieldText;
+      if (url.isEmpty && fieldText.isEmpty) {
         RuntimeTrace.step('URL skipped (empty or blank)');
         continue;
       }
 
-      await controller.loadMetadata(url);
+      await controller.loadMetadata(url.isEmpty ? fieldText : url);
       final video = controller.video;
       if (video == null) {
         RuntimeTrace.boundary('Video ${i + 1} metadata load failed');
@@ -382,7 +491,7 @@ class _HomePageState extends State<HomePage> {
         RuntimeTrace.step(
             'VideoHistoryService.recordSuccess (videoId="${video.videoId}")');
         await _videoHistoryService.recordSuccess(video);
-        controller.refreshHistoryStatus(_urlControllers[i].text);
+        controller.refreshHistoryStatus(controller.fullUrl ?? fieldText);
       } catch (e, stack) {
         RuntimeTrace.boundary('Video ${i + 1} failed with exception');
         debugPrint('[HomePage._generate] Video ${i + 1} failed: '
@@ -452,8 +561,15 @@ class _HomePageState extends State<HomePage> {
           meta: true,
           shift: true,
         ): const _ExportMarkdownIntent(),
+        // ⌘V Smart Paste (only triggers when clipboard contains a valid URL)
+        const SingleActivator(
+          LogicalKeyboardKey.keyV,
+          meta: true,
+        ): const _SmartPasteIntent(),
         // Escape unfocus
-        const SingleActivator(LogicalKeyboardKey.escape): const _UnfocusIntent(),
+        const SingleActivator(
+          LogicalKeyboardKey.escape,
+        ): const _UnfocusIntent(),
       },
       child: Actions(
         actions: {
@@ -475,6 +591,12 @@ class _HomePageState extends State<HomePage> {
               return null;
             },
           ),
+          _SmartPasteIntent: CallbackAction<_SmartPasteIntent>(
+            onInvoke: (_) {
+              _smartPaste();
+              return null;
+            },
+          ),
           _UnfocusIntent: CallbackAction<_UnfocusIntent>(
             onInvoke: (_) {
               FocusManager.instance.primaryFocus?.unfocus();
@@ -483,148 +605,154 @@ class _HomePageState extends State<HomePage> {
           ),
         },
         child: Scaffold(
-          body: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _Header(textTheme: textTheme),
-                    const SizedBox(height: 24),
-                    _SectionCard(
-                      title: 'Prompt',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          PromptSelector(
-                            prompts: _prompts,
-                            value: _selectedPrompt,
-                            onChanged: _onPromptChanged,
-                            onToggleFavorite: _onToggleFavorite,
-                            onToggleDefault: _onToggleDefault,
-                          ),
-                          const SizedBox(height: 16),
-                          PromptEditor(
-                            content: _selectedPromptContent,
-                            enabled: _isCustomPrompt,
-                            controller: _promptEditorController,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _SectionCard(
-                      title: 'Videos',
-                      child: Column(
-                        children: [
-                          for (var i = 0; i < _videoControllers.length; i++) ...[
-                            VideoInputCard(
-                              controller: _videoControllers[i],
-                              textController: _urlControllers[i],
-                              focusNode: _urlFocusNodes[i],
-                              onSubmitted: (value) =>
-                                  _handleUrlSubmitted(i, value),
-                              textInputAction: i < _videoControllers.length - 1
-                                  ? TextInputAction.next
-                                  : TextInputAction.done,
+            body: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _Header(textTheme: textTheme),
+                      const SizedBox(height: 24),
+                      _SectionCard(
+                        title: 'Prompt',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            PromptSelector(
+                              prompts: _prompts,
+                              value: _selectedPrompt,
+                              onChanged: _onPromptChanged,
+                              onToggleFavorite: _onToggleFavorite,
+                              onToggleDefault: _onToggleDefault,
                             ),
                             const SizedBox(height: 16),
+                            PromptEditor(
+                              content: _selectedPromptContent,
+                              enabled: _isCustomPrompt,
+                              controller: _promptEditorController,
+                            ),
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    _SectionCard(
-                      title: 'Output',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Focus(
-                                focusNode: _copyFocusNode,
-                                child: OutlinedButton.icon(
-                                  onPressed:
-                                      _canCopy ? _copyOutput : null,
-                                  icon: const Icon(Icons.copy),
-                                  label: const Text('Copy'),
-                                ),
+                      const SizedBox(height: 16),
+                      _SectionCard(
+                        title: 'Videos',
+                        child: Column(
+                          children: [
+                            for (var i = 0; i < _videoControllers.length; i++) ...[
+                              VideoInputCard(
+                                controller: _videoControllers[i],
+                                textController: _urlControllers[i],
+                                focusNode: _urlFocusNodes[i],
+                                onSubmitted: (value) =>
+                                    _handleUrlSubmitted(i, value),
+                                textInputAction:
+                                    i < _videoControllers.length - 1
+                                        ? TextInputAction.next
+                                        : TextInputAction.done,
+                                onClipboardPressed: _smartPaste,
+                                clipboardEnabled: _clipboardHasValidUrl,
                               ),
-                              const SizedBox(width: 12),
-                              Focus(
-                                focusNode: _exportFocusNode,
-                                child: OutlinedButton.icon(
-                                  onPressed:
-                                      _canExport ? _exportMarkdown : null,
-                                  icon: const Icon(Icons.description_outlined),
-                                  label: const Text('Export Markdown'),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              OutlinedButton.icon(
-                                onPressed:
-                                    _canClear ? _clearSession : null,
-                                icon: const Icon(Icons.clear),
-                                label: const Text('Clear'),
-                              ),
+                              const SizedBox(height: 16),
                             ],
-                          ),
-                          const SizedBox(height: 12),
-                          if (_generationFailures.isNotEmpty) ...[
-                            _FailureBanner(failures: _generationFailures),
-                            const SizedBox(height: 12),
                           ],
-                          Shortcuts(
-                            shortcuts: const {
-                              SingleActivator(LogicalKeyboardKey.keyC,
-                                  control: true):
-                                  _CopyOutputIntent(),
-                              SingleActivator(LogicalKeyboardKey.keyC,
-                                  meta: true):
-                                  _CopyOutputIntent(),
-                            },
-                            child: Actions(
-                              actions: {
-                                _CopyOutputIntent:
-                                    CallbackAction<_CopyOutputIntent>(
-                                  onInvoke: (_) {
-                                    if (_canCopy) _copyOutput();
-                                    return null;
-                                  },
-                                ),
-                              },
-                              child: Focus(
-                                focusNode: _outputFocusNode,
-                                child: OutputPreview(
-                                    controller: _outputController),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Focus(
-                              focusNode: _generateFocusNode,
-                              child: GenerateButton(
-                                onPressed: _generate,
-                                isLoading: _isGenerating,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    const _BottomToolbar(),
-                  ],
+                      const SizedBox(height: 16),
+                      _SectionCard(
+                        title: 'Output',
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Focus(
+                                  focusNode: _copyFocusNode,
+                                  child: OutlinedButton.icon(
+                                    onPressed:
+                                        _canCopy ? _copyOutput : null,
+                                    icon: const Icon(Icons.copy),
+                                    label: const Text('Copy'),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Focus(
+                                  focusNode: _exportFocusNode,
+                                  child: OutlinedButton.icon(
+                                    onPressed:
+                                        _canExport ? _exportMarkdown : null,
+                                    icon: const Icon(
+                                        Icons.description_outlined),
+                                    label: const Text('Export Markdown'),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                OutlinedButton.icon(
+                                  onPressed:
+                                      _canClear ? _clearSession : null,
+                                  icon: const Icon(Icons.clear),
+                                  label: const Text('Clear'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            if (_generationFailures.isNotEmpty) ...[
+                              _FailureBanner(failures: _generationFailures),
+                              const SizedBox(height: 12),
+                            ],
+                            Shortcuts(
+                              shortcuts: const {
+                                SingleActivator(
+                                    LogicalKeyboardKey.keyC,
+                                    control: true):
+                                    _CopyOutputIntent(),
+                                SingleActivator(
+                                    LogicalKeyboardKey.keyC,
+                                    meta: true):
+                                    _CopyOutputIntent(),
+                              },
+                              child: Actions(
+                                actions: {
+                                  _CopyOutputIntent:
+                                      CallbackAction<_CopyOutputIntent>(
+                                    onInvoke: (_) {
+                                      if (_canCopy) _copyOutput();
+                                      return null;
+                                    },
+                                  ),
+                                },
+                                child: Focus(
+                                  focusNode: _outputFocusNode,
+                                  child: OutputPreview(
+                                      controller: _outputController),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Focus(
+                                focusNode: _generateFocusNode,
+                                child: GenerateButton(
+                                  onPressed: _generate,
+                                  isLoading: _isGenerating,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const _BottomToolbar(),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
-      ),
     );
   }
 }
@@ -647,6 +775,11 @@ class _ClearIntent extends Intent {
 /// Intent for exporting Markdown via keyboard shortcut (⌘⇧S).
 class _ExportMarkdownIntent extends Intent {
   const _ExportMarkdownIntent();
+}
+
+/// Intent for Smart Paste via keyboard shortcut (⌘V).
+class _SmartPasteIntent extends Intent {
+  const _SmartPasteIntent();
 }
 
 /// Intent for removing keyboard focus via Escape.
@@ -709,8 +842,8 @@ class _Header extends StatelessWidget {
           children: [
             Text(
               'ContextForge',
-              style:
-                  textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: textTheme.headlineMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
               'Build AI-ready context from YouTube transcripts.',

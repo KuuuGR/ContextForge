@@ -2,9 +2,9 @@
 
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
-| **Current Version** | 0.1.15                                |
-| **Current Phase**   | 027                                  |
-| **Status**          | Keyboard workflow implemented        |
+| **Current Version** | 0.1.16                                |
+| **Current Phase**   | 028                                  |
+| **Status**          | Smart clipboard workflow implemented |
 | **Current Milestone** | Daily Workflow Improvements          |
 
 ## Phase Tracking
@@ -40,6 +40,7 @@
 | 025   | Prompt Favorites & Default Prompt        | Completed |
 | 026   | Export as Markdown                       | Completed |
 | 027   | Keyboard Workflow                        | Completed |
+| 028   | Smart Clipboard Workflow                 | Completed |
 
 ## Notes
 
@@ -82,7 +83,13 @@
   - Enter in URL fields navigates to the next field; Enter on the last field triggers Generate.
   - Focus nodes wrap Copy, Export, Generate, and Output for natural Tab ordering.
   - The complete workflow can be performed without touching the mouse.
+- Phase 028 added the Smart Clipboard Workflow:
+  - **⌘V Smart Paste** inserts a valid clipboard YouTube URL into the first empty slot.
+  - Duplicate detection rejects the same video ID with an "Already added" notification.
+  - Each URL field has a clipboard button enabled only when the clipboard holds a valid YouTube URL.
+  - Compact URL display shows `▶ VIDEO_ID` after validation; the full URL is kept internally and shown on hover.
+  - No background clipboard monitoring — reads are user-initiated only.
 
 ## Next Phase
 
-Phase 028.
+Phase 029.

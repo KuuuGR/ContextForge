@@ -4,6 +4,7 @@ import '../models/video.dart';
 import '../models/video_history_entry.dart';
 import '../models/video_status.dart';
 import '../services/runtime_trace.dart';
+import '../services/youtube_url_parser.dart';
 import '../viewmodels/video_card_controller.dart';
 import 'transcript_status_indicator.dart';
 
@@ -20,6 +21,8 @@ class VideoInputCard extends StatefulWidget {
     this.focusNode,
     this.onSubmitted,
     this.textInputAction,
+    this.onClipboardPressed,
+    this.clipboardEnabled = false,
   });
 
   final VideoCardController controller;
@@ -37,6 +40,12 @@ class VideoInputCard extends StatefulWidget {
 
   /// Keyboard enter action for the URL field.
   final TextInputAction? textInputAction;
+
+  /// Optional callback for the clipboard Smart Paste button.
+  final VoidCallback? onClipboardPressed;
+
+  /// Whether the clipboard currently contains a valid YouTube URL.
+  final bool clipboardEnabled;
 
   @override
   State<VideoInputCard> createState() => _VideoInputCardState();
@@ -84,6 +93,17 @@ class _VideoInputCardState extends State<VideoInputCard> {
     }
   }
 
+  String? get _displayText {
+    final fullUrl = widget.controller.fullUrl;
+    if (fullUrl == null) return null;
+    try {
+      final videoId = const YouTubeUrlParser().extractVideoId(fullUrl);
+      return '▶ $videoId';
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -93,25 +113,49 @@ class _VideoInputCardState extends State<VideoInputCard> {
         child: AnimatedBuilder(
           animation: widget.controller,
           builder: (context, _) {
+            final displayText = _displayText;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
                     Expanded(
-                      child: TextField(
-                        controller: _textController,
-                        focusNode: _focusNode,
-                        onSubmitted: _handleSubmitted,
-                        textInputAction:
-                            widget.textInputAction ?? TextInputAction.done,
-                        decoration: InputDecoration(
-                          labelText: 'YouTube URL',
-                          hintText: 'https://www.youtube.com/watch?v=...',
-                          border: const OutlineInputBorder(),
-                          isDense: true,
-                          suffixIcon: _HistoryStatusDot(
-                            entry: widget.controller.historyEntry,
+                      child: Tooltip(
+                        message: widget.controller.fullUrl ?? '',
+                        waitDuration: const Duration(milliseconds: 300),
+                        child: TextField(
+                          controller: _textController,
+                          focusNode: _focusNode,
+                          onSubmitted: _handleSubmitted,
+                          textInputAction: widget.textInputAction ??
+                              TextInputAction.done,
+                          style: displayText != null
+                              ? const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontWeight: FontWeight.w600,
+                                )
+                              : null,
+                          decoration: InputDecoration(
+                            labelText: 'YouTube URL',
+                            hintText: 'https://www.youtube.com/watch?v=...',
+                            border: const OutlineInputBorder(),
+                            isDense: true,
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _HistoryStatusDot(
+                                  entry: widget.controller.historyEntry,
+                                ),
+                                if (widget.onClipboardPressed != null) ...[
+                                  const SizedBox(width: 4),
+                                  _ClipboardButton(
+                                    enabled: widget.clipboardEnabled,
+                                    onPressed:
+                                        widget.onClipboardPressed!,
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -145,6 +189,26 @@ class _VideoInputCardState extends State<VideoInputCard> {
       VideoStatus.error => 'Error',
       VideoStatus.previouslyUsed => 'Previously Used',
     };
+  }
+}
+
+/// Small clipboard button for the Smart Paste action.
+class _ClipboardButton extends StatelessWidget {
+  const _ClipboardButton({required this.enabled, required this.onPressed});
+
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.content_paste, size: 18),
+      onPressed: enabled ? onPressed : null,
+      tooltip: 'Paste from clipboard',
+      visualDensity: VisualDensity.compact,
+      padding: const EdgeInsets.all(4),
+      iconSize: 18,
+    );
   }
 }
 
