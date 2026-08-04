@@ -2,6 +2,34 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.17] — 2026-08-04
+
+### Added
+
+- Command Bar:
+  - Compact three-row command bar in the top-right corner of the header.
+  - Designed as the primary control surface for power users — reduces mouse movement during repetitive daily work.
+- Row 1 — Quick Workflow (⚡):
+  - Reserved for future automation.
+  - Button displayed but disabled this phase.
+  - Tooltip: "Quick Workflow (coming soon)".
+- Row 2 — Quick Prompt Selection (① ② ③):
+  - Segmented-control behavior — selecting one slot immediately changes the currently selected prompt.
+  - Only one button is active at a time.
+  - Slots are populated from the first three saved prompts (after favorites sorting).
+  - If no prompt is assigned to a slot, that button is disabled.
+- Row 3 — Actions:
+  - 📋 Paste — uses Smart Paste (inserts clipboard YouTube URL into the first empty slot).
+  - 🔄 Generate — starts generation immediately, replacing existing output without confirmation.
+  - 📄 Copy — copies the generated output; disabled when output is empty.
+- `CommandBar` widget (`lib/widgets/command_bar.dart`) — modular, designed for future extension.
+- Tests (`test/command_bar_test.dart`): all three rows render, quick prompt selection changes the selected prompt, Generate works from the command bar, Copy disables correctly, Paste performs Smart Paste.
+
+### Notes
+
+- Existing controls (Prompt selector, URL fields, Output section buttons, keyboard shortcuts) are unchanged.
+- The command bar is an additional workflow, not a replacement.
+
 ## [0.1.16] — 2026-08-04
 
 ### Added

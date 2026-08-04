@@ -2,10 +2,10 @@
 
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
-| **Current Version** | 0.1.16                                |
-| **Current Phase**   | 028                                  |
-| **Status**          | Smart clipboard workflow implemented |
-| **Current Milestone** | Daily Workflow Improvements          |
+| **Current Version** | 0.1.17                                |
+| **Current Phase**   | 029                                  |
+| **Status**          | Command bar implemented              |
+| **Current Milestone** | Power User Workflow                  |
 
 ## Phase Tracking
 
@@ -41,6 +41,7 @@
 | 026   | Export as Markdown                       | Completed |
 | 027   | Keyboard Workflow                        | Completed |
 | 028   | Smart Clipboard Workflow                 | Completed |
+| 029   | Command Bar                              | Completed |
 
 ## Notes
 
@@ -89,7 +90,13 @@
   - Each URL field has a clipboard button enabled only when the clipboard holds a valid YouTube URL.
   - Compact URL display shows `▶ VIDEO_ID` after validation; the full URL is kept internally and shown on hover.
   - No background clipboard monitoring — reads are user-initiated only.
+- Phase 029 added the Command Bar:
+  - Compact three-row command bar in the top-right header.
+  - Row 1: ⚡ Quick Workflow (reserved, disabled).
+  - Row 2: ① ② ③ quick prompt selection (segmented control).
+  - Row 3: 📋 Paste, 🔄 Generate, 📄 Copy actions.
+  - Existing controls and workflows remain unchanged.
 
 ## Next Phase
 
-Phase 029.
+Phase 030.

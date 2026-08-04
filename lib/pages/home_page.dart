@@ -21,6 +21,7 @@ import '../services/video_history_service.dart';
 import '../services/video_service.dart';
 import '../services/youtube_url_parser.dart';
 import '../viewmodels/video_card_controller.dart';
+import '../widgets/command_bar.dart';
 import '../widgets/generate_button.dart';
 import '../widgets/output_preview.dart';
 import '../widgets/prompt_editor.dart';
@@ -613,7 +614,25 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _Header(textTheme: textTheme),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _Header(textTheme: textTheme),
+                          ),
+                          const SizedBox(width: 16),
+                          CommandBar(
+                            prompts: _prompts,
+                            selectedPrompt: _selectedPrompt,
+                            onSelectPrompt: _onPromptChanged,
+                            onPaste: _smartPaste,
+                            canPaste: _clipboardHasValidUrl,
+                            onGenerate: _generate,
+                            onCopy: _copyOutput,
+                            canCopy: _canCopy,
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 24),
                       _SectionCard(
                         title: 'Prompt',
@@ -837,20 +856,23 @@ class _Header extends StatelessWidget {
       children: [
         Icon(Icons.text_snippet_outlined, size: 40, color: colorScheme.primary),
         const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'ContextForge',
-              style: textTheme.headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            Text(
-              'Build AI-ready context from YouTube transcripts.',
-              style: textTheme.bodyMedium
-                  ?.copyWith(color: colorScheme.onSurfaceVariant),
-            ),
-          ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'ContextForge',
+                style: textTheme.headlineMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'Build AI-ready context from YouTube transcripts.',
+                style: textTheme.bodyMedium
+                    ?.copyWith(color: colorScheme.onSurfaceVariant),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ],
     );

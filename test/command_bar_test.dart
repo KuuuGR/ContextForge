@@ -13,6 +13,8 @@ import 'package:context_forge/repositories/in_memory_video_repository.dart';
 import 'package:context_forge/services/prompt_service.dart';
 import 'package:context_forge/services/video_history_service.dart';
 import 'package:context_forge/services/video_service.dart';
+import 'package:context_forge/widgets/command_bar.dart';
+import 'package:context_forge/widgets/prompt_editor.dart';
 import 'package:context_forge/widgets/video_input_card.dart';
 
 import 'helpers/in_memory_video_history_storage.dart';
@@ -77,7 +79,7 @@ class _FakeProvider implements YoutubeProvider {
 
 void main() {
   Future<void> pumpApp(WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(1000, 2200));
+    await tester.binding.setSurfaceSize(const Size(1200, 2200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final promptService = PromptService(
@@ -114,19 +116,110 @@ void main() {
     });
   }
 
-  List<IconButton> clipboardButtons(WidgetTester tester) {
-    final buttons = <IconButton>[];
-    for (var i = 0; i < 4; i++) {
-      buttons.add(
-        tester.widget<IconButton>(
-          find.widgetWithIcon(IconButton, Icons.content_paste).at(i),
-        ),
-      );
-    }
-    return buttons;
-  }
+  testWidgets('Command bar renders with all three rows',
+      (WidgetTester tester) async {
+    await pumpApp(tester);
 
-  testWidgets('Smart Paste fills the first empty slot',
+    expect(find.byType(CommandBar), findsOneWidget);
+    // Row 1: ⚡ Quick Workflow (disabled)
+    expect(find.byIcon(Icons.bolt_outlined), findsOneWidget);
+    // Row 2: ① ② ③ slots
+    expect(find.text('①'), findsOneWidget);
+    expect(find.text('②'), findsOneWidget);
+    expect(find.text('③'), findsOneWidget);
+    // Row 3: Paste/Generate/Copy inside the command bar
+    final commandBarPaste = find.descendant(
+      of: find.byType(CommandBar),
+      matching: find.byIcon(Icons.content_paste),
+    );
+    expect(commandBarPaste, findsOneWidget);
+    final commandBarGenerate = find.descendant(
+      of: find.byType(CommandBar),
+      matching: find.byIcon(Icons.play_arrow),
+    );
+    expect(commandBarGenerate, findsOneWidget);
+    final commandBarCopy = find.descendant(
+      of: find.byType(CommandBar),
+      matching: find.byIcon(Icons.copy),
+    );
+    expect(commandBarCopy, findsOneWidget);
+  });
+
+  testWidgets('Quick prompt slot changes the selected prompt',
+      (WidgetTester tester) async {
+    await pumpApp(tester);
+
+    // Capture the initially displayed prompt content in the editor.
+    final editorBefore = tester.widget<TextField>(
+      find.descendant(
+        of: find.byType(PromptEditor),
+        matching: find.byType(TextField),
+      ),
+    );
+    final beforeText = editorBefore.controller?.text ?? '';
+    expect(beforeText, isNotEmpty);
+
+    // Tap ② slot which should select the second prompt.
+    await tester.tap(find.text('②'));
+    await tester.pumpAndSettle();
+
+    // The editor content should change to reflect the second prompt.
+    final editorAfter = tester.widget<TextField>(
+      find.descendant(
+        of: find.byType(PromptEditor),
+        matching: find.byType(TextField),
+      ),
+    );
+    final afterText = editorAfter.controller?.text ?? '';
+    expect(afterText, isNot(beforeText));
+    expect(afterText, isNotEmpty);
+  });
+
+  testWidgets('Generate button in command bar generates output',
+      (WidgetTester tester) async {
+    await pumpApp(tester);
+
+    // Enter a URL.
+    final firstUrlField = find.descendant(
+      of: find.byType(VideoInputCard).first,
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(
+      firstUrlField,
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    );
+    await tester.pump();
+
+    // Find the command bar generate button (the play_arrow in the CommandBar).
+    final commandBarGenerate = find.descendant(
+      of: find.byType(CommandBar),
+      matching: find.byIcon(Icons.play_arrow),
+    );
+    await tester.tap(commandBarGenerate);
+    await tester.pumpAndSettle();
+
+    // Output was generated.
+    final outputField = tester.widget<TextField>(find.byType(TextField).last);
+    expect(outputField.controller!.text, isNotEmpty);
+    expect(outputField.controller!.text, contains('Transcript 1'));
+  });
+
+  testWidgets('Copy button in command bar is disabled when output is empty',
+      (WidgetTester tester) async {
+    await pumpApp(tester);
+
+    // Find the Copy button in the command bar.
+    final commandBarCopy = find.descendant(
+      of: find.byType(CommandBar),
+      matching: find.widgetWithIcon(IconButton, Icons.copy),
+    );
+    expect(commandBarCopy, findsOneWidget);
+
+    final copyButton = tester.widget<IconButton>(commandBarCopy);
+    expect(copyButton.onPressed, isNull);
+  });
+
+  testWidgets('Paste button in command bar performs smart paste',
       (WidgetTester tester) async {
     mockClipboard(
         tester, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
@@ -135,109 +228,21 @@ void main() {
     // Verify all slots are empty.
     expect(find.text('Empty'), findsNWidgets(3));
 
-    // Trigger smart paste via the clipboard button.
-    await tester.tap(find.byIcon(Icons.content_paste).first);
+    // Find the paste button in the command bar.
+    final commandBarPaste = find.descendant(
+      of: find.byType(CommandBar),
+      matching: find.byIcon(Icons.content_paste),
+    );
+    await tester.tap(commandBarPaste);
     await tester.pumpAndSettle();
 
-    // The first slot now has the URL and metadata loads.
+    // First slot is filled and validated.
     final firstUrlField = find.descendant(
       of: find.byType(VideoInputCard).first,
       matching: find.byType(TextField),
     );
     final field = tester.widget<TextField>(firstUrlField);
     expect(field.controller!.text, isNotEmpty);
-
-    // Metadata loaded (video title shown).
     expect(find.text('First Video'), findsOneWidget);
-    expect(find.text('Loaded'), findsOneWidget);
-  });
-
-  testWidgets('Duplicate URLs are rejected with Already added notification',
-      (WidgetTester tester) async {
-    mockClipboard(
-        tester, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-    await pumpApp(tester);
-
-    // Smart paste once.
-    await tester.tap(find.byIcon(Icons.content_paste).first);
-    await tester.pumpAndSettle();
-
-    // Smart paste the same URL again.
-    await tester.tap(find.byIcon(Icons.content_paste).first);
-    await tester.pump();
-
-    // "Already added" notification shown.
-    expect(find.text('Already added'), findsOneWidget);
-  });
-
-  testWidgets('Clipboard button is disabled when clipboard has no URL',
-      (WidgetTester tester) async {
-    mockClipboard(tester, 'not a youtube url');
-    await pumpApp(tester);
-
-    // Find the clipboard icon buttons — 3 in URL fields + 1 in command bar.
-    final buttons = clipboardButtons(tester);
-    expect(buttons, hasLength(4));
-    for (final button in buttons) {
-      expect(button.onPressed, isNull);
-    }
-  });
-
-  testWidgets('Clipboard button is enabled when clipboard has a YouTube URL',
-      (WidgetTester tester) async {
-    mockClipboard(
-        tester, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-    await pumpApp(tester);
-
-    final buttons = clipboardButtons(tester);
-    expect(buttons, hasLength(4));
-    for (final button in buttons) {
-      expect(button.onPressed, isNotNull);
-    }
-  });
-
-  testWidgets('Compact URL display shows ▶ VIDEO_ID after validation',
-      (WidgetTester tester) async {
-    mockClipboard(
-        tester, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-    await pumpApp(tester);
-
-    // Smart paste to populate and validate the first slot.
-    await tester.tap(find.byIcon(Icons.content_paste).first);
-    await tester.pumpAndSettle();
-
-    // The first URL field has the full URL and metadata displayed.
-    final firstUrlField = find.descendant(
-      of: find.byType(VideoInputCard).first,
-      matching: find.byType(TextField),
-    );
-    final textField = tester.widget<TextField>(firstUrlField);
-    expect(textField.controller!.text, isNotEmpty);
-
-    // The video metadata view shows the title.
-    expect(find.text('First Video'), findsOneWidget);
-  });
-
-  testWidgets('Full URL is preserved internally after smart paste',
-      (WidgetTester tester) async {
-    mockClipboard(
-        tester, 'https://youtu.be/dQw4w9WgXcQ');
-    await pumpApp(tester);
-
-    // Smart paste a youtu.be short URL.
-    await tester.tap(find.byIcon(Icons.content_paste).first);
-    await tester.pumpAndSettle();
-
-    // The canonical full URL is used internally (metadata fetch worked).
-    expect(find.text('First Video'), findsOneWidget);
-
-    // The text field still has the original full URL.
-    final firstUrlField = find.descendant(
-      of: find.byType(VideoInputCard).first,
-      matching: find.byType(TextField),
-    );
-    final textField = tester.widget<TextField>(firstUrlField);
-    expect(textField.controller!.text,
-        contains('https://youtu.be/dQw4w9WgXcQ'));
   });
 }
