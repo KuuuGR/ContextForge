@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import '../pages/home_page.dart';
+import '../features/intro/first_launch_intro.dart';
 import '../l10n/app_localizations.dart';
+import '../pages/home_page.dart';
 import '../providers/youtube_explode_provider.dart';
 import '../repositories/in_memory_prompt_repository.dart';
 import '../repositories/in_memory_video_repository.dart';
+import '../services/first_launch_intro_store.dart';
 import '../services/json_video_history_storage.dart';
 import '../services/prompt_service.dart';
 import '../services/video_history_service.dart';
@@ -18,6 +20,7 @@ class ContextForgeApp extends StatelessWidget {
     this.promptService,
     this.videoService,
     this.videoHistoryService,
+    this.introStore,
   });
 
   /// Optional injected prompt service; defaults to in-memory storage.
@@ -28,6 +31,9 @@ class ContextForgeApp extends StatelessWidget {
 
   /// Optional injected video history service; defaults to JSON file storage.
   final VideoHistoryService? videoHistoryService;
+
+  /// Optional injected First Launch Intro store; defaults to JSON file storage.
+  final FirstLaunchIntroStore? introStore;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +62,8 @@ class ContextForgeApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: HomePage(
+      home: _Root(
+        introStore: introStore ?? FirstLaunchIntroStore(),
         promptService:
             promptService ?? PromptService(repository: InMemoryPromptRepository()),
         videoService: videoService ??
@@ -67,6 +74,72 @@ class ContextForgeApp extends StatelessWidget {
         videoHistoryService: videoHistoryService ??
             VideoHistoryService(storage: JsonVideoHistoryStorage()),
       ),
+    );
+  }
+}
+
+/// Root widget that decides whether to show the First Launch Intro or Home.
+///
+/// The Intro is shown only once after installation. After completion, the
+/// flag is persisted and Home is displayed on subsequent launches.
+class _Root extends StatefulWidget {
+  const _Root({
+    required this.introStore,
+    required this.promptService,
+    required this.videoService,
+    required this.videoHistoryService,
+  });
+
+  final FirstLaunchIntroStore introStore;
+  final PromptService promptService;
+  final VideoService videoService;
+  final VideoHistoryService videoHistoryService;
+
+  @override
+  State<_Root> createState() => _RootState();
+}
+
+class _RootState extends State<_Root> {
+  bool? _showIntro;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIntro();
+  }
+
+  Future<void> _checkIntro() async {
+    final show = await widget.introStore.shouldShowIntro();
+    if (!mounted) return;
+    setState(() => _showIntro = show);
+  }
+
+  Future<void> _completeIntro() async {
+    await widget.introStore.markIntroCompleted();
+    if (!mounted) return;
+    setState(() => _showIntro = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final show = _showIntro;
+    if (show == null) {
+      // Still determining whether to show the Intro.
+      return const Scaffold(
+        body: Center(child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        )),
+      );
+    }
+    if (show) {
+      return FirstLaunchIntro(onComplete: _completeIntro);
+    }
+    return HomePage(
+      promptService: widget.promptService,
+      videoService: widget.videoService,
+      videoHistoryService: widget.videoHistoryService,
     );
   }
 }

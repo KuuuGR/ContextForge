@@ -3,8 +3,8 @@
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
 | **Current Version** | 0.1.17                                |
-| **Current Phase**   | 030                                   |
-| **Status**          | App Store Readiness I                 |
+| **Current Phase**   | 031                                   |
+| **Status**          | First Launch Intro                    |
 | **Current Milestone** | Power User Workflow                  |
 
 ## Phase Tracking
@@ -46,6 +46,8 @@
 | 029C  | Workflow Polish III                      | Completed |
 | 029D  | Prompt Library Completion                | Completed |
 | 029E  | Usability Finalization                   | Completed |
+| 030   | App Store Readiness I                    | Completed |
+| 031   | First Launch Intro                        | Completed |
 
 ## Notes
 
@@ -99,6 +101,13 @@
   - URL normalization strips playback-only parameters.
   - First-time user discoverability without external docs.
 
+- Phase 030 added App Store readiness:
+  - Localization (en/pl/es), starter prompt library, AI quick links, URL canonicalization.
+- Phase 031 added the First Launch Intro:
+  - One-time editorial introduction, opacity-only choreography, 12s duration.
+  - Context Reflections (random), persisted completion, dedicated feature architecture.
+  - Documented in `docs/FIRST_LAUNCH_INTRO.md`.
+
 ## Next Phase
 
-Phase 030.
+Phase 032.

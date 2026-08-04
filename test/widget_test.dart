@@ -13,6 +13,7 @@ import 'package:context_forge/services/video_history_service.dart';
 import 'package:context_forge/services/video_service.dart';
 import 'package:context_forge/widgets/generate_button.dart';
 
+import 'helpers/in_memory_first_launch_intro_store.dart';
 import 'helpers/in_memory_video_history_storage.dart';
 
 /// No-op provider so widget tests never create a real HttpClient.
@@ -45,6 +46,7 @@ void main() {
 
     await tester.pumpWidget(
       ContextForgeApp(
+        introStore: InMemoryFirstLaunchIntroStore(),
         promptService: promptService,
         videoService: VideoService(
           repository: InMemoryVideoRepository(),
@@ -65,7 +67,7 @@ void main() {
 
     // Prompt section
     expect(find.text('Prompt'), findsOneWidget);
-    expect(find.text('SEO Article'), findsWidgets);
+    expect(find.text('Instagram Post'), findsWidgets);
 
     // Videos section: 3 cards, initially Empty
     expect(find.text('Videos'), findsOneWidget);

@@ -16,6 +16,7 @@ import 'package:context_forge/services/video_service.dart';
 import 'package:context_forge/widgets/generate_button.dart';
 import 'package:context_forge/widgets/video_input_card.dart';
 
+import 'helpers/in_memory_first_launch_intro_store.dart';
 import 'helpers/in_memory_video_history_storage.dart';
 
 /// Fake provider producing output for one known video.
@@ -87,6 +88,7 @@ void main() {
     await promptService.ensureDefaultPrompts();
 
     return ContextForgeApp(
+      introStore: InMemoryFirstLaunchIntroStore(),
       promptService: promptService,
       videoService: VideoService(
         repository: InMemoryVideoRepository(),

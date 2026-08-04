@@ -2,6 +2,29 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.17] — 2026-08-04 (031)
+
+### Added
+
+- First Launch Intro:
+  - One-time editorial introduction shown only after installation.
+  - Opacity-only fade choreography, 12 seconds total.
+  - Sequence: logo → "presents" → ContextForge → subtitle → editorial divider → Context Reflection → fade out → Home.
+  - Completion persisted via `FirstLaunchIntroStore` (`intro_state.json`).
+  - Never shown again after completion; `reset()` available for development.
+- Context Reflections:
+  - Random selection from a curated set stored in `lib/resources/context_reflections.dart`.
+  - Prepared for future localization.
+- Architecture:
+  - `lib/features/intro/first_launch_intro.dart` — dedicated feature.
+  - `lib/services/first_launch_intro_store.dart` — persistence.
+  - Intro notifies completion via `onComplete` callback; navigation stays outside the Intro.
+- Documentation: `docs/FIRST_LAUNCH_INTRO.md`.
+
+### Notes
+
+- Not a splash screen. Not a loading animation.
+
 ## [0.1.17] — 2026-08-04 (030)
 
 ### Added

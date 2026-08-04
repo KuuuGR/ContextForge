@@ -15,6 +15,7 @@ import 'package:context_forge/services/video_service.dart';
 import 'package:context_forge/widgets/generate_button.dart';
 import 'package:context_forge/widgets/video_input_card.dart';
 
+import 'helpers/in_memory_first_launch_intro_store.dart';
 import 'helpers/in_memory_video_history_storage.dart';
 
 /// Fake provider returning metadata + transcript for one known video.
@@ -89,6 +90,7 @@ void main() {
 
     await tester.pumpWidget(
       ContextForgeApp(
+        introStore: InMemoryFirstLaunchIntroStore(),
         promptService: promptService,
         videoService: VideoService(
           repository: InMemoryVideoRepository(),
@@ -121,7 +123,7 @@ void main() {
     // The output area contains the generated text.
     final outputField = tester.widget<TextField>(find.byType(TextField).last);
     final output = outputField.controller!.text;
-    expect(output, contains('Write a comprehensive SEO-optimized article'));
+    expect(output, contains('Create an engaging Instagram post'));
     expect(
         output, contains('2025-01-15 -> https://www.youtube.com/watch?v=dQw4w9WgXcQ'));
     expect(output, contains('Transcript 1'));

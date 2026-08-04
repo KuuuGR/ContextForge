@@ -15,6 +15,7 @@ import 'package:context_forge/services/video_history_service.dart';
 import 'package:context_forge/services/video_service.dart';
 import 'package:context_forge/widgets/video_input_card.dart';
 
+import 'helpers/in_memory_first_launch_intro_store.dart';
 import 'helpers/in_memory_video_history_storage.dart';
 
 class _FakeProvider implements YoutubeProvider {
@@ -86,6 +87,7 @@ void main() {
 
     await tester.pumpWidget(
       ContextForgeApp(
+        introStore: InMemoryFirstLaunchIntroStore(),
         promptService: promptService,
         videoService: VideoService(
           repository: InMemoryVideoRepository(),
