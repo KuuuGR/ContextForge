@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/clean_transcript.dart';
 import '../models/prompt.dart';
@@ -1153,8 +1154,39 @@ class _Footer extends StatelessWidget {
           icon: const Icon(Icons.help_outline, size: 16),
           label: const Text('Help'),
         ),
+        const SizedBox(width: 8),
+        TextButton.icon(
+          onPressed: () => _showAiMenu(context),
+          icon: const Icon(Icons.smart_toy_outlined, size: 16),
+          label: const Text('AI'),
+        ),
       ],
     );
+  }
+
+  void _showAiMenu(BuildContext context) {
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(200, 0, 0, 0),
+      items: const [
+        PopupMenuItem(value: 'chatgpt', child: Text('ChatGPT')),
+        PopupMenuItem(value: 'gemini', child: Text('Gemini')),
+        PopupMenuItem(value: 'claude', child: Text('Claude')),
+        PopupMenuItem(value: 'deepseek', child: Text('DeepSeek')),
+      ],
+    ).then((value) {
+      if (value == null) return;
+      final url = switch (value) {
+        'chatgpt' => 'https://chat.openai.com',
+        'gemini' => 'https://gemini.google.com',
+        'claude' => 'https://claude.ai',
+        'deepseek' => 'https://chat.deepseek.com',
+        _ => null,
+      };
+      if (url != null) {
+        launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      }
+    });
   }
 
   void _showAbout(BuildContext context) {

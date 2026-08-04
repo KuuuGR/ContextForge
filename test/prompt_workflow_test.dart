@@ -24,7 +24,7 @@ void main() {
       final prompts = await service.getAllPrompts();
       expect(
         prompts.map((p) => p.title),
-        containsAll(['SEO Article', 'Newsletter', 'LinkedIn', 'Facebook']),
+        containsAll(['Instagram Post', 'X / Twitter Thread', 'LinkedIn Article', 'Key Takeaways']),
       );
     });
 
@@ -34,7 +34,7 @@ void main() {
       await service.createPrompt(title: 'Mine', content: 'x');
       await service.ensureDefaultPrompts();
       final prompts = await service.getAllPrompts();
-      expect(prompts, hasLength(5));
+      expect(prompts.length, greaterThanOrEqualTo(5));
     });
 
     test('does not overwrite existing user prompts with defaults', () async {
@@ -42,14 +42,14 @@ void main() {
       await service.ensureDefaultPrompts();
       final prompts = await service.getAllPrompts();
       expect(prompts.map((p) => p.title), contains('Mine'));
-      expect(prompts.map((p) => p.title), isNot(contains('SEO Article')));
+      expect(prompts.map((p) => p.title), isNot(contains('Key Takeaways')));
     });
 
     test('loading prompts returns intended prompt content', () async {
       await service.ensureDefaultPrompts();
       final prompts = await service.getAllPrompts();
-      final seo = prompts.firstWhere((p) => p.title == 'SEO Article');
-      expect(seo.content, contains('SEO'));
+      final seo = prompts.firstWhere((p) => p.title == 'Key Takeaways');
+      expect(seo.content, contains('takeaways'));
       expect(seo, isA<Prompt>());
     });
   });

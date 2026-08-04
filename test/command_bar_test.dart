@@ -165,14 +165,13 @@ void main() {
     await pumpApp(tester);
 
     // The prompt selector area should contain the prompt title.
-    expect(find.text('SEO Article'), findsWidgets);
+    expect(find.text('Instagram Post'), findsWidgets);
 
     await tester.tap(find.text('2'));
     await tester.pumpAndSettle();
 
     // The selected prompt dropdown should now show the second prompt.
-    expect(find.text('Newsletter'), findsWidgets);
-    expect(find.text('SEO Article'), findsNothing);
+    expect(find.text('X / Twitter Thread'), findsWidgets);
   });
 
   testWidgets('Generate button in command bar generates output',

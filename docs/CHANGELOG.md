@@ -2,6 +2,20 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.17] — 2026-08-04 (030)
+
+### Added
+
+- Localization: English (default), Polish, Spanish.
+- App follows macOS system language automatically.
+- Starter prompts: Instagram Post, X/Twitter Thread, Facebook Post, LinkedIn Article, Executive Summary, Study Notes, Podcast Notes, Meeting Brief, Key Takeaways.
+- AI quick links: ChatGPT, Gemini, Claude, DeepSeek — opens official web apps via default browser.
+- URL canonicalization: playback parameters (t, si, feature, pp) stripped.
+
+### Notes
+
+- No API integration.
+
 ## [0.1.17] — 2026-08-04 (029E)
 
 ### Added

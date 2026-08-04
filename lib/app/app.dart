@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../pages/home_page.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/youtube_explode_provider.dart';
 import '../repositories/in_memory_prompt_repository.dart';
 import '../repositories/in_memory_video_repository.dart';
@@ -32,6 +34,17 @@ class ContextForgeApp extends StatelessWidget {
     return MaterialApp(
       title: 'ContextForge',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('pl'),
+        Locale('es'),
+      ],
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueGrey),
         useMaterial3: true,

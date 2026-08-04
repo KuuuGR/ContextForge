@@ -28,20 +28,40 @@ class PromptService {
   /// Default prompt templates created automatically on first run.
   static const defaultPrompts = <({String title, String content})>[
     (
-      title: 'SEO Article',
-      content: 'Write a comprehensive SEO-optimized article based on the transcript.',
+      title: 'Instagram Post',
+      content: 'Create an engaging Instagram post from this transcript. Include a compelling hook, 3-5 key takeaways, relevant hashtags, and a call to action. Keep the tone authentic and conversational.',
     ),
     (
-      title: 'Newsletter',
-      content: 'Write a newsletter summarizing the key points from the transcript.',
+      title: 'X / Twitter Thread',
+      content: 'Create a Twitter/X thread from this transcript. Break the content into 5-8 punchy numbered tweets. Each tweet should be under 280 characters, with a strong opening hook and a clear call to action at the end.',
     ),
     (
-      title: 'LinkedIn',
-      content: 'Write a LinkedIn post inspired by the transcript.',
+      title: 'Facebook Post',
+      content: 'Create a professional Facebook post from this transcript. Include a hook, 2-4 key points, a personal touch, and an engagement question. Keep it around 150-250 words with emojis where appropriate.',
     ),
     (
-      title: 'Facebook',
-      content: 'Write a Facebook post inspired by the transcript.',
+      title: 'LinkedIn Article',
+      content: 'Write a professional LinkedIn article based on this transcript. Structure it with an attention-grabbing headline, executive summary, detailed analysis with examples, and actionable takeaways. Use a professional but accessible tone.',
+    ),
+    (
+      title: 'Executive Summary',
+      content: 'Create a concise executive summary from this transcript. Cover the main topic, key insights, implications, and recommended actions in under 400 words. Use clear section headings and bullet points where helpful.',
+    ),
+    (
+      title: 'Study Notes',
+      content: 'Transform this transcript into comprehensive study notes. Organize by main topics, define key terms, include important examples, and finish with key takeaways and review questions.',
+    ),
+    (
+      title: 'Podcast Notes',
+      content: 'Turn this transcript into clean podcast show notes. Include an engaging overview, structured chapter markers with timestamps if present, key highlights, quotable moments, and a summary for listeners.',
+    ),
+    (
+      title: 'Meeting Brief',
+      content: 'Create a meeting brief from this transcript. Summarize the discussion points, decisions made, action items with owners if mentioned, and open questions. Use a clear structured format.',
+    ),
+    (
+      title: 'Key Takeaways',
+      content: 'Extract the 5-10 most important takeaways from this transcript. Present each as a clear, standalone actionable insight with a brief explanation. Order by importance.',
     ),
   ];
 
