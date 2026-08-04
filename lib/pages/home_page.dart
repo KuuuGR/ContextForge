@@ -541,11 +541,13 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return false;
   }
 
-  /// Inserts [url] into slot [index], validates it, and focuses the field.
+  /// Inserts [url] into slot [index], normalizes it first, validates it,
+  /// and focuses the field.
   void _insertIntoSlot(int index, String url) {
-    _urlControllers[index].text = url;
-    _videoControllers[index].refreshHistoryStatus(url);
-    _videoControllers[index].loadMetadata(url);
+    final normalized = _urlParser.normalizeUrl(url);
+    _urlControllers[index].text = normalized;
+    _videoControllers[index].refreshHistoryStatus(normalized);
+    _videoControllers[index].loadMetadata(normalized);
     _urlFocusNodes[index].requestFocus();
   }
 
@@ -978,7 +980,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const _BottomToolbar(),
+                      const _Footer(),
                     ],
                   ),
                 ),
@@ -1125,33 +1127,109 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-/// Bottom toolbar containing the Generate, Copy, and Clear buttons.
-class _BottomToolbar extends StatelessWidget {
-  const _BottomToolbar();
+/// Lightweight informational footer with About, Shortcuts, and Help dialogs.
+class _Footer extends StatelessWidget {
+  const _Footer();
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        FilledButton.icon(
-          onPressed: null,
-          icon: const Icon(Icons.play_arrow),
-          label: const Text('Generate'),
+        TextButton.icon(
+          onPressed: () => _showAbout(context),
+          icon: const Icon(Icons.info_outline, size: 16),
+          label: const Text('About'),
         ),
-        const SizedBox(width: 12),
-        OutlinedButton.icon(
-          onPressed: null,
-          icon: const Icon(Icons.copy),
-          label: const Text('Copy'),
+        const SizedBox(width: 8),
+        TextButton.icon(
+          onPressed: () => _showShortcuts(context),
+          icon: const Icon(Icons.keyboard_outlined, size: 16),
+          label: const Text('Shortcuts'),
         ),
-        const SizedBox(width: 12),
-        OutlinedButton.icon(
-          onPressed: null,
-          icon: const Icon(Icons.clear),
-          label: const Text('Clear'),
+        const SizedBox(width: 8),
+        TextButton.icon(
+          onPressed: () => _showHelp(context),
+          icon: const Icon(Icons.help_outline, size: 16),
+          label: const Text('Help'),
         ),
       ],
+    );
+  }
+
+  void _showAbout(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('About ContextForge'),
+        content: const Text(
+          'ContextForge 0.1.17\n\n'
+          'Build AI-ready context from YouTube transcripts.\n\n'
+          'Built with Flutter.\n'
+          'Built using the SODA methodology.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showShortcuts(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Keyboard Shortcuts'),
+        content: const Text(
+          '⌘V  Paste the clipboard YouTube URL into the first '
+          'available slot. Successive paste operations continue '
+          'filling the next empty slot.\n\n'
+          '⌘R  Generate output.\n\n'
+          '⌘C  If nothing is selected: copy the generated output. '
+          'Otherwise: perform native copy.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHelp(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('How to use ContextForge'),
+        content: SingleChildScrollView(
+          child: const Text(
+            '1. Copy a YouTube URL.\n'
+            '2. Press ⌘V (or use Paste).\n'
+            '3. Select a prompt.\n'
+            '4. Press Generate.\n'
+            '5. Copy the generated output.\n\n'
+            'Quick Access:\n'
+            '⭐  Favorite prompt.\n'
+            '🌟  Default prompt. Automatically selected when '
+            'ContextForge starts.\n'
+            '⚡  Quick Workflow. Runs the complete workflow '
+            'automatically using the clipboard.\n'
+            '① ② ③  Quick Prompt Slots. Instantly switch the '
+            'selected prompt.',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
     );
   }
 }

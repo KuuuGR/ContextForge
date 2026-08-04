@@ -3,8 +3,8 @@
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
 | **Current Version** | 0.1.17                                |
-| **Current Phase**   | 029D                                  |
-| **Status**          | Power User Workflow Finalization      |
+| **Current Phase**   | 029E                                  |
+| **Status**          | Usability Finalization                |
 | **Current Milestone** | Power User Workflow                  |
 
 ## Phase Tracking
@@ -35,7 +35,6 @@
 | 021   | YouTube Provider Review                   | Completed |
 | 022A  | Collect macOS Network Configuration Evidence | Completed |
 | 022B  | Enable macOS Outbound Network Access      | Completed |
-| 023   | Output Actions                           | Completed |
 | 024   | URL History & Visual Status              | Completed |
 | 025   | Prompt Favorites & Default Prompt        | Completed |
 | 026   | Export as Markdown                       | Completed |
@@ -46,6 +45,7 @@
 | 029B  | Workflow Polish II                       | Completed |
 | 029C  | Workflow Polish III                      | Completed |
 | 029D  | Prompt Library Completion                | Completed |
+| 029E  | Usability Finalization                   | Completed |
 
 ## Notes
 
@@ -94,6 +94,10 @@
   - Prompt Library refreshes immediately on every action.
   - Command Bar spacing/alignment/button sizing consistent.
   - Complete daily workflow (Clipboard → Paste → Prompt → Generate → Copy) validated.
+- Phase 029E added Usability Finalization:
+  - Informational footer (ⓘ About, ⌨ Shortcuts, ❓ Help).
+  - URL normalization strips playback-only parameters.
+  - First-time user discoverability without external docs.
 
 ## Next Phase
 

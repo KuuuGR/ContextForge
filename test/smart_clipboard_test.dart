@@ -204,7 +204,7 @@ void main() {
     expect(find.text('First Video'), findsOneWidget);
   });
 
-  testWidgets('Full URL is preserved internally after smart paste',
+  testWidgets('URL is normalized to canonical form after smart paste',
       (WidgetTester tester) async {
     mockClipboard(
         tester, 'https://youtu.be/dQw4w9WgXcQ');
@@ -221,6 +221,6 @@ void main() {
     );
     final textField = tester.widget<TextField>(firstUrlField);
     expect(textField.controller!.text,
-        contains('https://youtu.be/dQw4w9WgXcQ'));
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
   });
 }

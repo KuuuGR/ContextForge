@@ -2,6 +2,22 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.17] — 2026-08-04 (029E)
+
+### Added
+
+- Informational footer:
+  - ⓘ About — version, description, Flutter, SODA methodology.
+  - ⌨ Shortcuts — documents ⌘V, ⌘R, ⌘C.
+  - ❓ Help — step-by-step workflow guide + Quick Access explanation.
+- URL normalization:
+  - Pasted YouTube URLs are normalized to canonical form, removing playback-only parameters (e.g. `https://www.youtube.com/watch?v=ID&t=4841s` → `https://www.youtube.com/watch?v=ID`).
+- First-time user discoverability.
+
+### Notes
+
+- No new product features.
+
 ## [0.1.17] — 2026-08-04 (029D Final)
 
 ### Verified

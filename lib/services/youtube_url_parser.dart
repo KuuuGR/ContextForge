@@ -84,6 +84,9 @@ class YouTubeUrlParser {
   /// Normalizes a supported YouTube URL to its canonical form:
   /// `https://www.youtube.com/watch?v=VIDEO_ID`.
   ///
+  /// Removes playback-specific parameters (e.g. `t`, `list`, `index`,
+  /// `start_radio`) that do not identify the video.
+  ///
   /// Throws [InvalidYouTubeUrlException] for unsupported or malformed URLs.
   String normalizeUrl(String url) {
     final videoId = extractVideoId(url);

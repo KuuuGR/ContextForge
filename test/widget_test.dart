@@ -78,11 +78,14 @@ void main() {
         find.text('Generated output will appear here.'), findsOneWidget);
 
     // The output Generate button is enabled; Copy/Export Markdown/Clear
-    // appear twice (action bar + bottom toolbar).
-    expect(find.text('Generate'), findsNWidgets(2));
-    expect(find.text('Copy'), findsNWidgets(2));
+    // appear once (action bar only). Footer shows informational buttons.
+    expect(find.text('Generate'), findsOneWidget);
+    expect(find.text('Copy'), findsNWidgets(1));
     expect(find.text('Export Markdown'), findsOneWidget);
-    expect(find.text('Clear'), findsNWidgets(2));
+    expect(find.text('Clear'), findsOneWidget);
+    expect(find.text('About'), findsOneWidget);
+    expect(find.text('Shortcuts'), findsOneWidget);
+    expect(find.text('Help'), findsOneWidget);
 
     final generateButton =
         tester.widget<GenerateButton>(find.byType(GenerateButton));
@@ -102,14 +105,5 @@ void main() {
     );
     expect(actionBarClear.onPressed, isNull);
 
-    // Bottom toolbar buttons remain disabled.
-    final bottomCopy = tester.widget<OutlinedButton>(
-      find.byType(OutlinedButton).at(3),
-    );
-    expect(bottomCopy.onPressed, isNull);
-    final bottomClear = tester.widget<OutlinedButton>(
-      find.byType(OutlinedButton).at(4),
-    );
-    expect(bottomClear.onPressed, isNull);
   });
 }
