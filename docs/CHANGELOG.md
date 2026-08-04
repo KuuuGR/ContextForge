@@ -2,6 +2,30 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.14] — 2026-08-04
+
+### Added
+
+- Export as Markdown:
+  - New `Export Markdown` action next to Copy and Clear in the Output section.
+  - Opens the native macOS Save dialog via `file_selector` (`getSaveLocation`).
+  - Default filename: `ContextForge-YYYY-MM-DD-HHMM.md`.
+  - Writes the generated output exactly as displayed — headings, spacing, blank lines, and formatting are preserved byte-for-byte.
+  - UTF-8 encoding.
+  - Shows a lightweight `Markdown exported.` snackbar confirmation after a successful save.
+- `MarkdownExportService` (`lib/services/markdown_export_service.dart`):
+  - `defaultFileName()` — builds the `ContextForge-YYYY-MM-DD-HHMM.md` filename.
+  - `exportMarkdown(content)` — opens the native Save dialog and writes UTF-8 Markdown; returns `true` on success, `false` when the user cancels.
+- macOS entitlements:
+  - Added `com.apple.security.files.user-selected.read-write` to `DebugProfile.entitlements` and `Release.entitlements` so the sandboxed app can write to user-selected locations.
+- Dependency: `file_selector` added for native Save dialog support.
+- Unit tests (`test/markdown_export_service_test.dart`): filename pattern, zero-padding of single-digit values, default local-time filename.
+
+### Notes
+
+- Transcript generation and the UI design are unchanged.
+- Export writes the output text verbatim — no Markdown conversion or transformation is applied.
+
 ## [0.1.13] — 2026-08-04
 
 ### Added

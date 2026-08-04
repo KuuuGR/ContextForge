@@ -10,6 +10,7 @@ import '../providers/youtube_explode_provider.dart';
 import '../repositories/in_memory_prompt_repository.dart';
 import '../repositories/in_memory_video_repository.dart';
 import '../services/json_video_history_storage.dart';
+import '../services/markdown_export_service.dart';
 import '../services/output_builder_service.dart';
 import '../services/prompt_service.dart';
 import '../services/runtime_trace.dart';
@@ -71,6 +72,8 @@ class _HomePageState extends State<HomePage> {
       const TranscriptCleanupService();
   final OutputBuilderService _outputBuilderService =
       const OutputBuilderService();
+  final MarkdownExportService _markdownExportService =
+      MarkdownExportService();
 
   List<Prompt> _prompts = const [];
   String _selectedPrompt = '';
@@ -88,6 +91,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   bool get _canCopy => _outputController.text.trim().isNotEmpty;
+
+  bool get _canExport => _outputController.text.trim().isNotEmpty;
 
   bool get _canClear {
     if (_outputController.text.isNotEmpty) return true;
@@ -231,6 +236,27 @@ class _HomePageState extends State<HomePage> {
         duration: Duration(seconds: 2),
       ),
     );
+  }
+
+  /// Exports the generated output as a Markdown document.
+  ///
+  /// Opens the native macOS Save dialog with the default filename
+  /// `ContextForge-YYYY-MM-DD-HHMM.md`. Writes the output exactly as it
+  /// appears in the editor (UTF-8). Shows a confirmation on success.
+  Future<void> _exportMarkdown() async {
+    final output = _outputController.text;
+    if (output.isEmpty) return;
+    final succeeded =
+        await _markdownExportService.exportMarkdown(output);
+    if (!mounted) return;
+    if (succeeded) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Markdown exported.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   /// Resets the working session to the initial ready state.
@@ -441,6 +467,12 @@ class _HomePageState extends State<HomePage> {
                             onPressed: _canCopy ? _copyOutput : null,
                             icon: const Icon(Icons.copy),
                             label: const Text('Copy'),
+                          ),
+                          const SizedBox(width: 12),
+                          OutlinedButton.icon(
+                            onPressed: _canExport ? _exportMarkdown : null,
+                            icon: const Icon(Icons.description_outlined),
+                            label: const Text('Export Markdown'),
                           ),
                           const SizedBox(width: 12),
                           OutlinedButton.icon(

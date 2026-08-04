@@ -77,33 +77,38 @@ void main() {
     expect(
         find.text('Generated output will appear here.'), findsOneWidget);
 
-    // The output Generate button is enabled; Copy/Clear appear twice
-    // (action bar + bottom toolbar).
+    // The output Generate button is enabled; Copy/Export Markdown/Clear
+    // appear twice (action bar + bottom toolbar).
     expect(find.text('Generate'), findsNWidgets(2));
     expect(find.text('Copy'), findsNWidgets(2));
+    expect(find.text('Export Markdown'), findsOneWidget);
     expect(find.text('Clear'), findsNWidgets(2));
 
     final generateButton =
         tester.widget<GenerateButton>(find.byType(GenerateButton));
     expect(generateButton.onPressed, isNotNull);
 
-    // Action-bar Copy/Clear are disabled when there is nothing to do.
+    // Action-bar buttons are disabled when there is nothing to do.
     final actionBarCopy = tester.widget<OutlinedButton>(
       find.byType(OutlinedButton).at(0),
     );
     expect(actionBarCopy.onPressed, isNull);
-    final actionBarClear = tester.widget<OutlinedButton>(
+    final actionBarExport = tester.widget<OutlinedButton>(
       find.byType(OutlinedButton).at(1),
+    );
+    expect(actionBarExport.onPressed, isNull);
+    final actionBarClear = tester.widget<OutlinedButton>(
+      find.byType(OutlinedButton).at(2),
     );
     expect(actionBarClear.onPressed, isNull);
 
     // Bottom toolbar buttons remain disabled.
     final bottomCopy = tester.widget<OutlinedButton>(
-      find.byType(OutlinedButton).at(2),
+      find.byType(OutlinedButton).at(3),
     );
     expect(bottomCopy.onPressed, isNull);
     final bottomClear = tester.widget<OutlinedButton>(
-      find.byType(OutlinedButton).at(3),
+      find.byType(OutlinedButton).at(4),
     );
     expect(bottomClear.onPressed, isNull);
   });

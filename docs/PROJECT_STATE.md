@@ -2,9 +2,9 @@
 
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
-| **Current Version** | 0.1.13                                |
-| **Current Phase**   | 025                                  |
-| **Status**          | Prompt favorites and default implemented |
+| **Current Version** | 0.1.14                                |
+| **Current Phase**   | 026                                  |
+| **Status**          | Markdown export implemented          |
 | **Current Milestone** | Daily Workflow Improvements          |
 
 ## Phase Tracking
@@ -38,6 +38,7 @@
 | 023   | Output Actions                           | Completed |
 | 024   | URL History & Visual Status              | Completed |
 | 025   | Prompt Favorites & Default Prompt        | Completed |
+| 026   | Export as Markdown                       | Completed |
 
 ## Notes
 
@@ -64,7 +65,14 @@
   - Default Prompt auto-selects on launch.
   - `isFavorite` / `isDefault` persisted in `prompts.json` (no new storage).
   - Removing Default restores previous behaviour (first prompt selected).
+- Phase 026 added Markdown export:
+  - `Export Markdown` button next to Copy and Clear in the Output section.
+  - Native macOS Save dialog via `file_selector`.
+  - Default filename: `ContextForge-YYYY-MM-DD-HHMM.md`.
+  - UTF-8 output written byte-for-byte exactly as displayed.
+  - `Markdown exported.` confirmation snackbar on success.
+  - Added `com.apple.security.files.user-selected.read-write` entitlement for the sandboxed app.
 
 ## Next Phase
 
-Phase 026.
+Phase 027.
