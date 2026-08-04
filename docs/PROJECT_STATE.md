@@ -3,8 +3,8 @@
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
 | **Current Version** | 0.1.17                                |
-| **Current Phase**   | 029                                  |
-| **Status**          | Command bar implemented              |
+| **Current Phase**   | 029A                                  |
+| **Status**          | Power User Workflow                   |
 | **Current Milestone** | Power User Workflow                  |
 
 ## Phase Tracking
@@ -42,6 +42,7 @@
 | 027   | Keyboard Workflow                        | Completed |
 | 028   | Smart Clipboard Workflow                 | Completed |
 | 029   | Command Bar                              | Completed |
+| 029A  | Power User Workflow                      | Completed |
 
 ## Notes
 
@@ -55,47 +56,19 @@
   - Verified: `codesign -d --entitlements` shows `com.apple.security.network.client` embedded in the built app.
 - User-facing "Could not reach YouTube" error is resolved.
 - Phase 023 added the Output action bar (Copy, Clear, keyboard shortcut).
-- Phase 024 added persistent video processing history:
-  - `video_history.json` in the application support directory.
-  - Records every successful transcript generation (videoId, originalUrl, title, channelName, processedAt).
-  - Updates `processedAt` on reprocessing — no duplicates.
-  - Green/neutral dot indicator inside each URL field.
-  - Tooltip shows the last processed date/time.
-  - History survives application restarts and the Clear button.
-- Phase 025 added Prompt Favorites and Default Prompt:
-  - Star icon toggles Favorites; Favorites sort to the top with manual order preserved.
-  - Bookmark control toggles the single Default; a "Default" badge is shown.
-  - Default Prompt auto-selects on launch.
-  - `isFavorite` / `isDefault` persisted in `prompts.json` (no new storage).
-  - Removing Default restores previous behaviour (first prompt selected).
-- Phase 026 added Markdown export:
-  - `Export Markdown` button next to Copy and Clear in the Output section.
-  - Native macOS Save dialog via `file_selector`.
-  - Default filename: `ContextForge-YYYY-MM-DD-HHMM.md`.
-  - UTF-8 output written byte-for-byte exactly as displayed.
-  - `Markdown exported.` confirmation snackbar on success.
-  - Added `com.apple.security.files.user-selected.read-write` entitlement for the sandboxed app.
-- Phase 027 added the keyboard workflow:
-  - **⌘↩ Generate** — global shortcut.
-  - **⌘⌫ Clear** — global shortcut.
-  - **⌘⇧S Export Markdown** — global shortcut.
-  - **⌘C Copy** — verified when Output has focus.
-  - **Escape** — removes keyboard focus.
-  - Enter in URL fields navigates to the next field; Enter on the last field triggers Generate.
-  - Focus nodes wrap Copy, Export, Generate, and Output for natural Tab ordering.
-  - The complete workflow can be performed without touching the mouse.
-- Phase 028 added the Smart Clipboard Workflow:
-  - **⌘V Smart Paste** inserts a valid clipboard YouTube URL into the first empty slot.
-  - Duplicate detection rejects the same video ID with an "Already added" notification.
-  - Each URL field has a clipboard button enabled only when the clipboard holds a valid YouTube URL.
-  - Compact URL display shows `▶ VIDEO_ID` after validation; the full URL is kept internally and shown on hover.
-  - No background clipboard monitoring — reads are user-initiated only.
-- Phase 029 added the Command Bar:
-  - Compact three-row command bar in the top-right header.
-  - Row 1: ⚡ Quick Workflow (reserved, disabled).
-  - Row 2: ① ② ③ quick prompt selection (segmented control).
-  - Row 3: 📋 Paste, 🔄 Generate, 📄 Copy actions.
-  - Existing controls and workflows remain unchanged.
+- Phase 024 added persistent video processing history.
+- Phase 025 added Prompt Favorites and Default Prompt.
+- Phase 026 added Markdown export.
+- Phase 027 added the keyboard workflow.
+- Phase 028 added the Smart Clipboard Workflow.
+- Phase 029 added the Command Bar.
+- Phase 029A added the Power User Workflow:
+  - Field clipboard icon replaces only ITS field; global ⌘V inserts into first empty slot.
+  - Quick Access prompt roles (⚡, ①, ②, ③) via the bookmark menu.
+  - Favorites state machine: ☆→★→🌟→☆; Default always implies Favorite.
+  - Generate reuses cached metadata/transcripts when possible.
+  - ⌘C behavior verified (full-output copy when no selection).
+  - Prompt roles persisted via `prompts.json` `quickAccess` field.
 
 ## Next Phase
 

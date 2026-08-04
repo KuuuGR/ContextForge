@@ -1,20 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/prompt.dart';
+import '../models/prompt_quick_access.dart';
 import '../presentation/prompt_constants.dart';
 
-/// Dropdown for selecting a saved prompt template.
-///
-/// Loads real prompts from the service (never mock data). Includes a
-/// "Custom Prompt" option at the end. Shows a friendly placeholder when
-/// no prompts exist yet.
-///
-/// Each prompt option displays:
-/// - A small star icon (filled for Favorites, outlined otherwise).
-/// - The prompt title.
-/// - A small "Default" badge on the Default Prompt.
-/// - A subtle outline bookmark icon on non-default prompts to set them
-///   as the Default.
 class PromptSelector extends StatelessWidget {
   const PromptSelector({
     super.key,
@@ -22,22 +11,14 @@ class PromptSelector extends StatelessWidget {
     required this.value,
     required this.onChanged,
     this.onToggleFavorite,
-    this.onToggleDefault,
+    this.onAssignQuickAccess,
   });
 
-  /// Saved prompt templates (already loaded by the parent from PromptService).
   final List<Prompt> prompts;
-
-  /// Currently selected value (a prompt title or [customPromptOption]).
   final String value;
-
   final ValueChanged<String> onChanged;
-
-  /// Called when the user taps the star icon next to a prompt.
   final ValueChanged<Prompt>? onToggleFavorite;
-
-  /// Called when the user taps the Default badge / set-default control.
-  final ValueChanged<Prompt>? onToggleDefault;
+  final ValueChanged<(Prompt, PromptQuickAccess)>? onAssignQuickAccess;
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +31,9 @@ class PromptSelector extends StatelessWidget {
             onToggleFavorite: onToggleFavorite == null
                 ? null
                 : () => onToggleFavorite!(prompt),
-            onToggleDefault: onToggleDefault == null
+            onAssignQuickAccess: onAssignQuickAccess == null
                 ? null
-                : () => onToggleDefault!(prompt),
+                : (role) => onAssignQuickAccess!((prompt, role)),
           ),
         ),
       const DropdownMenuItem(
@@ -70,7 +51,8 @@ class PromptSelector extends StatelessWidget {
     }
 
     return DropdownButtonFormField<String>(
-      initialValue: items.any((i) => i.value == value) ? value : items.first.value,
+      initialValue:
+          items.any((i) => i.value == value) ? value : items.first.value,
       decoration: const InputDecoration(
         labelText: 'Select a prompt',
         border: OutlineInputBorder(),
@@ -85,21 +67,16 @@ class PromptSelector extends StatelessWidget {
   }
 }
 
-/// A single row inside the prompt dropdown.
-///
-/// Shows a subtle star icon (filled = favorite, outlined = not), the title,
-/// and either a "Default" badge (for the default prompt) or a set-default
-/// outline bookmark icon (for other prompts).
 class _PromptMenuItem extends StatelessWidget {
   const _PromptMenuItem({
     required this.prompt,
     this.onToggleFavorite,
-    this.onToggleDefault,
+    this.onAssignQuickAccess,
   });
 
   final Prompt prompt;
   final VoidCallback? onToggleFavorite;
-  final VoidCallback? onToggleDefault;
+  final ValueChanged<PromptQuickAccess>? onAssignQuickAccess;
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +84,6 @@ class _PromptMenuItem extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Subtle star icon — filled for favorites, outlined otherwise.
         InkWell(
           onTap: onToggleFavorite,
           borderRadius: BorderRadius.circular(16),
@@ -126,34 +102,29 @@ class _PromptMenuItem extends StatelessWidget {
         Text(prompt.title),
         if (prompt.isDefault) ...[
           const SizedBox(width: 6),
-          // Default badge — tappable to remove the Default designation.
-          InkWell(
-            onTap: onToggleDefault,
-            borderRadius: BorderRadius.circular(4),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                'Default',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSecondaryContainer,
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              'Default',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSecondaryContainer,
               ),
             ),
           ),
-        ] else if (onToggleDefault != null) ...[
+        ],
+        if (onAssignQuickAccess != null) ...[
           const SizedBox(width: 4),
-          // Subtle set-default control for non-default prompts.
           InkWell(
-            onTap: onToggleDefault,
+            onTap: () => _showQuickAccessMenu(context),
             borderRadius: BorderRadius.circular(16),
             child: Padding(
               padding: const EdgeInsets.all(4),
               child: Icon(
-                Icons.bookmark_border,
+                _roleIcon(prompt.quickAccess),
                 size: 16,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -162,5 +133,70 @@ class _PromptMenuItem extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  IconData _roleIcon(PromptQuickAccess role) {
+    switch (role) {
+      case PromptQuickAccess.none:
+        return Icons.bookmark_border;
+      case PromptQuickAccess.quickWorkflow:
+        return Icons.bolt_outlined;
+      case PromptQuickAccess.slotOne:
+        return Icons.looks_one_outlined;
+      case PromptQuickAccess.slotTwo:
+        return Icons.looks_two_outlined;
+      case PromptQuickAccess.slotThree:
+        return Icons.looks_3_outlined;
+    }
+  }
+
+  void _showQuickAccessMenu(BuildContext context) {
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(200, 0, 0, 0),
+      items: [
+        PopupMenuItem(
+          value: 'none',
+          child: Text(prompt.quickAccess == PromptQuickAccess.none
+              ? '✓ None'
+              : 'None'),
+        ),
+        PopupMenuItem(
+          value: 'quickWorkflow',
+          child: Text(prompt.quickAccess == PromptQuickAccess.quickWorkflow
+              ? '✓ ⚡ Quick Workflow'
+              : '⚡ Quick Workflow'),
+        ),
+        PopupMenuItem(
+          value: 'slotOne',
+          child: Text(prompt.quickAccess == PromptQuickAccess.slotOne
+              ? '✓ ① Slot One'
+              : '① Slot One'),
+        ),
+        PopupMenuItem(
+          value: 'slotTwo',
+          child: Text(prompt.quickAccess == PromptQuickAccess.slotTwo
+              ? '✓ ② Slot Two'
+              : '② Slot Two'),
+        ),
+        PopupMenuItem(
+          value: 'slotThree',
+          child: Text(prompt.quickAccess == PromptQuickAccess.slotThree
+              ? '✓ ③ Slot Three'
+              : '③ Slot Three'),
+        ),
+      ],
+    ).then((value) {
+      if (value == null || onAssignQuickAccess == null) return;
+      final role = switch (value) {
+        'none' => PromptQuickAccess.none,
+        'quickWorkflow' => PromptQuickAccess.quickWorkflow,
+        'slotOne' => PromptQuickAccess.slotOne,
+        'slotTwo' => PromptQuickAccess.slotTwo,
+        'slotThree' => PromptQuickAccess.slotThree,
+        _ => PromptQuickAccess.none,
+      };
+      onAssignQuickAccess!(role);
+    });
   }
 }

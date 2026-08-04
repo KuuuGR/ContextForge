@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:context_forge/app/app.dart';
+import 'package:context_forge/models/prompt_quick_access.dart';
 import 'package:context_forge/models/transcript_language.dart';
 import 'package:context_forge/providers/youtube_provider.dart';
 import 'package:context_forge/providers/youtube_transcript.dart';
@@ -78,14 +79,31 @@ class _FakeProvider implements YoutubeProvider {
 }
 
 void main() {
+  late PromptService promptService;
+
   Future<void> pumpApp(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1200, 2200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final promptService = PromptService(
+    promptService = PromptService(
       repository: InMemoryPromptRepository(),
     );
     await promptService.ensureDefaultPrompts();
+
+    // Assign the first 3 prompts to quick slots ① ② ③.
+    final prompts = await promptService.getAllPrompts();
+    if (prompts.isNotEmpty) {
+      await promptService.assignQuickAccess(
+          prompts[0].id, PromptQuickAccess.slotOne);
+    }
+    if (prompts.length >= 2) {
+      await promptService.assignQuickAccess(
+          prompts[1].id, PromptQuickAccess.slotTwo);
+    }
+    if (prompts.length >= 3) {
+      await promptService.assignQuickAccess(
+          prompts[2].id, PromptQuickAccess.slotThree);
+    }
 
     await tester.pumpWidget(
       ContextForgeApp(
@@ -121,13 +139,11 @@ void main() {
     await pumpApp(tester);
 
     expect(find.byType(CommandBar), findsOneWidget);
-    // Row 1: ⚡ Quick Workflow (disabled)
     expect(find.byIcon(Icons.bolt_outlined), findsOneWidget);
-    // Row 2: ① ② ③ slots
-    expect(find.text('①'), findsOneWidget);
-    expect(find.text('②'), findsOneWidget);
-    expect(find.text('③'), findsOneWidget);
-    // Row 3: Paste/Generate/Copy inside the command bar
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+
     final commandBarPaste = find.descendant(
       of: find.byType(CommandBar),
       matching: find.byIcon(Icons.content_paste),
@@ -149,7 +165,6 @@ void main() {
       (WidgetTester tester) async {
     await pumpApp(tester);
 
-    // Capture the initially displayed prompt content in the editor.
     final editorBefore = tester.widget<TextField>(
       find.descendant(
         of: find.byType(PromptEditor),
@@ -159,11 +174,9 @@ void main() {
     final beforeText = editorBefore.controller?.text ?? '';
     expect(beforeText, isNotEmpty);
 
-    // Tap ② slot which should select the second prompt.
-    await tester.tap(find.text('②'));
+    await tester.tap(find.text('2'));
     await tester.pumpAndSettle();
 
-    // The editor content should change to reflect the second prompt.
     final editorAfter = tester.widget<TextField>(
       find.descendant(
         of: find.byType(PromptEditor),
@@ -179,7 +192,6 @@ void main() {
       (WidgetTester tester) async {
     await pumpApp(tester);
 
-    // Enter a URL.
     final firstUrlField = find.descendant(
       of: find.byType(VideoInputCard).first,
       matching: find.byType(TextField),
@@ -190,7 +202,6 @@ void main() {
     );
     await tester.pump();
 
-    // Find the command bar generate button (the play_arrow in the CommandBar).
     final commandBarGenerate = find.descendant(
       of: find.byType(CommandBar),
       matching: find.byIcon(Icons.play_arrow),
@@ -198,7 +209,6 @@ void main() {
     await tester.tap(commandBarGenerate);
     await tester.pumpAndSettle();
 
-    // Output was generated.
     final outputField = tester.widget<TextField>(find.byType(TextField).last);
     expect(outputField.controller!.text, isNotEmpty);
     expect(outputField.controller!.text, contains('Transcript 1'));
@@ -208,7 +218,6 @@ void main() {
       (WidgetTester tester) async {
     await pumpApp(tester);
 
-    // Find the Copy button in the command bar.
     final commandBarCopy = find.descendant(
       of: find.byType(CommandBar),
       matching: find.widgetWithIcon(IconButton, Icons.copy),
@@ -225,10 +234,8 @@ void main() {
         tester, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     await pumpApp(tester);
 
-    // Verify all slots are empty.
     expect(find.text('Empty'), findsNWidgets(3));
 
-    // Find the paste button in the command bar.
     final commandBarPaste = find.descendant(
       of: find.byType(CommandBar),
       matching: find.byIcon(Icons.content_paste),
@@ -236,7 +243,6 @@ void main() {
     await tester.tap(commandBarPaste);
     await tester.pumpAndSettle();
 
-    // First slot is filled and validated.
     final firstUrlField = find.descendant(
       of: find.byType(VideoInputCard).first,
       matching: find.byType(TextField),

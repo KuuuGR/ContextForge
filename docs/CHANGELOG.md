@@ -2,6 +2,32 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.17] — 2026-08-04 (029A)
+
+### Added
+
+- Smart Paste fixed:
+  - Field clipboard icon now replaces the URL in THAT field only.
+  - Global ⌘V Smart Paste inserts into the first empty slot only.
+  - Duplicate detection rejects same video ID with "Already added".
+- Quick Access prompt roles:
+  - Bookmark icon repurposed to open a Quick Access menu (None, ⚡ Quick Workflow, ① Slot One, ② Slot Two, ③ Slot Three).
+  - A prompt may be assigned to exactly one role.
+  - Command bar slots now use quick access roles instead of first-N prompts.
+- Favorites state machine:
+  - ☆ Normal → ★ Favorite → 🌟 Favorite + Default → ☆ Normal.
+  - Default always implies Favorite; Default without Favorite never exists.
+  - Un-favoriting a Default removes the Default too.
+- Generate reuses cached metadata/transcripts when available.
+- ⌘C behavior: copies entire output when no text selection, native behavior when selection exists.
+- Keyboard shortcuts verified: ⌘↩ Generate, ⌘⌫ Clear, ⌘⇧S Export, ⌘C Copy, ⌘V Smart Paste, Escape unfocus.
+
+### Notes
+
+- Workflow friction removal only — no feature expansion.
+- Existing controls unchanged.
+- Prompt roles persisted via `prompts.json` (new `quickAccess` field).
+
 ## [0.1.17] — 2026-08-04
 
 ### Added

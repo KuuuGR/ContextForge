@@ -2,6 +2,7 @@ import 'dart:math';
 
 import '../exceptions/prompt_exceptions.dart';
 import '../models/prompt.dart';
+import '../models/prompt_quick_access.dart';
 import '../repositories/prompt_repository.dart';
 
 /// Application service for prompt domain workflows.
@@ -109,9 +110,25 @@ class PromptService {
 
   /// Toggles the Favorite state of the prompt with [id].
   ///
+  /// State machine:
+  /// - ☆ Normal → ★ Favorite
+  /// - ★ Favorite → ☆ Normal
+  /// - 🌟 Favorite + Default → ☆ Normal (Default is removed too, because
+  ///   Default without Favorite must never exist)
+  ///
   /// Throws [PromptNotFoundException] when the prompt does not exist.
   Future<Prompt> setFavorite(String id, bool isFavorite) async {
     final existing = await getPrompt(id);
+    if (!isFavorite && existing.isDefault) {
+      // Un-favoriting a default removes the default too.
+      final cleared = existing.copyWith(
+        isFavorite: false,
+        isDefault: false,
+        updatedAt: _nowIso8601(),
+      );
+      await repository.save(cleared);
+      return cleared;
+    }
     final updated = existing.copyWith(
       isFavorite: isFavorite,
       updatedAt: _nowIso8601(),
@@ -122,7 +139,10 @@ class PromptService {
 
   /// Marks the prompt with [id] as the single Default Prompt.
   ///
-  /// Any previously-default prompt has its `isDefault` flag cleared.
+  /// Setting the Default also sets Favorite (Default always implies
+  /// Favorite). Any previously-default prompt has its `isDefault` flag
+  /// cleared.
+  ///
   /// Throws [PromptNotFoundException] when the prompt does not exist.
   Future<Prompt> setDefault(String id) async {
     final existing = await getPrompt(id);
@@ -137,6 +157,35 @@ class PromptService {
 
     final updated = existing.copyWith(
       isDefault: true,
+      isFavorite: true,
+      updatedAt: _nowIso8601(),
+    );
+    await repository.save(updated);
+    return updated;
+  }
+
+  /// Assigns a [PromptQuickAccess] role to the prompt with [id].
+  ///
+  /// Only one prompt may hold a given role — assigning a role clears any
+  /// previous holder of that role. Passing [PromptQuickAccess.none] removes
+  /// the current role assignment.
+  ///
+  /// Throws [PromptNotFoundException] when the prompt does not exist.
+  Future<Prompt> assignQuickAccess(String id, PromptQuickAccess role) async {
+    final existing = await getPrompt(id);
+
+    // Clear any existing prompt holding this role.
+    if (role != PromptQuickAccess.none) {
+      final prompts = await repository.getAll();
+      for (final p in prompts) {
+        if (p.id != id && p.quickAccess == role) {
+          await repository.save(p.copyWith(quickAccess: PromptQuickAccess.none));
+        }
+      }
+    }
+
+    final updated = existing.copyWith(
+      quickAccess: role,
       updatedAt: _nowIso8601(),
     );
     await repository.save(updated);
@@ -145,7 +194,8 @@ class PromptService {
 
   /// Removes the Default Prompt designation.
   ///
-  /// No-op when no prompt is currently the Default.
+  /// The prompt remains a Favorite (🌟 → ★). No-op when no prompt is
+  /// currently the Default.
   /// Throws [PromptNotFoundException] when the prompt does not exist.
   Future<Prompt> clearDefault(String id) async {
     final existing = await getPrompt(id);

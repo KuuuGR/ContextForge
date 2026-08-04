@@ -118,7 +118,7 @@ void main() {
           prompts: updatedPrompts,
           value: updatedPrompts.first.title,
           onChanged: (String _) {},
-          onToggleDefault: (Prompt _) {},
+          onAssignQuickAccess: (_) {},
         )),
       );
 

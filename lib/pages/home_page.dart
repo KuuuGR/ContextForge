@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../models/clean_transcript.dart';
 import '../models/prompt.dart';
+import '../models/prompt_quick_access.dart';
 import '../models/transcript_selection.dart';
 import '../models/video.dart';
 import '../presentation/prompt_constants.dart';
@@ -213,33 +214,18 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  /// Toggles the Default designation of a prompt.
-  ///
-  /// Tapping on the current Default removes it; tapping on any other prompt
-  /// makes it the single Default (clearing any previous one).
-  Future<void> _onToggleDefault(Prompt prompt) async {
-    if (prompt.isDefault) {
-      await _promptService.clearDefault(prompt.id);
-    } else {
-      await _promptService.setDefault(prompt.id);
-    }
+  /// Assigns a Quick Access role to a prompt and reloads the list.
+  Future<void> _onAssignQuickAccess(
+      (Prompt, PromptQuickAccess) assignment) async {
+    final (prompt, role) = assignment;
+    await _promptService.assignQuickAccess(prompt.id, role);
     final prompts = await _promptService.getAllPrompts();
-    // If the Default was just removed, fall back to the first prompt.
     if (!mounted) return;
     setState(() {
       _prompts = prompts;
-      if (_selectedPrompt == customPromptOption ||
-          !prompts.any((p) => p.title == _selectedPrompt)) {
-        _selectedPrompt =
-            prompts.isEmpty ? customPromptOption : prompts.first.title;
-        final selected =
-            prompts.isEmpty ? null : prompts.first;
-        if (selected != null) {
-          _promptEditorController.text = selected.content;
-        }
-      }
     });
   }
+
 
   /// Handles Enter in a URL field.
   ///
@@ -274,66 +260,50 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  /// Smart Paste: inserts the clipboard URL into the first empty slot.
+  /// Reads the clipboard URL and validates its video ID.
+  ///
+  /// Returns `null` when the clipboard does not contain a valid YouTube URL.
+  String? _clipboardVideoId() {
+    if (!_clipboardHasValidUrl || _clipboardUrl.isEmpty) return null;
+    try {
+      return _urlParser.extractVideoId(_clipboardUrl);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Shows the duplicate notification.
+  void _showAlreadyAdded() {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Already added'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  /// Global Smart Paste: inserts the clipboard URL into the first empty slot.
   ///
   /// - Does not overwrite existing URLs.
   /// - Rejects duplicates by video ID (shows "Already added").
   /// - Immediately validates the inserted URL.
-  Future<void> _smartPaste() async {
+  Future<void> _smartPasteGlobal() async {
     await _refreshClipboardState();
-    if (!_clipboardHasValidUrl || _clipboardUrl.isEmpty) return;
+    final candidateVideoId = _clipboardVideoId();
+    if (candidateVideoId == null) return;
 
-    final candidate = _clipboardUrl;
-    String candidateVideoId;
-    try {
-      candidateVideoId = _urlParser.extractVideoId(candidate);
-    } catch (_) {
+    // Duplicate check against all validated and unvalidated slots.
+    if (_videoAlreadyPresent(candidateVideoId)) {
+      _showAlreadyAdded();
       return;
-    }
-
-    // Duplicate check: the same video ID in any validated slot.
-    for (final controller in _videoControllers) {
-      final video = controller.video;
-      if (video != null && video.videoId == candidateVideoId) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Already added'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-        return;
-      }
-    }
-    // Also check non-empty text fields that have not been validated yet.
-    for (final textController in _urlControllers) {
-      final text = textController.text.trim();
-      if (text.isEmpty) continue;
-      try {
-        if (_urlParser.extractVideoId(text) == candidateVideoId) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Already added'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
-          return;
-        }
-      } catch (_) {
-        // Ignore invalid text in other slots.
-      }
     }
 
     // Find the first empty slot and insert the URL.
     for (var i = 0; i < _urlControllers.length; i++) {
       if (_urlControllers[i].text.trim().isEmpty) {
-        _urlControllers[i].text = candidate;
-        _videoControllers[i].refreshHistoryStatus(candidate);
-        _videoControllers[i].loadMetadata(candidate);
-        _urlFocusNodes[i].requestFocus();
+        _insertIntoSlot(i, _clipboardUrl);
         return;
       }
     }
@@ -347,6 +317,67 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     }
+  }
+
+  /// Field-specific paste: replaces the URL in the given [index] field.
+  ///
+  /// Does NOT insert into the first empty slot. Rejects duplicates in other
+  /// slots (shows "Already added").
+  Future<void> _smartPasteIntoField(int index) async {
+    await _refreshClipboardState();
+    final candidateVideoId = _clipboardVideoId();
+    if (candidateVideoId == null) return;
+
+    // Duplicate check against other slots (not this one).
+    for (var i = 0; i < _videoControllers.length; i++) {
+      if (i == index) continue;
+      final video = _videoControllers[i].video;
+      if (video != null && video.videoId == candidateVideoId) {
+        _showAlreadyAdded();
+        return;
+      }
+    }
+    for (var i = 0; i < _urlControllers.length; i++) {
+      if (i == index) continue;
+      final text = _urlControllers[i].text.trim();
+      if (text.isEmpty) continue;
+      try {
+        if (_urlParser.extractVideoId(text) == candidateVideoId) {
+          _showAlreadyAdded();
+          return;
+        }
+      } catch (_) {
+        // Ignore invalid text in other slots.
+      }
+    }
+
+    _insertIntoSlot(index, _clipboardUrl);
+  }
+
+  /// Checks whether [videoId] already exists in any slot.
+  bool _videoAlreadyPresent(String videoId) {
+    for (final controller in _videoControllers) {
+      final video = controller.video;
+      if (video != null && video.videoId == videoId) return true;
+    }
+    for (final textController in _urlControllers) {
+      final text = textController.text.trim();
+      if (text.isEmpty) continue;
+      try {
+        if (_urlParser.extractVideoId(text) == videoId) return true;
+      } catch (_) {
+        // Ignore invalid text.
+      }
+    }
+    return false;
+  }
+
+  /// Inserts [url] into slot [index], validates it, and focuses the field.
+  void _insertIntoSlot(int index, String url) {
+    _urlControllers[index].text = url;
+    _videoControllers[index].refreshHistoryStatus(url);
+    _videoControllers[index].loadMetadata(url);
+    _urlFocusNodes[index].requestFocus();
   }
 
   /// Copies the generated output to the system clipboard.
@@ -594,7 +625,7 @@ class _HomePageState extends State<HomePage> {
           ),
           _SmartPasteIntent: CallbackAction<_SmartPasteIntent>(
             onInvoke: (_) {
-              _smartPaste();
+              _smartPasteGlobal();
               return null;
             },
           ),
@@ -625,7 +656,7 @@ class _HomePageState extends State<HomePage> {
                             prompts: _prompts,
                             selectedPrompt: _selectedPrompt,
                             onSelectPrompt: _onPromptChanged,
-                            onPaste: _smartPaste,
+                            onPaste: _smartPasteGlobal,
                             canPaste: _clipboardHasValidUrl,
                             onGenerate: _generate,
                             onCopy: _copyOutput,
@@ -644,7 +675,7 @@ class _HomePageState extends State<HomePage> {
                               value: _selectedPrompt,
                               onChanged: _onPromptChanged,
                               onToggleFavorite: _onToggleFavorite,
-                              onToggleDefault: _onToggleDefault,
+                              onAssignQuickAccess: _onAssignQuickAccess,
                             ),
                             const SizedBox(height: 16),
                             PromptEditor(
@@ -671,7 +702,7 @@ class _HomePageState extends State<HomePage> {
                                     i < _videoControllers.length - 1
                                         ? TextInputAction.next
                                         : TextInputAction.done,
-                                onClipboardPressed: _smartPaste,
+                                onClipboardPressed: () => _smartPasteIntoField(i),
                                 clipboardEnabled: _clipboardHasValidUrl,
                               ),
                               const SizedBox(height: 16),
