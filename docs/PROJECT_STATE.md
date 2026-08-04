@@ -2,9 +2,9 @@
 
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
-| **Current Version** | 0.1.14                                |
-| **Current Phase**   | 026                                  |
-| **Status**          | Markdown export implemented          |
+| **Current Version** | 0.1.15                                |
+| **Current Phase**   | 027                                  |
+| **Status**          | Keyboard workflow implemented        |
 | **Current Milestone** | Daily Workflow Improvements          |
 
 ## Phase Tracking
@@ -39,6 +39,7 @@
 | 024   | URL History & Visual Status              | Completed |
 | 025   | Prompt Favorites & Default Prompt        | Completed |
 | 026   | Export as Markdown                       | Completed |
+| 027   | Keyboard Workflow                        | Completed |
 
 ## Notes
 
@@ -72,7 +73,16 @@
   - UTF-8 output written byte-for-byte exactly as displayed.
   - `Markdown exported.` confirmation snackbar on success.
   - Added `com.apple.security.files.user-selected.read-write` entitlement for the sandboxed app.
+- Phase 027 added the keyboard workflow:
+  - **⌘↩ Generate** — global shortcut.
+  - **⌘⌫ Clear** — global shortcut.
+  - **⌘⇧S Export Markdown** — global shortcut.
+  - **⌘C Copy** — verified when Output has focus.
+  - **Escape** — removes keyboard focus.
+  - Enter in URL fields navigates to the next field; Enter on the last field triggers Generate.
+  - Focus nodes wrap Copy, Export, Generate, and Output for natural Tab ordering.
+  - The complete workflow can be performed without touching the mouse.
 
 ## Next Phase
 
-Phase 027.
+Phase 028.

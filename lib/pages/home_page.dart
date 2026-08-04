@@ -55,6 +55,12 @@ class _HomePageState extends State<HomePage> {
   late final TranscriptService _transcriptService;
   late final List<VideoCardController> _videoControllers;
   late final List<TextEditingController> _urlControllers;
+  late final List<FocusNode> _urlFocusNodes;
+
+  final FocusNode _outputFocusNode = FocusNode();
+  final FocusNode _generateFocusNode = FocusNode();
+  final FocusNode _copyFocusNode = FocusNode();
+  final FocusNode _exportFocusNode = FocusNode();
 
   final TextEditingController _outputController = TextEditingController();
   final TextEditingController _promptEditorController = TextEditingController();
@@ -124,6 +130,9 @@ class _HomePageState extends State<HomePage> {
     ];
     _urlControllers = [
       for (var i = 0; i < _videoCount; i++) TextEditingController(),
+    ];
+    _urlFocusNodes = [
+      for (var i = 0; i < _videoCount; i++) FocusNode(),
     ];
     for (final c in _urlControllers) {
       c.addListener(_onSessionStateChanged);
@@ -222,6 +231,16 @@ class _HomePageState extends State<HomePage> {
         }
       }
     });
+  }
+
+  /// Handles Enter in a URL field: moves to the next URL field, or triggers
+  /// Generate on the last URL.
+  void _handleUrlSubmitted(int index, String value) {
+    if (index < _urlControllers.length - 1) {
+      _urlFocusNodes[index + 1].requestFocus();
+    } else {
+      _generate();
+    }
   }
 
   /// Copies the generated output to the system clipboard.
@@ -398,6 +417,13 @@ class _HomePageState extends State<HomePage> {
       c.removeListener(_onSessionStateChanged);
       c.dispose();
     }
+    for (final n in _urlFocusNodes) {
+      n.dispose();
+    }
+    _outputFocusNode.dispose();
+    _generateFocusNode.dispose();
+    _copyFocusNode.dispose();
+    _exportFocusNode.dispose();
     _outputController.removeListener(_onSessionStateChanged);
     _outputController.dispose();
     _promptEditorController.dispose();
@@ -408,122 +434,193 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1200),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Header(textTheme: textTheme),
-                const SizedBox(height: 24),
-                _SectionCard(
-                  title: 'Prompt',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      PromptSelector(
-                        prompts: _prompts,
-                        value: _selectedPrompt,
-                        onChanged: _onPromptChanged,
-                        onToggleFavorite: _onToggleFavorite,
-                        onToggleDefault: _onToggleDefault,
-                      ),
-                      const SizedBox(height: 16),
-                      PromptEditor(
-                        content: _selectedPromptContent,
-                        enabled: _isCustomPrompt,
-                        controller: _promptEditorController,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _SectionCard(
-                  title: 'Videos',
-                  child: Column(
-                    children: [
-                      for (var i = 0; i < _videoControllers.length; i++) ...[
-                        VideoInputCard(
-                          controller: _videoControllers[i],
-                          textController: _urlControllers[i],
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _SectionCard(
-                  title: 'Output',
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+    return Shortcuts(
+      shortcuts: {
+        // ⌘↩ Generate
+        const SingleActivator(
+          LogicalKeyboardKey.enter,
+          meta: true,
+        ): const _GenerateIntent(),
+        // ⌘⌫ Clear
+        const SingleActivator(
+          LogicalKeyboardKey.backspace,
+          meta: true,
+        ): const _ClearIntent(),
+        // ⌘⇧S Export Markdown
+        const SingleActivator(
+          LogicalKeyboardKey.keyS,
+          meta: true,
+          shift: true,
+        ): const _ExportMarkdownIntent(),
+        // Escape unfocus
+        const SingleActivator(LogicalKeyboardKey.escape): const _UnfocusIntent(),
+      },
+      child: Actions(
+        actions: {
+          _GenerateIntent: CallbackAction<_GenerateIntent>(
+            onInvoke: (_) {
+              _generate();
+              return null;
+            },
+          ),
+          _ClearIntent: CallbackAction<_ClearIntent>(
+            onInvoke: (_) {
+              _clearSession();
+              return null;
+            },
+          ),
+          _ExportMarkdownIntent: CallbackAction<_ExportMarkdownIntent>(
+            onInvoke: (_) {
+              _exportMarkdown();
+              return null;
+            },
+          ),
+          _UnfocusIntent: CallbackAction<_UnfocusIntent>(
+            onInvoke: (_) {
+              FocusManager.instance.primaryFocus?.unfocus();
+              return null;
+            },
+          ),
+        },
+        child: Scaffold(
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _Header(textTheme: textTheme),
+                    const SizedBox(height: 24),
+                    _SectionCard(
+                      title: 'Prompt',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          OutlinedButton.icon(
-                            onPressed: _canCopy ? _copyOutput : null,
-                            icon: const Icon(Icons.copy),
-                            label: const Text('Copy'),
+                          PromptSelector(
+                            prompts: _prompts,
+                            value: _selectedPrompt,
+                            onChanged: _onPromptChanged,
+                            onToggleFavorite: _onToggleFavorite,
+                            onToggleDefault: _onToggleDefault,
                           ),
-                          const SizedBox(width: 12),
-                          OutlinedButton.icon(
-                            onPressed: _canExport ? _exportMarkdown : null,
-                            icon: const Icon(Icons.description_outlined),
-                            label: const Text('Export Markdown'),
-                          ),
-                          const SizedBox(width: 12),
-                          OutlinedButton.icon(
-                            onPressed: _canClear ? _clearSession : null,
-                            icon: const Icon(Icons.clear),
-                            label: const Text('Clear'),
+                          const SizedBox(height: 16),
+                          PromptEditor(
+                            content: _selectedPromptContent,
+                            enabled: _isCustomPrompt,
+                            controller: _promptEditorController,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      if (_generationFailures.isNotEmpty) ...[
-                        _FailureBanner(failures: _generationFailures),
-                        const SizedBox(height: 12),
-                      ],
-                      Focus(
-                        autofocus: false,
-                        child: Shortcuts(
-                          shortcuts: const {
-                            SingleActivator(LogicalKeyboardKey.keyC,
-                                control: true):
-                                _CopyOutputIntent(),
-                            SingleActivator(LogicalKeyboardKey.keyC, meta: true):
-                                _CopyOutputIntent(),
-                          },
-                          child: Actions(
-                            actions: {
-                              _CopyOutputIntent: CallbackAction<_CopyOutputIntent>(
-                                onInvoke: (_) {
-                                  if (_canCopy) _copyOutput();
-                                  return null;
-                                },
+                    ),
+                    const SizedBox(height: 16),
+                    _SectionCard(
+                      title: 'Videos',
+                      child: Column(
+                        children: [
+                          for (var i = 0; i < _videoControllers.length; i++) ...[
+                            VideoInputCard(
+                              controller: _videoControllers[i],
+                              textController: _urlControllers[i],
+                              focusNode: _urlFocusNodes[i],
+                              onSubmitted: (value) =>
+                                  _handleUrlSubmitted(i, value),
+                              textInputAction: i < _videoControllers.length - 1
+                                  ? TextInputAction.next
+                                  : TextInputAction.done,
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _SectionCard(
+                      title: 'Output',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Focus(
+                                focusNode: _copyFocusNode,
+                                child: OutlinedButton.icon(
+                                  onPressed:
+                                      _canCopy ? _copyOutput : null,
+                                  icon: const Icon(Icons.copy),
+                                  label: const Text('Copy'),
+                                ),
                               ),
-                            },
-                            child: OutputPreview(controller: _outputController),
+                              const SizedBox(width: 12),
+                              Focus(
+                                focusNode: _exportFocusNode,
+                                child: OutlinedButton.icon(
+                                  onPressed:
+                                      _canExport ? _exportMarkdown : null,
+                                  icon: const Icon(Icons.description_outlined),
+                                  label: const Text('Export Markdown'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              OutlinedButton.icon(
+                                onPressed:
+                                    _canClear ? _clearSession : null,
+                                icon: const Icon(Icons.clear),
+                                label: const Text('Clear'),
+                              ),
+                            ],
                           ),
-                        ),
+                          const SizedBox(height: 12),
+                          if (_generationFailures.isNotEmpty) ...[
+                            _FailureBanner(failures: _generationFailures),
+                            const SizedBox(height: 12),
+                          ],
+                          Shortcuts(
+                            shortcuts: const {
+                              SingleActivator(LogicalKeyboardKey.keyC,
+                                  control: true):
+                                  _CopyOutputIntent(),
+                              SingleActivator(LogicalKeyboardKey.keyC,
+                                  meta: true):
+                                  _CopyOutputIntent(),
+                            },
+                            child: Actions(
+                              actions: {
+                                _CopyOutputIntent:
+                                    CallbackAction<_CopyOutputIntent>(
+                                  onInvoke: (_) {
+                                    if (_canCopy) _copyOutput();
+                                    return null;
+                                  },
+                                ),
+                              },
+                              child: Focus(
+                                focusNode: _outputFocusNode,
+                                child: OutputPreview(
+                                    controller: _outputController),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Focus(
+                              focusNode: _generateFocusNode,
+                              child: GenerateButton(
+                                onPressed: _generate,
+                                isLoading: _isGenerating,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: GenerateButton(
-                          onPressed: _generate,
-                          isLoading: _isGenerating,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 24),
+                    const _BottomToolbar(),
+                  ],
                 ),
-                const SizedBox(height: 24),
-                const _BottomToolbar(),
-              ],
+              ),
             ),
           ),
         ),
@@ -535,6 +632,26 @@ class _HomePageState extends State<HomePage> {
 /// Intent for copying the generated output via keyboard shortcut (⌘C).
 class _CopyOutputIntent extends Intent {
   const _CopyOutputIntent();
+}
+
+/// Intent for generating output via keyboard shortcut (⌘↩).
+class _GenerateIntent extends Intent {
+  const _GenerateIntent();
+}
+
+/// Intent for clearing the session via keyboard shortcut (⌘⌫).
+class _ClearIntent extends Intent {
+  const _ClearIntent();
+}
+
+/// Intent for exporting Markdown via keyboard shortcut (⌘⇧S).
+class _ExportMarkdownIntent extends Intent {
+  const _ExportMarkdownIntent();
+}
+
+/// Intent for removing keyboard focus via Escape.
+class _UnfocusIntent extends Intent {
+  const _UnfocusIntent();
 }
 
 /// Banner listing per-video failures that did not abort generation.

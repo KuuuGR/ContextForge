@@ -2,6 +2,33 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.15] — 2026-08-04
+
+### Added
+
+- Keyboard workflow:
+  - **⌘↩ Generate** — triggers output generation from anywhere in the app.
+  - **⌘⌫ Clear** — resets the current session.
+  - **⌘⇧S Export Markdown** — opens the native Save dialog.
+  - **⌘C Copy** — verified consistent when the Output section has focus (existing behaviour).
+  - **Escape** — removes keyboard focus.
+- Enter-in-URL-field navigation:
+  - Enter in URL field 1 moves focus to URL field 2.
+  - Enter in URL field 2 moves focus to URL field 3.
+  - Enter in the last URL field triggers Generate.
+- Focus navigation:
+  - `VideoInputCard` now accepts external `focusNode`, `onSubmitted`, and `textInputAction` for keyboard-driven tab ordering (Prompt → URL 1 → URL 2 → URL 3 → Generate → Output → Copy → Export).
+- `HomePage` uses global `Shortcuts`/`Actions` for app-level keyboard shortcuts and wraps buttons in `Focus` nodes for natural tab order.
+
+### Changed
+
+- `VideoInputCard.onSubmitted` now delegates to an external handler when provided (previously always called `loadMetadata` directly), enabling Enter-to-next-field navigation.
+
+### Notes
+
+- No business features or architecture changes — keyboard shortcut support only.
+- Existing mouse/touch workflows are unchanged.
+
 ## [0.1.14] — 2026-08-04
 
 ### Added

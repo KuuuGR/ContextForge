@@ -10,12 +10,16 @@ import 'transcript_status_indicator.dart';
 /// Card showing a video URL input and its metadata state.
 ///
 /// Pure presentation: owns local text entry state and reads [controller]
-/// state; calls `loadMetadata` on submit. No business logic here.
+/// state; calls `loadMetadata` on submit (unless an external [onSubmitted]
+/// handler is provided). No business logic here.
 class VideoInputCard extends StatefulWidget {
   const VideoInputCard({
     super.key,
     required this.controller,
     this.textController,
+    this.focusNode,
+    this.onSubmitted,
+    this.textInputAction,
   });
 
   final VideoCardController controller;
@@ -24,17 +28,29 @@ class VideoInputCard extends StatefulWidget {
   /// create its own — the owner is responsible for keeping it in sync.
   final TextEditingController? textController;
 
+  /// Optional external focus node for focus navigation.
+  final FocusNode? focusNode;
+
+  /// Optional external submit handler for keyboard workflows.
+  /// When null, the widget calls `controller.loadMetadata(value)`.
+  final ValueChanged<String>? onSubmitted;
+
+  /// Keyboard enter action for the URL field.
+  final TextInputAction? textInputAction;
+
   @override
   State<VideoInputCard> createState() => _VideoInputCardState();
 }
 
 class _VideoInputCardState extends State<VideoInputCard> {
   late final TextEditingController _textController;
+  late final FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
     _textController = widget.textController ?? TextEditingController();
+    _focusNode = widget.focusNode ?? FocusNode();
     _textController.addListener(_onTextChanged);
   }
 
@@ -43,6 +59,9 @@ class _VideoInputCardState extends State<VideoInputCard> {
     _textController.removeListener(_onTextChanged);
     if (widget.textController == null) {
       _textController.dispose();
+    }
+    if (widget.focusNode == null) {
+      _focusNode.dispose();
     }
     super.dispose();
   }
@@ -53,6 +72,16 @@ class _VideoInputCardState extends State<VideoInputCard> {
   /// perceptible UI delay.
   void _onTextChanged() {
     widget.controller.refreshHistoryStatus(_textController.text);
+  }
+
+  void _handleSubmitted(String value) {
+    RuntimeTrace.step('VideoInputCard.onSubmitted ("$value")');
+    final handler = widget.onSubmitted;
+    if (handler != null) {
+      handler(value);
+    } else {
+      widget.controller.loadMetadata(value);
+    }
   }
 
   @override
@@ -72,11 +101,10 @@ class _VideoInputCardState extends State<VideoInputCard> {
                     Expanded(
                       child: TextField(
                         controller: _textController,
-                        onSubmitted: (value) {
-                          RuntimeTrace.step(
-                              'VideoInputCard.onSubmitted ("$value")');
-                          widget.controller.loadMetadata(value);
-                        },
+                        focusNode: _focusNode,
+                        onSubmitted: _handleSubmitted,
+                        textInputAction:
+                            widget.textInputAction ?? TextInputAction.done,
                         decoration: InputDecoration(
                           labelText: 'YouTube URL',
                           hintText: 'https://www.youtube.com/watch?v=...',
