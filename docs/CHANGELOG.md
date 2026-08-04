@@ -2,6 +2,54 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.12] — 2026-08-04
+
+### Added
+
+- Persistent video processing history:
+  - `VideoHistoryEntry` domain model (`lib/models/video_history_entry.dart`) with `videoId`, `originalUrl`, `title`, `channelName`, `processedAt`.
+  - `JsonVideoHistoryStorage` (`lib/services/json_video_history_storage.dart`) — human-readable `video_history.json` in the application support directory.
+  - `VideoHistoryService` (`lib/services/video_history_service.dart`) — loads history once at startup, keeps it in memory for instant O(1) lookups, and upserts entries by `videoId`.
+  - Automatic history recording: every successful transcript generation writes an entry with the current timestamp. Failed attempts are never recorded.
+  - Duplicate prevention: processing the same video again updates `processedAt` instead of creating a new entry.
+- Visual status indicator in each URL field:
+  - Small subtle dot inside the URL input.
+  - 🟢 Green when the video has been processed before.
+  - Neutral grey when the video has never been processed.
+  - Tooltip on the green dot shows `Previously processed` and the local date/time (e.g. `2026-08-04 14:25`).
+  - Indicator updates live while typing; lookups are synchronous in-memory operations with no disk I/O.
+- History persists across application restarts and survives the Clear button — Clear only resets the working session.
+- Unit tests (`test/video_history_service_test.dart`): persistence, duplicate prevention, timestamp updates, restart survival, URL-form matching, invalid URL handling, model serialization/equality.
+- In-memory history storage test helper (`test/helpers/in_memory_video_history_storage.dart`) for widget tests.
+- `ContextForgeApp`, `HomePage`, and `VideoCardController` accept an optional injected `VideoHistoryService` for testability.
+- `VideoStatus.previouslyUsed` indicator color updated from blue to green to match the "processed before" visual language.
+
+### Changed
+
+- The existing `VideoStatus.previouslyUsed` now maps to green instead of blue.
+
+### Notes
+
+- No SQLite, no database, no migration layer, no storage abstraction.
+- History is a single lightweight JSON file.
+- YouTube pipeline and transcript generation are unchanged.
+
+## [0.1.11] — 2026-08-04
+
+### Added
+
+- Output action bar with Copy and Clear buttons:
+  - Copy copies the generated output to the system clipboard and shows a confirmation snackbar.
+  - Clear resets the working session to the initial state (output, URL fields, transcript previews, error banners) while keeping the prompt library.
+  - Copy keyboard shortcut support (⌘C / Ctrl+C) scoped to the Output section.
+  - Buttons enable/disable based on session state.
+- `VideoCardController.clear()` — resets a controller to its initial empty state.
+- Integration-style widget tests (`test/output_actions_test.dart`): copy-to-clipboard, session clear/reset.
+
+### Notes
+
+- No history / persistence changes in this phase.
+
 ## [0.1.10] — 2026-02-08
 
 ### Added

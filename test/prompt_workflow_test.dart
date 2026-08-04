@@ -6,7 +6,10 @@ import 'package:context_forge/pages/home_page.dart';
 import 'package:context_forge/presentation/prompt_constants.dart';
 import 'package:context_forge/repositories/in_memory_prompt_repository.dart';
 import 'package:context_forge/services/prompt_service.dart';
+import 'package:context_forge/services/video_history_service.dart';
 import 'package:context_forge/widgets/prompt_selector.dart';
+
+import 'helpers/in_memory_video_history_storage.dart';
 
 void main() {
   late PromptService service;
@@ -90,11 +93,18 @@ void main() {
   });
 
   group('HomePage workflow', () {
+    Widget buildHome() => MaterialApp(
+          home: HomePage(
+            promptService: service,
+            videoHistoryService: VideoHistoryService(
+              storage: InMemoryVideoHistoryStorage(),
+            ),
+          ),
+        );
+
     testWidgets('loads and displays selected prompt content',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(home: HomePage(promptService: service)),
-      );
+      await tester.pumpWidget(buildHome());
       await tester.pumpAndSettle();
 
       final first = (await service.getAllPrompts()).first;
@@ -104,9 +114,7 @@ void main() {
 
     testWidgets('selecting Custom Prompt enables editing',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(home: HomePage(promptService: service)),
-      );
+      await tester.pumpWidget(buildHome());
       await tester.pumpAndSettle();
 
       await tester.tap(find.byType(DropdownButtonFormField<String>));
@@ -120,9 +128,7 @@ void main() {
 
     testWidgets('saved prompt content is read-only',
         (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(home: HomePage(promptService: service)),
-      );
+      await tester.pumpWidget(buildHome());
       await tester.pumpAndSettle();
 
       final field = tester.widget<TextField>(find.byType(TextField).first);

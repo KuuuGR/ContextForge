@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/video.dart';
+import '../models/video_history_entry.dart';
 import '../models/video_status.dart';
 import '../services/runtime_trace.dart';
 import '../viewmodels/video_card_controller.dart';
@@ -34,14 +35,24 @@ class _VideoInputCardState extends State<VideoInputCard> {
   void initState() {
     super.initState();
     _textController = widget.textController ?? TextEditingController();
+    _textController.addListener(_onTextChanged);
   }
 
   @override
   void dispose() {
+    _textController.removeListener(_onTextChanged);
     if (widget.textController == null) {
       _textController.dispose();
     }
     super.dispose();
+  }
+
+  /// Updates the history indicator while the user types.
+  ///
+  /// The lookup is a synchronous in-memory operation, so there is no
+  /// perceptible UI delay.
+  void _onTextChanged() {
+    widget.controller.refreshHistoryStatus(_textController.text);
   }
 
   @override
@@ -66,11 +77,14 @@ class _VideoInputCardState extends State<VideoInputCard> {
                               'VideoInputCard.onSubmitted ("$value")');
                           widget.controller.loadMetadata(value);
                         },
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'YouTube URL',
                           hintText: 'https://www.youtube.com/watch?v=...',
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                           isDense: true,
+                          suffixIcon: _HistoryStatusDot(
+                            entry: widget.controller.historyEntry,
+                          ),
                         ),
                       ),
                     ),
@@ -103,6 +117,54 @@ class _VideoInputCardState extends State<VideoInputCard> {
       VideoStatus.error => 'Error',
       VideoStatus.previouslyUsed => 'Previously Used',
     };
+  }
+}
+
+/// Small subtle dot inside the URL field showing processing history.
+///
+/// Green when the video was processed before; neutral/grey otherwise.
+/// The green dot carries a tooltip with the last processed date.
+class _HistoryStatusDot extends StatelessWidget {
+  const _HistoryStatusDot({required this.entry});
+
+  final VideoHistoryEntry? entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final processed = entry != null;
+    final dot = Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        color: processed ? Colors.green : Colors.grey.shade400,
+        shape: BoxShape.circle,
+      ),
+    );
+
+    if (!processed) {
+      return Padding(
+        padding: const EdgeInsets.all(10),
+        child: dot,
+      );
+    }
+
+    return Tooltip(
+      message: 'Previously processed\n${_formatDate(entry!.processedAt)}',
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: dot,
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final local = date.toLocal();
+    final y = local.year.toString().padLeft(4, '0');
+    final mo = local.month.toString().padLeft(2, '0');
+    final d = local.day.toString().padLeft(2, '0');
+    final h = local.hour.toString().padLeft(2, '0');
+    final mi = local.minute.toString().padLeft(2, '0');
+    return '$y-$mo-$d $h:$mi';
   }
 }
 

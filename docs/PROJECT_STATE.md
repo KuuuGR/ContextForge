@@ -2,10 +2,10 @@
 
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
-| **Current Version** | 0.1.10                                |
-| **Current Phase**   | 022B                                  |
-| **Status**          | macOS network client entitlement enabled |
-| **Current Milestone** | Network Connectivity Fixed          |
+| **Current Version** | 0.1.12                                |
+| **Current Phase**   | 024                                  |
+| **Status**          | URL history and visual status implemented |
+| **Current Milestone** | Daily Workflow Improvements          |
 
 ## Phase Tracking
 
@@ -35,6 +35,8 @@
 | 021   | YouTube Provider Review                   | Completed |
 | 022A  | Collect macOS Network Configuration Evidence | Completed |
 | 022B  | Enable macOS Outbound Network Access      | Completed |
+| 023   | Output Actions                           | Completed |
+| 024   | URL History & Visual Status              | Completed |
 
 ## Notes
 
@@ -47,7 +49,15 @@
   - Verified: `flutter build macos` succeeds (44.4MB Release build).
   - Verified: `codesign -d --entitlements` shows `com.apple.security.network.client` embedded in the built app.
 - User-facing "Could not reach YouTube" error is resolved.
+- Phase 023 added the Output action bar (Copy, Clear, keyboard shortcut).
+- Phase 024 added persistent video processing history:
+  - `video_history.json` in the application support directory.
+  - Records every successful transcript generation (videoId, originalUrl, title, channelName, processedAt).
+  - Updates `processedAt` on reprocessing — no duplicates.
+  - Green/neutral dot indicator inside each URL field.
+  - Tooltip shows the last processed date/time.
+  - History survives application restarts and the Clear button.
 
 ## Next Phase
 
-Phase 023.
+Phase 025.

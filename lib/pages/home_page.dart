@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/clean_transcript.dart';
 import '../models/prompt.dart';
@@ -8,12 +9,14 @@ import '../presentation/prompt_constants.dart';
 import '../providers/youtube_explode_provider.dart';
 import '../repositories/in_memory_prompt_repository.dart';
 import '../repositories/in_memory_video_repository.dart';
+import '../services/json_video_history_storage.dart';
 import '../services/output_builder_service.dart';
 import '../services/prompt_service.dart';
 import '../services/runtime_trace.dart';
 import '../services/transcript_cleanup_service.dart';
 import '../services/transcript_selection_service.dart';
 import '../services/transcript_service.dart';
+import '../services/video_history_service.dart';
 import '../services/video_service.dart';
 import '../viewmodels/video_card_controller.dart';
 import '../widgets/generate_button.dart';
@@ -24,13 +27,21 @@ import '../widgets/video_input_card.dart';
 
 /// Main application page containing the full ContextForge workflow UI.
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, this.videoService, this.promptService});
+  const HomePage({
+    super.key,
+    this.videoService,
+    this.promptService,
+    this.videoHistoryService,
+  });
 
   /// Optional injected service; defaults to the production wiring.
   final VideoService? videoService;
 
   /// Optional injected prompt service; defaults to JSON storage.
   final PromptService? promptService;
+
+  /// Optional injected history service; defaults to JSON file storage.
+  final VideoHistoryService? videoHistoryService;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -49,6 +60,10 @@ class _HomePageState extends State<HomePage> {
 
   late final PromptService _promptService = widget.promptService ??
       PromptService(repository: InMemoryPromptRepository());
+
+  late final VideoHistoryService _videoHistoryService =
+      widget.videoHistoryService ??
+          VideoHistoryService(storage: JsonVideoHistoryStorage());
 
   final TranscriptSelectionService _selectionService =
       const TranscriptSelectionService();
@@ -72,6 +87,20 @@ class _HomePageState extends State<HomePage> {
     return '';
   }
 
+  bool get _canCopy => _outputController.text.trim().isNotEmpty;
+
+  bool get _canClear {
+    if (_outputController.text.isNotEmpty) return true;
+    if (_generationFailures.isNotEmpty) return true;
+    for (final c in _urlControllers) {
+      if (c.text.trim().isNotEmpty) return true;
+    }
+    for (final c in _videoControllers) {
+      if (c.hasMetadata || c.errorMessage != null) return true;
+    }
+    return false;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -83,12 +112,24 @@ class _HomePageState extends State<HomePage> {
     _transcriptService = TranscriptService(provider: _videoService.provider);
     _videoControllers = [
       for (var i = 0; i < _videoCount; i++)
-        VideoCardController(service: _videoService),
+        VideoCardController(
+          service: _videoService,
+          historyService: _videoHistoryService,
+        ),
     ];
     _urlControllers = [
       for (var i = 0; i < _videoCount; i++) TextEditingController(),
     ];
+    for (final c in _urlControllers) {
+      c.addListener(_onSessionStateChanged);
+    }
+    _outputController.addListener(_onSessionStateChanged);
     _loadPrompts();
+    _loadHistory();
+  }
+
+  void _onSessionStateChanged() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadPrompts() async {
@@ -101,6 +142,20 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _prompts = prompts;
       _selectedPrompt = prompts.isEmpty ? customPromptOption : prompts.first.title;
+    });
+  }
+
+  Future<void> _loadHistory() async {
+    await _videoHistoryService.load();
+    if (!mounted) return;
+    // Refresh the history indicator for any pre-filled URL fields.
+    setState(() {
+      for (var i = 0; i < _urlControllers.length; i++) {
+        final url = _urlControllers[i].text;
+        if (url.trim().isNotEmpty) {
+          _videoControllers[i].refreshHistoryStatus(url);
+        }
+      }
     });
   }
 
@@ -118,14 +173,48 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  /// Copies the generated output to the system clipboard.
+  Future<void> _copyOutput() async {
+    final output = _outputController.text;
+    if (output.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: output));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Copied to clipboard'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// Resets the working session to the initial ready state.
+  ///
+  /// Clears generated output, URL fields, video metadata, transcript
+  /// previews, and error messages. Keeps the prompt library and the
+  /// persistent history.
+  void _clearSession() {
+    _outputController.clear();
+    for (final c in _urlControllers) {
+      c.clear();
+    }
+    for (final c in _videoControllers) {
+      c.clear();
+    }
+    setState(() {
+      _generationFailures = const [];
+    });
+  }
+
   /// Executes the end-to-end generation workflow.
   ///
   /// For each non-empty URL:
   /// 1. Validate + fetch metadata via [VideoCardController.loadMetadata].
   /// 2. Discover, select, download, and clean the transcript.
+  /// 3. On success, record the video in persistent history.
   ///
   /// Videos that fail at any step are collected as failures and do not abort
-  /// processing of the remaining videos.
+  /// processing of the remaining videos. Failed attempts are never recorded
+  /// in history.
   Future<void> _generate() async {
     RuntimeTrace.reset();
     RuntimeTrace.step('HomePage.generate entered');
@@ -197,6 +286,12 @@ class _HomePageState extends State<HomePage> {
         }
         videos.add(video);
         transcripts.add(clean);
+
+        // Record the successful generation in persistent history.
+        RuntimeTrace.step(
+            'VideoHistoryService.recordSuccess (videoId="${video.videoId}")');
+        await _videoHistoryService.recordSuccess(video);
+        controller.refreshHistoryStatus(_urlControllers[i].text);
       } catch (e, stack) {
         RuntimeTrace.boundary('Video ${i + 1} failed with exception');
         debugPrint('[HomePage._generate] Video ${i + 1} failed: '
@@ -228,8 +323,10 @@ class _HomePageState extends State<HomePage> {
       c.dispose();
     }
     for (final c in _urlControllers) {
+      c.removeListener(_onSessionStateChanged);
       c.dispose();
     }
+    _outputController.removeListener(_onSessionStateChanged);
     _outputController.dispose();
     _promptEditorController.dispose();
     super.dispose();
@@ -290,11 +387,49 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _canCopy ? _copyOutput : null,
+                            icon: const Icon(Icons.copy),
+                            label: const Text('Copy'),
+                          ),
+                          const SizedBox(width: 12),
+                          OutlinedButton.icon(
+                            onPressed: _canClear ? _clearSession : null,
+                            icon: const Icon(Icons.clear),
+                            label: const Text('Clear'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
                       if (_generationFailures.isNotEmpty) ...[
                         _FailureBanner(failures: _generationFailures),
                         const SizedBox(height: 12),
                       ],
-                      OutputPreview(controller: _outputController),
+                      Focus(
+                        autofocus: false,
+                        child: Shortcuts(
+                          shortcuts: const {
+                            SingleActivator(LogicalKeyboardKey.keyC,
+                                control: true):
+                                _CopyOutputIntent(),
+                            SingleActivator(LogicalKeyboardKey.keyC, meta: true):
+                                _CopyOutputIntent(),
+                          },
+                          child: Actions(
+                            actions: {
+                              _CopyOutputIntent: CallbackAction<_CopyOutputIntent>(
+                                onInvoke: (_) {
+                                  if (_canCopy) _copyOutput();
+                                  return null;
+                                },
+                              ),
+                            },
+                            child: OutputPreview(controller: _outputController),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       Align(
                         alignment: Alignment.centerRight,
@@ -315,6 +450,11 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+}
+
+/// Intent for copying the generated output via keyboard shortcut (⌘C).
+class _CopyOutputIntent extends Intent {
+  const _CopyOutputIntent();
 }
 
 /// Banner listing per-video failures that did not abort generation.

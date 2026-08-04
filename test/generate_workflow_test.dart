@@ -10,9 +10,12 @@ import 'package:context_forge/providers/youtube_video_metadata.dart';
 import 'package:context_forge/repositories/in_memory_prompt_repository.dart';
 import 'package:context_forge/repositories/in_memory_video_repository.dart';
 import 'package:context_forge/services/prompt_service.dart';
+import 'package:context_forge/services/video_history_service.dart';
 import 'package:context_forge/services/video_service.dart';
 import 'package:context_forge/widgets/generate_button.dart';
 import 'package:context_forge/widgets/video_input_card.dart';
+
+import 'helpers/in_memory_video_history_storage.dart';
 
 /// Fake provider returning metadata + transcript for one known video.
 class _FakeProvider implements YoutubeProvider {
@@ -90,6 +93,9 @@ void main() {
         videoService: VideoService(
           repository: InMemoryVideoRepository(),
           provider: _FakeProvider(),
+        ),
+        videoHistoryService: VideoHistoryService(
+          storage: InMemoryVideoHistoryStorage(),
         ),
       ),
     );

@@ -19,7 +19,7 @@ class TranscriptStatusIndicator extends StatelessWidget {
       VideoStatus.noUrl => Colors.grey,
       VideoStatus.loaded => Colors.green,
       VideoStatus.error => Colors.red,
-      VideoStatus.previouslyUsed => Colors.blue,
+      VideoStatus.previouslyUsed => Colors.green,
     };
 
     return Row(
