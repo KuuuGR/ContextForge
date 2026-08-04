@@ -3,8 +3,8 @@
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
 | **Current Version** | 0.1.17                                |
-| **Current Phase**   | 029A                                  |
-| **Status**          | Power User Workflow                   |
+| **Current Phase**   | 029B                                  |
+| **Status**          | Workflow Polish II                    |
 | **Current Milestone** | Power User Workflow                  |
 
 ## Phase Tracking
@@ -43,6 +43,7 @@
 | 028   | Smart Clipboard Workflow                 | Completed |
 | 029   | Command Bar                              | Completed |
 | 029A  | Power User Workflow                      | Completed |
+| 029B  | Workflow Polish II                       | Completed |
 
 ## Notes
 
@@ -69,6 +70,11 @@
   - Generate reuses cached metadata/transcripts when possible.
   - ⌘C behavior verified (full-output copy when no selection).
   - Prompt roles persisted via `prompts.json` `quickAccess` field.
+- Phase 029B added Workflow Polish:
+  - Immediate UI refresh after Quick Access/Favorite/Default changes.
+  - Generate availability (disabled when nothing to process).
+  - Clipboard refresh on window activation via WidgetsBindingObserver.
+  - Command Bar visual polish (centered ⚡, improved spacing, clickable look).
 
 ## Next Phase
 

@@ -2,6 +2,30 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.17] — 2026-08-04 (029B)
+
+### Added
+
+- Immediate UI refresh:
+  - Quick Access assignment and Favorite/Default changes now refresh the Prompt Library immediately.
+  - No need to collapse and reopen the prompt selector to see updated icons.
+- Generate availability:
+  - Generate is now disabled when there are no valid YouTube URLs or nothing to generate.
+  - Enables automatically once at least one valid video exists in a slot.
+- Clipboard refresh on window activation:
+  - Uses `WidgetsBindingObserver.didChangeAppLifecycleState` to refresh clipboard availability when the application window becomes active.
+  - No continuous polling.
+- Command Bar polish:
+  - ⚡ centered.
+  - Improved spacing and alignment.
+  - Every command button now visually indicates clickability with surface background and border.
+  - Native macOS appearance preserved.
+
+### Notes
+
+- Workflow friction removal only.
+- Existing controls unchanged.
+
 ## [0.1.17] — 2026-08-04 (029A)
 
 ### Added

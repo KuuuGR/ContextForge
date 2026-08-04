@@ -17,7 +17,6 @@ import 'package:context_forge/widgets/video_input_card.dart';
 
 import 'helpers/in_memory_video_history_storage.dart';
 
-/// Fake provider producing output for one known video.
 class _FakeProvider implements YoutubeProvider {
   static const videoId = 'dQw4w9WgXcQ';
 
@@ -77,7 +76,7 @@ class _FakeProvider implements YoutubeProvider {
 
 void main() {
   Future<void> pumpApp(WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(1000, 2200));
+    await tester.binding.setSurfaceSize(const Size(1200, 2200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final promptService = PromptService(
@@ -116,7 +115,7 @@ void main() {
 
   List<IconButton> clipboardButtons(WidgetTester tester) {
     final buttons = <IconButton>[];
-    for (var i = 0; i < 4; i++) {
+    for (var i = 0; i < 3; i++) {
       buttons.add(
         tester.widget<IconButton>(
           find.widgetWithIcon(IconButton, Icons.content_paste).at(i),
@@ -132,22 +131,17 @@ void main() {
         tester, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     await pumpApp(tester);
 
-    // Verify all slots are empty.
     expect(find.text('Empty'), findsNWidgets(3));
 
-    // Trigger smart paste via the clipboard button.
     await tester.tap(find.byIcon(Icons.content_paste).first);
     await tester.pumpAndSettle();
 
-    // The first slot now has the URL and metadata loads.
     final firstUrlField = find.descendant(
       of: find.byType(VideoInputCard).first,
       matching: find.byType(TextField),
     );
     final field = tester.widget<TextField>(firstUrlField);
     expect(field.controller!.text, isNotEmpty);
-
-    // Metadata loaded (video title shown).
     expect(find.text('First Video'), findsOneWidget);
     expect(find.text('Loaded'), findsOneWidget);
   });
@@ -158,15 +152,12 @@ void main() {
         tester, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     await pumpApp(tester);
 
-    // Smart paste once.
     await tester.tap(find.byIcon(Icons.content_paste).first);
     await tester.pumpAndSettle();
 
-    // Smart paste the same URL again.
     await tester.tap(find.byIcon(Icons.content_paste).first);
     await tester.pump();
 
-    // "Already added" notification shown.
     expect(find.text('Already added'), findsOneWidget);
   });
 
@@ -175,9 +166,8 @@ void main() {
     mockClipboard(tester, 'not a youtube url');
     await pumpApp(tester);
 
-    // Find the clipboard icon buttons — 3 in URL fields + 1 in command bar.
     final buttons = clipboardButtons(tester);
-    expect(buttons, hasLength(4));
+    expect(buttons, hasLength(3));
     for (final button in buttons) {
       expect(button.onPressed, isNull);
     }
@@ -190,31 +180,27 @@ void main() {
     await pumpApp(tester);
 
     final buttons = clipboardButtons(tester);
-    expect(buttons, hasLength(4));
+    expect(buttons, hasLength(3));
     for (final button in buttons) {
       expect(button.onPressed, isNotNull);
     }
   });
 
-  testWidgets('Compact URL display shows ▶ VIDEO_ID after validation',
+  testWidgets('Compact URL display shows full URL after validation',
       (WidgetTester tester) async {
     mockClipboard(
         tester, 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
     await pumpApp(tester);
 
-    // Smart paste to populate and validate the first slot.
     await tester.tap(find.byIcon(Icons.content_paste).first);
     await tester.pumpAndSettle();
 
-    // The first URL field has the full URL and metadata displayed.
     final firstUrlField = find.descendant(
       of: find.byType(VideoInputCard).first,
       matching: find.byType(TextField),
     );
     final textField = tester.widget<TextField>(firstUrlField);
     expect(textField.controller!.text, isNotEmpty);
-
-    // The video metadata view shows the title.
     expect(find.text('First Video'), findsOneWidget);
   });
 
@@ -224,14 +210,11 @@ void main() {
         tester, 'https://youtu.be/dQw4w9WgXcQ');
     await pumpApp(tester);
 
-    // Smart paste a youtu.be short URL.
     await tester.tap(find.byIcon(Icons.content_paste).first);
     await tester.pumpAndSettle();
 
-    // The canonical full URL is used internally (metadata fetch worked).
     expect(find.text('First Video'), findsOneWidget);
 
-    // The text field still has the original full URL.
     final firstUrlField = find.descendant(
       of: find.byType(VideoInputCard).first,
       matching: find.byType(TextField),

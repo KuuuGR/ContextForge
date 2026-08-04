@@ -14,16 +14,18 @@ class CommandBar extends StatelessWidget {
     required this.onCopy,
     required this.canCopy,
     required this.canPaste,
+    this.canGenerate = true,
   });
 
   final List<Prompt> prompts;
   final String selectedPrompt;
   final ValueChanged<String> onSelectPrompt;
   final VoidCallback onPaste;
-  final VoidCallback onGenerate;
+  final VoidCallback? onGenerate;
   final VoidCallback onCopy;
   final bool canCopy;
   final bool canPaste;
+  final bool canGenerate;
 
   List<Prompt?> get _slotPrompts {
     final result = <Prompt?>[null, null, null];
@@ -48,7 +50,7 @@ class CommandBar extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final slots = _slotPrompts;
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(12),
@@ -56,23 +58,26 @@ class CommandBar extends StatelessWidget {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Tooltip(
-            message: 'Quick Workflow (coming soon)',
-            child: IconButton(
-              onPressed: null,
-              icon: const Icon(Icons.bolt_outlined),
-              iconSize: 20,
-              color: scheme.onSurfaceVariant,
+          Center(
+            child: Tooltip(
+              message: 'Quick Workflow (coming soon)',
+              child: IconButton(
+                onPressed: null,
+                icon: const Icon(Icons.bolt_outlined, size: 20),
+                iconSize: 20,
+                color: scheme.onSurfaceVariant,
+                tooltip: 'Quick Workflow (coming soon)',
+              ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               for (var i = 0; i < 3; i++) ...[
-                if (i > 0) const SizedBox(width: 4),
+                if (i > 0) const SizedBox(width: 6),
                 _SlotButton(
                   label: i == 0 ? '1' : i == 1 ? '2' : '3',
                   prompt: slots[i],
@@ -85,42 +90,71 @@ class CommandBar extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Tooltip(
-                message: 'Paste from clipboard',
-                child: IconButton(
-                  onPressed: canPaste ? onPaste : null,
-                  icon: const Icon(Icons.content_paste, size: 18),
-                  iconSize: 18,
-                  visualDensity: VisualDensity.compact,
-                ),
+              _ActionButton(
+                icon: Icons.content_paste,
+                tooltip: 'Paste from clipboard',
+                onPressed: canPaste ? onPaste : null,
               ),
-              const SizedBox(width: 4),
-              Tooltip(
-                message: 'Generate',
-                child: IconButton(
-                  onPressed: onGenerate,
-                  icon: const Icon(Icons.play_arrow, size: 18),
-                  iconSize: 18,
-                  visualDensity: VisualDensity.compact,
-                ),
+              const SizedBox(width: 8),
+              _ActionButton(
+                icon: Icons.play_arrow,
+                tooltip: 'Generate',
+                onPressed: canGenerate ? onGenerate : null,
               ),
-              const SizedBox(width: 4),
-              Tooltip(
-                message: 'Copy output',
-                child: IconButton(
-                  onPressed: canCopy ? onCopy : null,
-                  icon: const Icon(Icons.copy, size: 18),
-                  iconSize: 18,
-                  visualDensity: VisualDensity.compact,
-                ),
+              const SizedBox(width: 8),
+              _ActionButton(
+                icon: Icons.copy,
+                tooltip: 'Copy output',
+                onPressed: canCopy ? onCopy : null,
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final enabled = onPressed != null;
+    final color = enabled ? scheme.onSurfaceVariant : scheme.outlineVariant;
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 36,
+          height: 32,
+          decoration: BoxDecoration(
+            color: enabled ? scheme.surface : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: enabled ? scheme.outlineVariant : Colors.transparent,
+            ),
+          ),
+          child: Center(
+            child: Icon(icon, size: 18, color: color),
+          ),
+        ),
       ),
     );
   }
@@ -147,21 +181,29 @@ class _SlotButton extends StatelessWidget {
       message: prompt?.title ?? 'No prompt assigned',
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: isSelected ? scheme.primaryContainer : Colors.transparent,
-            borderRadius: BorderRadius.circular(6),
+            color: isSelected
+                ? scheme.primaryContainer
+                : enabled
+                    ? scheme.surface
+                    : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected ? scheme.primary : scheme.outlineVariant,
+              color: enabled
+                  ? isSelected
+                      ? scheme.primary
+                      : scheme.outlineVariant
+                  : Colors.transparent,
             ),
           ),
           child: Text(
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: !enabled
-                      ? scheme.onSurface.withValues(alpha: 0.3)
+                      ? scheme.onSurface.withValues(alpha: 0.25)
                       : isSelected
                           ? scheme.onPrimaryContainer
                           : scheme.onSurface,

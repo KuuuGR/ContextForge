@@ -51,7 +51,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   static const _videoCount = 3;
 
   late final VideoService _videoService;
@@ -108,6 +108,16 @@ class _HomePageState extends State<HomePage> {
 
   bool get _canExport => _outputController.text.trim().isNotEmpty;
 
+  /// Whether at least one video can be processed (valid URL present).
+  bool get _canGenerate {
+    if (_promptEditorController.text.trim().isEmpty) return false;
+    for (var i = 0; i < _urlControllers.length; i++) {
+      if (_urlControllers[i].text.trim().isNotEmpty) return true;
+      if (_videoControllers[i].video != null) return true;
+    }
+    return false;
+  }
+
   bool get _canClear {
     if (_outputController.text.isNotEmpty) return true;
     if (_generationFailures.isNotEmpty) return true;
@@ -123,6 +133,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _videoService = widget.videoService ??
         VideoService(
           repository: InMemoryVideoRepository(),
@@ -550,7 +561,16 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Refresh clipboard availability when the window becomes active.
+    if (state == AppLifecycleState.resumed) {
+      _refreshClipboardState();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     for (final c in _videoControllers) {
       c.dispose();
     }
@@ -658,7 +678,8 @@ class _HomePageState extends State<HomePage> {
                             onSelectPrompt: _onPromptChanged,
                             onPaste: _smartPasteGlobal,
                             canPaste: _clipboardHasValidUrl,
-                            onGenerate: _generate,
+                            onGenerate: _canGenerate ? _generate : null,
+                            canGenerate: _canGenerate,
                             onCopy: _copyOutput,
                             canCopy: _canCopy,
                           ),
