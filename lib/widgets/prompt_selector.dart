@@ -12,6 +12,8 @@ class PromptSelector extends StatelessWidget {
     required this.onChanged,
     this.onToggleFavorite,
     this.onAssignQuickAccess,
+    this.onEditPrompt,
+    this.onDeletePrompt,
   });
 
   final List<Prompt> prompts;
@@ -19,6 +21,8 @@ class PromptSelector extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final ValueChanged<Prompt>? onToggleFavorite;
   final ValueChanged<(Prompt, PromptQuickAccess)>? onAssignQuickAccess;
+  final ValueChanged<Prompt>? onEditPrompt;
+  final ValueChanged<Prompt>? onDeletePrompt;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +38,12 @@ class PromptSelector extends StatelessWidget {
             onAssignQuickAccess: onAssignQuickAccess == null
                 ? null
                 : (role) => onAssignQuickAccess!((prompt, role)),
+            onEditPrompt: onEditPrompt == null
+                ? null
+                : () => onEditPrompt!(prompt),
+            onDeletePrompt: onDeletePrompt == null
+                ? null
+                : () => onDeletePrompt!(prompt),
           ),
         ),
       const DropdownMenuItem(
@@ -72,11 +82,15 @@ class _PromptMenuItem extends StatelessWidget {
     required this.prompt,
     this.onToggleFavorite,
     this.onAssignQuickAccess,
+    this.onEditPrompt,
+    this.onDeletePrompt,
   });
 
   final Prompt prompt;
   final VoidCallback? onToggleFavorite;
   final ValueChanged<PromptQuickAccess>? onAssignQuickAccess;
+  final VoidCallback? onEditPrompt;
+  final VoidCallback? onDeletePrompt;
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +126,36 @@ class _PromptMenuItem extends StatelessWidget {
               'Default',
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSecondaryContainer,
+              ),
+            ),
+          ),
+        ],
+        if (onEditPrompt != null) ...[
+          const SizedBox(width: 4),
+          InkWell(
+            onTap: onEditPrompt,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                Icons.edit_outlined,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+        if (onDeletePrompt != null) ...[
+          const SizedBox(width: 2),
+          InkWell(
+            onTap: onDeletePrompt,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                Icons.delete_outline,
+                size: 16,
+                color: theme.colorScheme.error,
               ),
             ),
           ),

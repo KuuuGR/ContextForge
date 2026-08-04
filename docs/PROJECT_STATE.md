@@ -3,8 +3,8 @@
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
 | **Current Version** | 0.1.17                                |
-| **Current Phase**   | 029B                                  |
-| **Status**          | Workflow Polish II                    |
+| **Current Phase**   | 029D                                  |
+| **Status**          | Prompt Library Completion             |
 | **Current Milestone** | Power User Workflow                  |
 
 ## Phase Tracking
@@ -44,6 +44,8 @@
 | 029   | Command Bar                              | Completed |
 | 029A  | Power User Workflow                      | Completed |
 | 029B  | Workflow Polish II                       | Completed |
+| 029C  | Workflow Polish III                      | Completed |
+| 029D  | Prompt Library Completion                | Completed |
 
 ## Notes
 
@@ -75,6 +77,17 @@
   - Generate availability (disabled when nothing to process).
   - Clipboard refresh on window activation via WidgetsBindingObserver.
   - Command Bar visual polish (centered ⚡, improved spacing, clickable look).
+- Phase 029C added Workflow Polish III:
+  - ⌘R Generate shortcut (reuses existing Generate action).
+  - Prompt Library refresh confirms immediate updates.
+  - Clipboard revalidation on window activation confirmed.
+  - Command Bar hover feedback and clickable affordances improved.
+- Phase 029D completed the Prompt Library:
+  - ➕ New Prompt button with Save/Cancel dialog.
+  - Edit dialog for title + content.
+  - Delete with role-assignment confirmation.
+  - Empty state with "Create your first prompt".
+  - All modifications refresh immediately.
 
 ## Next Phase
 

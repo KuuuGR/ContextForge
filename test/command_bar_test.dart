@@ -15,7 +15,6 @@ import 'package:context_forge/services/prompt_service.dart';
 import 'package:context_forge/services/video_history_service.dart';
 import 'package:context_forge/services/video_service.dart';
 import 'package:context_forge/widgets/command_bar.dart';
-import 'package:context_forge/widgets/prompt_editor.dart';
 import 'package:context_forge/widgets/video_input_card.dart';
 
 import 'helpers/in_memory_video_history_storage.dart';
@@ -165,27 +164,15 @@ void main() {
       (WidgetTester tester) async {
     await pumpApp(tester);
 
-    final editorBefore = tester.widget<TextField>(
-      find.descendant(
-        of: find.byType(PromptEditor),
-        matching: find.byType(TextField),
-      ),
-    );
-    final beforeText = editorBefore.controller?.text ?? '';
-    expect(beforeText, isNotEmpty);
+    // The prompt selector area should contain the prompt title.
+    expect(find.text('SEO Article'), findsWidgets);
 
     await tester.tap(find.text('2'));
     await tester.pumpAndSettle();
 
-    final editorAfter = tester.widget<TextField>(
-      find.descendant(
-        of: find.byType(PromptEditor),
-        matching: find.byType(TextField),
-      ),
-    );
-    final afterText = editorAfter.controller?.text ?? '';
-    expect(afterText, isNot(beforeText));
-    expect(afterText, isNotEmpty);
+    // The selected prompt dropdown should now show the second prompt.
+    expect(find.text('Newsletter'), findsWidgets);
+    expect(find.text('SEO Article'), findsNothing);
   });
 
   testWidgets('Generate button in command bar generates output',

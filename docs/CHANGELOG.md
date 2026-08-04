@@ -2,6 +2,46 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.17] — 2026-08-04 (029D)
+
+### Added
+
+- Prompt Library Completion:
+  - ➕ New Prompt button with explicit Save / Cancel workflow.
+  - Edit dialog for changing title and content.
+  - Delete with confirmation dialog that explains any assigned role (Default, ⚡, ①, ②, ③).
+  - Friendly empty state with "Create your first prompt" button.
+  - All modifications refresh immediately.
+- `PromptManager` widget handles the complete user-managed Prompt Library.
+- `PromptSelector` items now include edit (✏) and delete (🗑) icons.
+
+### Notes
+
+- No special "built-in" prompts.
+- Users own the library.
+
+## [0.1.17] — 2026-08-04 (029C)
+
+### Added
+
+- **⌘R Generate shortcut** — equivalent to pressing Generate; reuses the existing Generate action with the same enable/disable logic.
+- Prompt Library refresh:
+  - Favorite, Default, ⚡, ①, ②, ③ assignments now refresh the expanded Prompt Library immediately.
+  - No collapsing/reopening required.
+- Clipboard button refresh:
+  - Revalidates clipboard contents whenever ContextForge becomes the active application.
+  - Enables/disables clipboard buttons immediately.
+  - Uses native window activation notifications (WidgetsBindingObserver) — no polling.
+- Command Bar polish:
+  - Clear hover feedback via tooltips.
+  - Improved spacing and alignment.
+  - Every icon clearly looks clickable.
+
+### Notes
+
+- Workflow friction removal only.
+- No new product features.
+
 ## [0.1.17] — 2026-08-04 (029B)
 
 ### Added

@@ -25,8 +25,7 @@ import '../viewmodels/video_card_controller.dart';
 import '../widgets/command_bar.dart';
 import '../widgets/generate_button.dart';
 import '../widgets/output_preview.dart';
-import '../widgets/prompt_editor.dart';
-import '../widgets/prompt_selector.dart';
+import '../widgets/prompt_manager.dart';
 import '../widgets/video_input_card.dart';
 
 /// Main application page containing the full ContextForge workflow UI.
@@ -213,6 +212,165 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         }
       }
     }
+  }
+
+  /// Creates a new prompt via a title + content dialog.
+  Future<void> _onCreatePrompt() async {
+    final titleController = TextEditingController();
+    final contentController = TextEditingController();
+    final created = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('New Prompt'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: 'Title'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: contentController,
+              maxLines: 4,
+              decoration: const InputDecoration(labelText: 'Content'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (created == true) {
+      final title = titleController.text.trim();
+      final content = contentController.text.trim();
+      if (title.isNotEmpty && content.isNotEmpty) {
+        await _promptService.createPrompt(title: title, content: content);
+        await _reloadPrompts();
+      }
+    }
+    titleController.dispose();
+    contentController.dispose();
+  }
+
+  /// Edits an existing prompt via a title + content dialog.
+  Future<void> _onEditPrompt(Prompt prompt) async {
+    final titleController = TextEditingController(text: prompt.title);
+    final contentController = TextEditingController(text: prompt.content);
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Prompt'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: 'Title'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: contentController,
+              maxLines: 4,
+              decoration: const InputDecoration(labelText: 'Content'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (saved == true) {
+      final title = titleController.text.trim();
+      final content = contentController.text.trim();
+      if (title.isNotEmpty && content.isNotEmpty) {
+        await _promptService.updatePrompt(
+          id: prompt.id,
+          title: title,
+          content: content,
+        );
+        await _reloadPrompts();
+      }
+    }
+    titleController.dispose();
+    contentController.dispose();
+  }
+
+  /// Deletes a prompt, with role-assignment confirmation.
+  Future<void> _onDeletePrompt(Prompt prompt) async {
+    String? roleLabel;
+    if (prompt.quickAccess != PromptQuickAccess.none) {
+      roleLabel = switch (prompt.quickAccess) {
+        PromptQuickAccess.quickWorkflow => '⚡ Quick Workflow',
+        PromptQuickAccess.slotOne => '① Slot One',
+        PromptQuickAccess.slotTwo => '② Slot Two',
+        PromptQuickAccess.slotThree => '③ Slot Three',
+        PromptQuickAccess.none => null,
+      };
+    }
+    if (prompt.isDefault) {
+      roleLabel = 'Default';
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Prompt?'),
+        content: Text(
+          roleLabel == null
+              ? 'Delete "${prompt.title}"?'
+              : 'Delete "${prompt.title}"? It is currently assigned to: $roleLabel.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _promptService.deletePrompt(prompt.id);
+      await _reloadPrompts();
+    }
+  }
+
+  /// Reloads prompts and refreshes selection.
+  Future<void> _reloadPrompts() async {
+    final prompts = await _promptService.getAllPrompts();
+    if (!mounted) return;
+    setState(() {
+      _prompts = prompts;
+      if (!prompts.any((p) => p.title == _selectedPrompt)) {
+        _selectedPrompt = prompts.isEmpty ? customPromptOption : prompts.first.title;
+      }
+    });
   }
 
   /// Toggles the Favorite state of a prompt and reloads the (sorted) list.
@@ -602,6 +760,11 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           LogicalKeyboardKey.enter,
           meta: true,
         ): const _GenerateIntent(),
+        // ⌘R Generate
+        const SingleActivator(
+          LogicalKeyboardKey.keyR,
+          meta: true,
+        ): const _GenerateIntent(),
         // ⌘⌫ Clear
         const SingleActivator(
           LogicalKeyboardKey.backspace,
@@ -691,18 +854,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            PromptSelector(
+                            PromptManager(
                               prompts: _prompts,
                               value: _selectedPrompt,
                               onChanged: _onPromptChanged,
                               onToggleFavorite: _onToggleFavorite,
                               onAssignQuickAccess: _onAssignQuickAccess,
-                            ),
-                            const SizedBox(height: 16),
-                            PromptEditor(
-                              content: _selectedPromptContent,
-                              enabled: _isCustomPrompt,
-                              controller: _promptEditorController,
+                              onCreatePrompt: _onCreatePrompt,
+                              onEditPrompt: _onEditPrompt,
+                              onDeletePrompt: _onDeletePrompt,
+                              editorController: _promptEditorController,
+                              editorEnabled: _isCustomPrompt,
                             ),
                           ],
                         ),
