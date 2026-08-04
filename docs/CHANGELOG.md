@@ -2,6 +2,40 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [0.1.13] — 2026-08-04
+
+### Added
+
+- Prompt Favorites:
+  - Each prompt can be marked as a Favorite via a subtle star icon in the prompt dropdown.
+  - Filled star = Favorite; outlined star = not a favorite.
+  - Favorites always appear at the top of the prompt list.
+  - Within Favorites, the manual (stored) ordering is preserved.
+- Default Prompt:
+  - Exactly one prompt can be marked as the Default via the bookmark control in the prompt dropdown.
+  - The Default Prompt is automatically selected when the application starts.
+  - When no Default exists, the current behaviour is kept (first saved prompt is selected).
+  - Removing the Default restores the previous behaviour.
+  - The Default Prompt displays a small "Default" badge.
+- Persistence:
+  - `isFavorite` and `isDefault` fields added to the `Prompt` model (`lib/models/prompt.dart`).
+  - Existing JSON storage formats remain readable — missing `isFavorite` / `isDefault` keys default to `false`.
+  - No new storage layer, no database; reuses the existing `prompts.json` storage.
+- Service APIs:
+  - `PromptService.getAllPrompts()` now returns prompts with Favorites first (manual order preserved within groups).
+  - `PromptService.setFavorite(id, bool)` — toggles favorite state.
+  - `PromptService.setDefault(id)` — marks a prompt as the single Default (clearing any previous one).
+  - `PromptService.clearDefault(id)` — removes the Default designation.
+  - `PromptService.getDefaultPrompt()` — returns the current Default, or `null`.
+- `PromptSelector` accepts optional `onToggleFavorite` and `onToggleDefault` callbacks for interactive star and default controls.
+- `HomePage` auto-selects the Default Prompt on launch and wires the favorite/default toggle callbacks.
+- Tests: model serialization for new fields, favorites-first ordering, favorite/default persistence across restart, single-default enforcement, default clearing, widget tests for star icons and the Default badge.
+
+### Notes
+
+- No dialogs, no extra configuration screens, no UI redesign.
+- The prompt editor and transcript generation are unchanged.
+
 ## [0.1.12] — 2026-08-04
 
 ### Added

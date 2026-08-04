@@ -164,6 +164,153 @@ void main() {
       );
     });
 
+    group('favorites and default', () {
+      test('setFavorite marks a prompt as favorite', () async {
+        final created = await service.createPrompt(
+          title: 'SEO Article',
+          content: 'Content',
+        );
+
+        final updated = await service.setFavorite(created.id, true);
+        expect(updated.isFavorite, isTrue);
+
+        final loaded = await service.getPrompt(created.id);
+        expect(loaded.isFavorite, isTrue);
+      });
+
+      test('setFavorite can unmark a favorite', () async {
+        final created = await service.createPrompt(
+          title: 'SEO Article',
+          content: 'Content',
+        );
+        await service.setFavorite(created.id, true);
+        final updated = await service.setFavorite(created.id, false);
+
+        expect(updated.isFavorite, isFalse);
+      });
+
+      test('setFavorite persists across restart', () async {
+        final created = await service.createPrompt(
+          title: 'SEO Article',
+          content: 'Content',
+        );
+        await service.setFavorite(created.id, true);
+
+        // Simulate restart: fresh service reading the same file.
+        final storage =
+            JsonPromptStorage(directoryPath: tempDir.path);
+        final repository = JsonPromptRepository(storage: storage);
+        final restarted = PromptService(repository: repository);
+
+        final loaded = await restarted.getPrompt(created.id);
+        expect(loaded.isFavorite, isTrue);
+      });
+
+      test('getAllPrompts returns favorites first', () async {
+        final a = await service.createPrompt(title: 'Alpha', content: 'A');
+        final b = await service.createPrompt(title: 'Beta', content: 'B');
+        final c = await service.createPrompt(title: 'Gamma', content: 'C');
+
+        // Make the second and third favorites.
+        await service.setFavorite(b.id, true);
+        await service.setFavorite(c.id, true);
+
+        final prompts = await service.getAllPrompts();
+        expect(prompts.map((p) => p.title), ['Beta', 'Gamma', 'Alpha']);
+        // Manual ordering preserved within favorites.
+        expect(prompts[0].id, b.id);
+        expect(prompts[1].id, c.id);
+        // Manual ordering preserved within non-favorites.
+        expect(prompts[2].id, a.id);
+      });
+
+      test('setDefault marks a prompt as the single default', () async {
+        final a = await service.createPrompt(title: 'Alpha', content: 'A');
+        final b = await service.createPrompt(title: 'Beta', content: 'B');
+
+        await service.setDefault(b.id);
+
+        final defaultPrompt = await service.getDefaultPrompt();
+        expect(defaultPrompt, isNotNull);
+        expect(defaultPrompt!.id, b.id);
+        expect(defaultPrompt.isDefault, isTrue);
+
+        // Only one prompt can be default.
+        final prompts = await service.getAllPrompts();
+        final defaults = prompts.where((p) => p.isDefault);
+        expect(defaults, hasLength(1));
+        expect(a.isDefault, isFalse);
+      });
+
+      test('setting a new default clears the previous one', () async {
+        final a = await service.createPrompt(title: 'Alpha', content: 'A');
+        final b = await service.createPrompt(title: 'Beta', content: 'B');
+
+        await service.setDefault(a.id);
+        await service.setDefault(b.id);
+
+        final defaultPrompt = await service.getDefaultPrompt();
+        expect(defaultPrompt!.id, b.id);
+
+        final prompts = await service.getAllPrompts();
+        final defaults = prompts.where((p) => p.isDefault);
+        expect(defaults, hasLength(1));
+      });
+
+      test('clearDefault removes the default designation', () async {
+        final created = await service.createPrompt(
+          title: 'SEO Article',
+          content: 'Content',
+        );
+        await service.setDefault(created.id);
+
+        final cleared = await service.clearDefault(created.id);
+        expect(cleared.isDefault, isFalse);
+
+        final defaultPrompt = await service.getDefaultPrompt();
+        expect(defaultPrompt, isNull);
+      });
+
+      test('default survives restart', () async {
+        final created = await service.createPrompt(
+          title: 'SEO Article',
+          content: 'Content',
+        );
+        await service.setDefault(created.id);
+
+        // Simulate restart: fresh service reading the same file.
+        final storage =
+            JsonPromptStorage(directoryPath: tempDir.path);
+        final repository = JsonPromptRepository(storage: storage);
+        final restarted = PromptService(repository: repository);
+
+        final defaultPrompt = await restarted.getDefaultPrompt();
+        expect(defaultPrompt, isNotNull);
+        expect(defaultPrompt!.id, created.id);
+      });
+
+      test('setDefault throws PromptNotFoundException for missing id', () async {
+        expect(
+          () => service.setDefault('missing'),
+          throwsA(isA<PromptNotFoundException>()),
+        );
+      });
+
+      test('clearDefault throws PromptNotFoundException for missing id',
+          () async {
+        expect(
+          () => service.clearDefault('missing'),
+          throwsA(isA<PromptNotFoundException>()),
+        );
+      });
+
+      test('getDefaultPrompt returns null when no default set', () async {
+        await service.createPrompt(title: 'One', content: 'First');
+        final defaultPrompt = await service.getDefaultPrompt();
+        expect(defaultPrompt, isNull);
+      });
+    });
+
     group('validation', () {
       test('rejects empty title', () async {
         expect(

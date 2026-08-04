@@ -136,12 +136,20 @@ class _HomePageState extends State<HomePage> {
     await _promptService.ensureDefaultPrompts();
     final prompts = await _promptService.getAllPrompts();
     if (!mounted) return;
-    if (prompts.isNotEmpty) {
-      _promptEditorController.text = prompts.first.content;
+
+    // The Default Prompt is auto-selected on launch. When no Default exists,
+    // keep the current behaviour: select the first saved prompt.
+    final defaultPrompt = await _promptService.getDefaultPrompt();
+    final initialTitle = defaultPrompt?.title ??
+        (prompts.isEmpty ? customPromptOption : prompts.first.title);
+    final initialPrompt = defaultPrompt ??
+        (prompts.isNotEmpty ? prompts.first : null);
+    if (initialPrompt != null) {
+      _promptEditorController.text = initialPrompt.content;
     }
     setState(() {
       _prompts = prompts;
-      _selectedPrompt = prompts.isEmpty ? customPromptOption : prompts.first.title;
+      _selectedPrompt = initialTitle;
     });
   }
 
@@ -171,6 +179,44 @@ class _HomePageState extends State<HomePage> {
         }
       }
     }
+  }
+
+  /// Toggles the Favorite state of a prompt and reloads the (sorted) list.
+  Future<void> _onToggleFavorite(Prompt prompt) async {
+    await _promptService.setFavorite(prompt.id, !prompt.isFavorite);
+    final prompts = await _promptService.getAllPrompts();
+    if (!mounted) return;
+    setState(() {
+      _prompts = prompts;
+    });
+  }
+
+  /// Toggles the Default designation of a prompt.
+  ///
+  /// Tapping on the current Default removes it; tapping on any other prompt
+  /// makes it the single Default (clearing any previous one).
+  Future<void> _onToggleDefault(Prompt prompt) async {
+    if (prompt.isDefault) {
+      await _promptService.clearDefault(prompt.id);
+    } else {
+      await _promptService.setDefault(prompt.id);
+    }
+    final prompts = await _promptService.getAllPrompts();
+    // If the Default was just removed, fall back to the first prompt.
+    if (!mounted) return;
+    setState(() {
+      _prompts = prompts;
+      if (_selectedPrompt == customPromptOption ||
+          !prompts.any((p) => p.title == _selectedPrompt)) {
+        _selectedPrompt =
+            prompts.isEmpty ? customPromptOption : prompts.first.title;
+        final selected =
+            prompts.isEmpty ? null : prompts.first;
+        if (selected != null) {
+          _promptEditorController.text = selected.content;
+        }
+      }
+    });
   }
 
   /// Copies the generated output to the system clipboard.
@@ -356,6 +402,8 @@ class _HomePageState extends State<HomePage> {
                         prompts: _prompts,
                         value: _selectedPrompt,
                         onChanged: _onPromptChanged,
+                        onToggleFavorite: _onToggleFavorite,
+                        onToggleDefault: _onToggleDefault,
                       ),
                       const SizedBox(height: 16),
                       PromptEditor(

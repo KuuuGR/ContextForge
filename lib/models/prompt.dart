@@ -9,6 +9,8 @@ class Prompt {
     this.rating = 0,
     required this.createdAt,
     required this.updatedAt,
+    this.isFavorite = false,
+    this.isDefault = false,
   });
 
   /// Unique identifier for the prompt.
@@ -23,6 +25,12 @@ class Prompt {
   /// Rating score (0 = unrated).
   final int rating;
 
+  /// Whether the prompt is marked as a Favorite.
+  final bool isFavorite;
+
+  /// Whether this prompt is the single Default Prompt.
+  final bool isDefault;
+
   /// Creation timestamp as ISO-8601 string.
   final String createdAt;
 
@@ -35,6 +43,8 @@ class Prompt {
     String? title,
     String? content,
     int? rating,
+    bool? isFavorite,
+    bool? isDefault,
     String? createdAt,
     String? updatedAt,
   }) {
@@ -43,6 +53,8 @@ class Prompt {
       title: title ?? this.title,
       content: content ?? this.content,
       rating: rating ?? this.rating,
+      isFavorite: isFavorite ?? this.isFavorite,
+      isDefault: isDefault ?? this.isDefault,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -55,18 +67,25 @@ class Prompt {
       'title': title,
       'content': content,
       'rating': rating,
+      'isFavorite': isFavorite,
+      'isDefault': isDefault,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
   }
 
   /// Deserializes a [Prompt] from a JSON-compatible map.
+  ///
+  /// Missing `isFavorite` / `isDefault` keys default to `false` so older
+  /// prompt files remain readable.
   factory Prompt.fromJson(Map<String, dynamic> json) {
     return Prompt(
       id: json['id'] as String,
       title: json['title'] as String,
       content: json['content'] as String,
       rating: json['rating'] as int? ?? 0,
+      isFavorite: json['isFavorite'] as bool? ?? false,
+      isDefault: json['isDefault'] as bool? ?? false,
       createdAt: json['createdAt'] as String,
       updatedAt: json['updatedAt'] as String,
     );
@@ -80,18 +99,22 @@ class Prompt {
         other.title == title &&
         other.content == content &&
         other.rating == rating &&
+        other.isFavorite == isFavorite &&
+        other.isDefault == isDefault &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, title, content, rating, createdAt, updatedAt);
+    return Object.hash(
+        id, title, content, rating, isFavorite, isDefault, createdAt, updatedAt);
   }
 
   @override
   String toString() {
     return 'Prompt(id: $id, title: $title, rating: $rating, '
+        'isFavorite: $isFavorite, isDefault: $isDefault, '
         'createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 }

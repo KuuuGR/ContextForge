@@ -79,16 +79,53 @@ void main() {
       expect(find.text(customPromptOption).hitTestable(), findsWidgets);
     });
 
-    testWidgets('shows friendly empty state when no prompts',
+    testWidgets('shows star icons for each prompt option',
         (WidgetTester tester) async {
+      await service.ensureDefaultPrompts();
+      final prompts = await service.getAllPrompts();
+      await service.setFavorite(prompts.first.id, true);
+
+      final updatedPrompts = await service.getAllPrompts();
+
       await tester.pumpWidget(
         wrap(PromptSelector(
-          prompts: const [],
-          value: customPromptOption,
+          prompts: updatedPrompts,
+          value: updatedPrompts.first.title,
           onChanged: (String _) {},
+          onToggleFavorite: (Prompt _) {},
         )),
       );
-      expect(find.textContaining('No saved prompts'), findsOneWidget);
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+
+      // The favorite prompt shows a filled star.
+      expect(find.byIcon(Icons.star), findsWidgets);
+      // Non-favorite prompts show outlined stars.
+      expect(find.byIcon(Icons.star_border), findsWidgets);
+    });
+
+    testWidgets('shows Default badge on the default prompt',
+        (WidgetTester tester) async {
+      await service.ensureDefaultPrompts();
+      final prompts = await service.getAllPrompts();
+      await service.setDefault(prompts.first.id);
+
+      final updatedPrompts = await service.getAllPrompts();
+
+      await tester.pumpWidget(
+        wrap(PromptSelector(
+          prompts: updatedPrompts,
+          value: updatedPrompts.first.title,
+          onChanged: (String _) {},
+          onToggleDefault: (Prompt _) {},
+        )),
+      );
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Default').hitTestable(), findsOneWidget);
     });
   });
 
@@ -109,6 +146,34 @@ void main() {
 
       final first = (await service.getAllPrompts()).first;
       expect(find.text(first.title), findsWidgets);
+      expect(find.text(first.content), findsOneWidget);
+    });
+
+    testWidgets('auto-selects the Default prompt on launch',
+        (WidgetTester tester) async {
+      await service.ensureDefaultPrompts();
+      final prompts = await service.getAllPrompts();
+      // Make the last prompt the default.
+      await service.setDefault(prompts.last.id);
+      final updated = await service.getAllPrompts();
+
+      await tester.pumpWidget(buildHome());
+      await tester.pumpAndSettle();
+
+      // The default prompt's content is shown in the editor.
+      final defaultPrompt = updated.firstWhere((p) => p.isDefault);
+      expect(find.text(defaultPrompt.content), findsOneWidget);
+
+      // The selected dropdown shows the default prompt's title.
+      expect(find.text(defaultPrompt.title), findsWidgets);
+    });
+
+    testWidgets('selects first prompt when no default exists',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(buildHome());
+      await tester.pumpAndSettle();
+
+      final first = (await service.getAllPrompts()).first;
       expect(find.text(first.content), findsOneWidget);
     });
 

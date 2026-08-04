@@ -10,6 +10,7 @@ import '../repositories/prompt_repository.dart';
 /// - Load available prompt templates for selection.
 /// - Provide the active prompt for output generation.
 /// - Support custom prompt authoring during the workflow.
+/// - Manage Favorites and the single Default Prompt.
 /// - Own all prompt business rules (validation, trimming, ID generation).
 ///
 /// Depends on [PromptRepository] abstraction; storage details are
@@ -43,12 +44,25 @@ class PromptService {
     ),
   ];
 
-  /// Loads all saved prompts.
+  /// Loads all saved prompts, sorted so Favorites appear first.
+  ///
+  /// Within Favorites and within non-Favorites, the original stored order
+  /// (manual ordering) is preserved.
   ///
   /// Pure read — does not seed defaults. Use [ensureDefaultPrompts] to seed
   /// on first run.
-  Future<List<Prompt>> getAllPrompts() {
-    return repository.getAll();
+  Future<List<Prompt>> getAllPrompts() async {
+    final prompts = await repository.getAll();
+    final favoritesFirst = <Prompt>[];
+    final rest = <Prompt>[];
+    for (final p in prompts) {
+      if (p.isFavorite) {
+        favoritesFirst.add(p);
+      } else {
+        rest.add(p);
+      }
+    }
+    return [...favoritesFirst, ...rest];
   }
 
   /// Seeds the default prompt templates when storage is empty.
@@ -82,6 +96,65 @@ class PromptService {
       throw PromptNotFoundException('Prompt with id "$id" was not found.');
     }
     return prompt;
+  }
+
+  /// Returns the Default Prompt, or `null` when no Default is set.
+  Future<Prompt?> getDefaultPrompt() async {
+    final prompts = await repository.getAll();
+    for (final p in prompts) {
+      if (p.isDefault) return p;
+    }
+    return null;
+  }
+
+  /// Toggles the Favorite state of the prompt with [id].
+  ///
+  /// Throws [PromptNotFoundException] when the prompt does not exist.
+  Future<Prompt> setFavorite(String id, bool isFavorite) async {
+    final existing = await getPrompt(id);
+    final updated = existing.copyWith(
+      isFavorite: isFavorite,
+      updatedAt: _nowIso8601(),
+    );
+    await repository.save(updated);
+    return updated;
+  }
+
+  /// Marks the prompt with [id] as the single Default Prompt.
+  ///
+  /// Any previously-default prompt has its `isDefault` flag cleared.
+  /// Throws [PromptNotFoundException] when the prompt does not exist.
+  Future<Prompt> setDefault(String id) async {
+    final existing = await getPrompt(id);
+
+    // Clear any existing default.
+    final prompts = await repository.getAll();
+    for (final p in prompts) {
+      if (p.id != id && p.isDefault) {
+        await repository.save(p.copyWith(isDefault: false));
+      }
+    }
+
+    final updated = existing.copyWith(
+      isDefault: true,
+      updatedAt: _nowIso8601(),
+    );
+    await repository.save(updated);
+    return updated;
+  }
+
+  /// Removes the Default Prompt designation.
+  ///
+  /// No-op when no prompt is currently the Default.
+  /// Throws [PromptNotFoundException] when the prompt does not exist.
+  Future<Prompt> clearDefault(String id) async {
+    final existing = await getPrompt(id);
+    final updated = existing.copyWith(
+      isDefault: false,
+      updatedAt: _nowIso8601(),
+    );
+    await repository.save(updated);
+    return updated;
   }
 
   /// Creates a new prompt from [title] and [content].
@@ -118,7 +191,7 @@ class PromptService {
   /// - Title and content are trimmed.
   /// - Empty or whitespace-only title/content are rejected.
   /// - `updatedAt` is refreshed automatically.
-  /// - `createdAt`, `id`, and `rating` are preserved.
+  /// - `createdAt`, `id`, `rating`, `isFavorite`, and `isDefault` are preserved.
   Future<Prompt> updatePrompt({
     required String id,
     required String title,

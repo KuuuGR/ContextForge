@@ -2,9 +2,9 @@
 
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
-| **Current Version** | 0.1.12                                |
-| **Current Phase**   | 024                                  |
-| **Status**          | URL history and visual status implemented |
+| **Current Version** | 0.1.13                                |
+| **Current Phase**   | 025                                  |
+| **Status**          | Prompt favorites and default implemented |
 | **Current Milestone** | Daily Workflow Improvements          |
 
 ## Phase Tracking
@@ -37,6 +37,7 @@
 | 022B  | Enable macOS Outbound Network Access      | Completed |
 | 023   | Output Actions                           | Completed |
 | 024   | URL History & Visual Status              | Completed |
+| 025   | Prompt Favorites & Default Prompt        | Completed |
 
 ## Notes
 
@@ -57,7 +58,13 @@
   - Green/neutral dot indicator inside each URL field.
   - Tooltip shows the last processed date/time.
   - History survives application restarts and the Clear button.
+- Phase 025 added Prompt Favorites and Default Prompt:
+  - Star icon toggles Favorites; Favorites sort to the top with manual order preserved.
+  - Bookmark control toggles the single Default; a "Default" badge is shown.
+  - Default Prompt auto-selects on launch.
+  - `isFavorite` / `isDefault` persisted in `prompts.json` (no new storage).
+  - Removing Default restores previous behaviour (first prompt selected).
 
 ## Next Phase
 
-Phase 025.
+Phase 026.
