@@ -13,6 +13,12 @@ import '../services/prompt_service.dart';
 import '../services/video_history_service.dart';
 import '../services/video_service.dart';
 
+/// Debug flag that always shows the First Launch Intro.
+///
+/// Only applies in debug builds — release builds always respect the
+/// persisted completion state.
+const debugAlwaysShowIntro = true;
+
 /// Root widget for the ContextForge application.
 class ContextForgeApp extends StatelessWidget {
   const ContextForgeApp({
@@ -109,7 +115,9 @@ class _RootState extends State<_Root> {
   }
 
   Future<void> _checkIntro() async {
-    final show = await widget.introStore.shouldShowIntro();
+    final show = kDebugMode && debugAlwaysShowIntro
+        ? true
+        : await widget.introStore.shouldShowIntro();
     if (!mounted) return;
     setState(() => _showIntro = show);
   }
