@@ -121,6 +121,18 @@ class _PromptSelectorState extends State<PromptSelector> {
         border: OutlineInputBorder(),
       ),
       items: items,
+      selectedItemBuilder: (context) => [
+        const SizedBox.shrink(),
+        for (final prompt in widget.prompts)
+          ValueListenableBuilder<List<Prompt>>(
+            valueListenable: _prompts,
+            builder: (context, prompts, _) {
+              final live = _promptById(prompts, prompt.id) ?? prompt;
+              return _PromptTitleWithStar(prompt: live);
+            },
+          ),
+        const Text(customPromptOption),
+      ],
       onChanged: (selected) {
         if (selected != null && selected != _closeOption) {
           widget.onChanged(selected);
@@ -160,6 +172,59 @@ class _CloseMenuItem extends StatelessWidget {
   }
 }
 
+/// Star mark for the favorite / super-star (default) state cycle:
+///
+/// - ☆ (normal)   → [Icons.star_border]
+/// - ★ (favorite) → [Icons.star]
+/// - 🌟 (default)  → [Icons.stars]
+class _PromptStarMark extends StatelessWidget {
+  const _PromptStarMark({required this.prompt, this.size = 16});
+
+  final Prompt prompt;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Icon(
+      prompt.isDefault
+          ? Icons.stars
+          : prompt.isFavorite
+              ? Icons.star
+              : Icons.star_border,
+      size: size,
+      color: prompt.isDefault || prompt.isFavorite
+          ? Colors.amber
+          : theme.colorScheme.onSurfaceVariant,
+    );
+  }
+}
+
+/// Star + title row shown inside the collapsed prompt selector so the
+/// collapsed and expanded panels display the same star state.
+class _PromptTitleWithStar extends StatelessWidget {
+  const _PromptTitleWithStar({required this.prompt});
+
+  final Prompt prompt;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _PromptStarMark(prompt: prompt),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            prompt.title,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _PromptMenuItem extends StatelessWidget {
   const _PromptMenuItem({
     required this.prompt,
@@ -186,17 +251,7 @@ class _PromptMenuItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(4),
-            child: Icon(
-              prompt.isDefault
-                  ? Icons.stars
-                  : prompt.isFavorite
-                      ? Icons.star
-                      : Icons.star_border,
-              size: 16,
-              color: prompt.isDefault || prompt.isFavorite
-                  ? Colors.amber
-                  : theme.colorScheme.onSurfaceVariant,
-            ),
+            child: _PromptStarMark(prompt: prompt),
           ),
         ),
         const SizedBox(width: 6),
