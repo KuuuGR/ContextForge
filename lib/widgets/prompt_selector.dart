@@ -128,7 +128,12 @@ class _PromptSelectorState extends State<PromptSelector> {
             valueListenable: _prompts,
             builder: (context, prompts, _) {
               final live = _promptById(prompts, prompt.id) ?? prompt;
-              return _PromptTitleWithStar(prompt: live);
+              return _PromptTitleWithStar(
+                prompt: live,
+                onToggleFavorite: widget.onToggleFavorite == null
+                    ? null
+                    : () => widget.onToggleFavorite!(live),
+              );
             },
           ),
         const Text(customPromptOption),
@@ -202,18 +207,33 @@ class _PromptStarMark extends StatelessWidget {
 
 /// Star + title row shown inside the collapsed prompt selector so the
 /// collapsed and expanded panels display the same star state.
+///
+/// The star is wrapped in its own [GestureDetector] so clicking it changes
+/// only the star state and never expands the collapsed prompt panel.
 class _PromptTitleWithStar extends StatelessWidget {
-  const _PromptTitleWithStar({required this.prompt});
+  const _PromptTitleWithStar({
+    required this.prompt,
+    this.onToggleFavorite,
+  });
 
   final Prompt prompt;
+  final ValueChanged<Prompt>? onToggleFavorite;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _PromptStarMark(prompt: prompt),
-        const SizedBox(width: 6),
+        GestureDetector(
+          onTap:
+              onToggleFavorite == null ? null : () => onToggleFavorite!(prompt),
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: _PromptStarMark(prompt: prompt),
+          ),
+        ),
+        const SizedBox(width: 4),
         Flexible(
           child: Text(
             prompt.title,
