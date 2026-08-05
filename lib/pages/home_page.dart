@@ -385,9 +385,27 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
-  /// Toggles the Favorite state of a prompt and reloads the (sorted) list.
+  /// Cycles the star state of a prompt and reloads the (sorted) list.
+  ///
+  /// State machine:
+  /// - ☆ (normal)   → ★ (favorite)
+  /// - ★ (favorite) → ⭐ (default)
+  /// - ⭐ (default)  → ☆ (normal)
+  ///
+  /// Only one prompt may be ⭐ at a time; promoting a prompt to ⭐ removes
+  /// the default from the previous ⭐ holder.
   Future<void> _onToggleFavorite(Prompt prompt) async {
-    await _promptService.setFavorite(prompt.id, !prompt.isFavorite);
+    if (prompt.isDefault) {
+      // ⭐ → ☆ : remove the default designation and un-favorite.
+      await _promptService.clearDefault(prompt.id);
+      await _promptService.setFavorite(prompt.id, false);
+    } else if (prompt.isFavorite) {
+      // ★ → ⭐ : promote to the Default.
+      await _promptService.setDefault(prompt.id);
+    } else {
+      // ☆ → ★ : mark as Favorite.
+      await _promptService.setFavorite(prompt.id, true);
+    }
     final prompts = await _promptService.getAllPrompts();
     if (!mounted) return;
     setState(() {
