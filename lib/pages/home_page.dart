@@ -96,6 +96,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   bool get _isCustomPrompt => _selectedPrompt == customPromptOption;
 
+  /// The prompt assigned to ⚡ Quick Workflow, or `null` when none is set.
+  Prompt? get _quickWorkflowPrompt {
+    for (final p in _prompts) {
+      if (p.quickAccess == PromptQuickAccess.quickWorkflow) return p;
+    }
+    return null;
+  }
+
+  /// Whether a ⚡ Quick Workflow prompt is assigned.
+  bool get _canQuickWorkflow => _quickWorkflowPrompt != null;
+
   String get _selectedPromptContent {
     if (_isCustomPrompt) return _promptEditorController.text.trim();
     for (final prompt in _prompts) {
@@ -524,6 +535,65 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     _insertIntoSlot(index, _clipboardUrl);
   }
 
+  /// Runs the ⚡ Quick Workflow for the assigned prompt.
+  ///
+  /// Reads the clipboard, validates the YouTube URL, pastes it into the
+  /// first empty video slot, selects the ⚡ prompt, generates the output,
+  /// and copies the result to the clipboard.
+  Future<void> _quickWorkflow() async {
+    final prompt = _quickWorkflowPrompt;
+    if (prompt == null) return;
+
+    // 1-2. Read and validate the clipboard URL.
+    await _refreshClipboardState();
+    final candidateVideoId = _clipboardVideoId();
+    if (candidateVideoId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Clipboard does not contain a valid YouTube URL.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Reject duplicates.
+    if (_videoAlreadyPresent(candidateVideoId)) {
+      _showAlreadyAdded();
+      return;
+    }
+
+    // 3. Paste into the first empty video slot.
+    var inserted = false;
+    for (var i = 0; i < _urlControllers.length; i++) {
+      if (_urlControllers[i].text.trim().isEmpty) {
+        _insertIntoSlot(i, _clipboardUrl);
+        inserted = true;
+        break;
+      }
+    }
+    if (!inserted) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All video slots are full.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Select the ⚡ prompt so generation uses it.
+    _onPromptChanged(prompt.title);
+
+    // 4-5. Generate output automatically.
+    await _generate();
+
+    // 6. Copy the generated output to the clipboard.
+    if (_canCopy) _copyOutput();
+  }
+
   /// Checks whether [videoId] already exists in any slot.
   bool _videoAlreadyPresent(String videoId) {
     for (final controller in _videoControllers) {
@@ -848,6 +918,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             canGenerate: _canGenerate,
                             onCopy: _copyOutput,
                             canCopy: _canCopy,
+                            onQuickWorkflow:
+                                _canQuickWorkflow ? _quickWorkflow : null,
+                            canQuickWorkflow: _canQuickWorkflow,
                           ),
                         ],
                       ),

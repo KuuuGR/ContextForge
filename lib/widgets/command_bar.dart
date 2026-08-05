@@ -69,13 +69,19 @@ class CommandBar extends StatelessWidget {
         children: [
           Center(
             child: Tooltip(
-              message: 'Quick Workflow (coming soon)',
+              message: canQuickWorkflow
+                  ? 'Quick Workflow'
+                  : 'Quick Workflow (no prompt assigned)',
               child: IconButton(
-                onPressed: null,
+                onPressed: canQuickWorkflow ? onQuickWorkflow : null,
                 icon: const Icon(Icons.bolt_outlined, size: 20),
                 iconSize: 20,
-                color: scheme.onSurfaceVariant,
-                tooltip: 'Quick Workflow (coming soon)',
+                color: canQuickWorkflow
+                    ? scheme.primary
+                    : scheme.onSurfaceVariant,
+                tooltip: canQuickWorkflow
+                    ? 'Quick Workflow'
+                    : 'Quick Workflow (no prompt assigned)',
               ),
             ),
           ),
