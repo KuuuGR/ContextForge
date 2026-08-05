@@ -187,9 +187,13 @@ class _PromptMenuItem extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(4),
             child: Icon(
-              prompt.isFavorite ? Icons.star : Icons.star_border,
+              prompt.isDefault
+                  ? Icons.stars
+                  : prompt.isFavorite
+                      ? Icons.star
+                      : Icons.star_border,
               size: 16,
-              color: prompt.isFavorite
+              color: prompt.isDefault || prompt.isFavorite
                   ? Colors.amber
                   : theme.colorScheme.onSurfaceVariant,
             ),
