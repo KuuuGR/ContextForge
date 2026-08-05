@@ -4,6 +4,9 @@ import '../models/prompt.dart';
 import '../models/prompt_quick_access.dart';
 import '../presentation/prompt_constants.dart';
 
+/// Non-selectable value for the close row at the top of the dropdown menu.
+const String _closeOption = '__prompt_selector_close__';
+
 class PromptSelector extends StatefulWidget {
   const PromptSelector({
     super.key,
@@ -56,6 +59,11 @@ class _PromptSelectorState extends State<PromptSelector> {
   @override
   Widget build(BuildContext context) {
     final items = <DropdownMenuItem<String>>[
+      const DropdownMenuItem<String>(
+        value: _closeOption,
+        padding: EdgeInsets.zero,
+        child: _CloseMenuItem(),
+      ),
       for (final prompt in widget.prompts)
         DropdownMenuItem(
           value: prompt.title,
@@ -100,14 +108,16 @@ class _PromptSelectorState extends State<PromptSelector> {
     return DropdownButtonFormField<String>(
       initialValue: items.any((i) => i.value == widget.value)
           ? widget.value
-          : items.first.value,
+          : (widget.prompts.isNotEmpty
+              ? widget.prompts.first.title
+              : customPromptOption),
       decoration: const InputDecoration(
         labelText: 'Select a prompt',
         border: OutlineInputBorder(),
       ),
       items: items,
       onChanged: (selected) {
-        if (selected != null) {
+        if (selected != null && selected != _closeOption) {
           widget.onChanged(selected);
         }
       },
@@ -119,6 +129,29 @@ class _PromptSelectorState extends State<PromptSelector> {
       if (p.id == id) return p;
     }
     return null;
+  }
+}
+
+/// Close control for the expanded prompt selector.
+///
+/// Tapping this row dismisses the dropdown menu without selecting a prompt,
+/// leaving the current selection unchanged.
+class _CloseMenuItem extends StatelessWidget {
+  const _CloseMenuItem();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+        child: Icon(
+          Icons.close,
+          size: 14,
+          color: scheme.onSurfaceVariant,
+        ),
+      ),
+    );
   }
 }
 
