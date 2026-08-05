@@ -46,7 +46,13 @@ class _PromptSelectorState extends State<PromptSelector> {
   void didUpdateWidget(PromptSelector oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.prompts != widget.prompts) {
-      _prompts.value = widget.prompts;
+      // Defer the notifier update until after the current frame so the
+      // ValueListenableBuilders inside the open dropdown menu are not
+      // triggered to rebuild during the build phase.
+      final next = widget.prompts;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _prompts.value = next;
+      });
     }
   }
 
