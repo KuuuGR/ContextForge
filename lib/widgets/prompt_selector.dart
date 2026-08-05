@@ -65,9 +65,9 @@ class _PromptSelectorState extends State<PromptSelector> {
   @override
   Widget build(BuildContext context) {
     final items = <DropdownMenuItem<String>>[
-      const DropdownMenuItem<String>(
+      DropdownMenuItem<String>(
         value: _closeOption,
-        child: _CloseMenuItem(),
+        child: _CloseMenuItem(restoreValue: _restorePromptOnClose()),
       ),
       for (final prompt in widget.prompts)
         DropdownMenuItem(
@@ -152,25 +152,51 @@ class _PromptSelectorState extends State<PromptSelector> {
     }
     return null;
   }
+
+  /// Determines which prompt to restore when the expanded panel is closed.
+  ///
+  /// Prefers the Default (🌟) prompt; otherwise restores the previously
+  /// active prompt when it still exists. Returns `null` when neither is
+  /// available (keeps the current behavior).
+  String? _restorePromptOnClose() {
+    for (final p in _prompts.value) {
+      if (p.isDefault) return p.title;
+    }
+    if (widget.value.isNotEmpty &&
+        (widget.value == customPromptOption ||
+            _prompts.value.any((p) => p.title == widget.value))) {
+      return widget.value;
+    }
+    return null;
+  }
 }
 
 /// Close control for the expanded prompt selector.
 ///
-/// Tapping this row dismisses the dropdown menu without selecting a prompt,
-/// leaving the current selection unchanged.
+/// Tapping this row dismisses the dropdown menu and pops with [restoreValue]
+/// so the FormField selects the restored prompt (Default 🌟 if present,
+/// otherwise the previously active prompt) and the editor never ends up
+/// empty when a Default Prompt is available.
 class _CloseMenuItem extends StatelessWidget {
-  const _CloseMenuItem();
+  const _CloseMenuItem({required this.restoreValue});
+
+  /// Title of the prompt to restore, or `null` to keep the current behavior.
+  final String? restoreValue;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-        child: Icon(
-          Icons.close,
-          size: 14,
-          color: scheme.onSurfaceVariant,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => Navigator.pop(context, restoreValue),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+          child: Icon(
+            Icons.close,
+            size: 14,
+            color: scheme.onSurfaceVariant,
+          ),
         ),
       ),
     );
