@@ -15,6 +15,8 @@ class CommandBar extends StatelessWidget {
     required this.canCopy,
     required this.canPaste,
     this.canGenerate = true,
+    this.onQuickWorkflow,
+    this.canQuickWorkflow = false,
   });
 
   final List<Prompt> prompts;
@@ -26,6 +28,12 @@ class CommandBar extends StatelessWidget {
   final bool canCopy;
   final bool canPaste;
   final bool canGenerate;
+
+  /// Called when the user taps ⚡ Quick Workflow.
+  final VoidCallback? onQuickWorkflow;
+
+  /// Whether a Quick Workflow prompt is assigned.
+  final bool canQuickWorkflow;
 
   List<Prompt?> get _slotPrompts {
     final result = <Prompt?>[null, null, null];

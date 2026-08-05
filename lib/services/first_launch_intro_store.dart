@@ -3,9 +3,16 @@ import 'dart:io';
 
 /// Persists the First Launch Intro completion state.
 class FirstLaunchIntroStore {
-  FirstLaunchIntroStore({this.directoryPath});
+  FirstLaunchIntroStore({
+    this.directoryPath,
+    this.debugAlwaysShowIntro = false,
+  });
 
   final String? directoryPath;
+
+  /// Development flag: when true, the Intro is always displayed regardless
+  /// of the persisted completion state. Release builds keep this false.
+  final bool debugAlwaysShowIntro;
 
   String get _resolvedDirectoryPath =>
       directoryPath ?? _defaultApplicationSupportPath();
@@ -14,6 +21,7 @@ class FirstLaunchIntroStore {
       '$_resolvedDirectoryPath${Platform.pathSeparator}intro_state.json';
 
   Future<bool> shouldShowIntro() async {
+    if (debugAlwaysShowIntro) return true;
     try {
       final file = File(_filePath);
       if (!await file.exists()) return true;

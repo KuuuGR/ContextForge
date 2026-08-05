@@ -7,6 +7,10 @@
 .buildlog/
 .history
 
+# Local artifacts / packaging
+docs.zip
+ctForge/
+
 
 
 # Flutter repo-specific
