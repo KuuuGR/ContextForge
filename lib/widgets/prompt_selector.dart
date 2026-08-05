@@ -177,6 +177,9 @@ class _PromptSelectorState extends State<PromptSelector> {
 /// so the FormField selects the restored prompt (Default 🌟 if present,
 /// otherwise the previously active prompt) and the editor never ends up
 /// empty when a Default Prompt is available.
+///
+/// The control is styled as an Apple-style grab handle (a thin rounded gray
+/// horizontal bar) centered at the top of the expanded panel.
 class _CloseMenuItem extends StatelessWidget {
   const _CloseMenuItem({required this.restoreValue});
 
@@ -191,11 +194,14 @@ class _CloseMenuItem extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: () => Navigator.pop(context, restoreValue),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-          child: Icon(
-            Icons.close,
-            size: 14,
-            color: scheme.onSurfaceVariant,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Container(
+            width: 36,
+            height: 5,
+            decoration: BoxDecoration(
+              color: scheme.onSurfaceVariant.withValues(alpha: 0.4),
+              borderRadius: BorderRadius.circular(2.5),
+            ),
           ),
         ),
       ),
