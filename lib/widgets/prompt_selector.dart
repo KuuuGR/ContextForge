@@ -61,7 +61,6 @@ class _PromptSelectorState extends State<PromptSelector> {
     final items = <DropdownMenuItem<String>>[
       const DropdownMenuItem<String>(
         value: _closeOption,
-        padding: EdgeInsets.zero,
         child: _CloseMenuItem(),
       ),
       for (final prompt in widget.prompts)
