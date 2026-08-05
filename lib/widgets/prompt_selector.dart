@@ -4,7 +4,7 @@ import '../models/prompt.dart';
 import '../models/prompt_quick_access.dart';
 import '../presentation/prompt_constants.dart';
 
-class PromptSelector extends StatelessWidget {
+class PromptSelector extends StatefulWidget {
   const PromptSelector({
     super.key,
     required this.prompts,
@@ -25,32 +25,69 @@ class PromptSelector extends StatelessWidget {
   final ValueChanged<Prompt>? onDeletePrompt;
 
   @override
+  State<PromptSelector> createState() => _PromptSelectorState();
+}
+
+class _PromptSelectorState extends State<PromptSelector> {
+  /// Mirrors [PromptSelector.prompts] so an already-expanded dropdown menu
+  /// can refresh live (Favorite / Default / Quick Access) without closing.
+  late final ValueNotifier<List<Prompt>> _prompts;
+
+  @override
+  void initState() {
+    super.initState();
+    _prompts = ValueNotifier(widget.prompts);
+  }
+
+  @override
+  void didUpdateWidget(PromptSelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.prompts != widget.prompts) {
+      _prompts.value = widget.prompts;
+    }
+  }
+
+  @override
+  void dispose() {
+    _prompts.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final items = <DropdownMenuItem<String>>[
-      for (final prompt in prompts)
+      for (final prompt in widget.prompts)
         DropdownMenuItem(
           value: prompt.title,
-          child: _PromptMenuItem(
-            prompt: prompt,
-            onToggleFavorite: onToggleFavorite == null
-                ? null
-                : () => onToggleFavorite!(prompt),
-            onAssignQuickAccess: onAssignQuickAccess == null
-                ? null
-                : (role) => onAssignQuickAccess!((prompt, role)),
-            onEditPrompt: onEditPrompt == null
-                ? null
-                : () => onEditPrompt!(prompt),
-            onDeletePrompt: onDeletePrompt == null
-                ? null
-                : () => onDeletePrompt!(prompt),
+          child: ValueListenableBuilder<List<Prompt>>(
+            valueListenable: _prompts,
+            builder: (context, prompts, _) {
+              // Use the live copy so an open menu updates immediately after
+              // Favorite / Default / Quick Access changes.
+              final live = _promptById(prompts, prompt.id) ?? prompt;
+              return _PromptMenuItem(
+                prompt: live,
+                onToggleFavorite: widget.onToggleFavorite == null
+                    ? null
+                    : () => widget.onToggleFavorite!(live),
+                onAssignQuickAccess: widget.onAssignQuickAccess == null
+                    ? null
+                    : (role) => widget.onAssignQuickAccess!((live, role)),
+                onEditPrompt: widget.onEditPrompt == null
+                    ? null
+                    : () => widget.onEditPrompt!(live),
+                onDeletePrompt: widget.onDeletePrompt == null
+                    ? null
+                    : () => widget.onDeletePrompt!(live),
+              );
+            },
           ),
         ),
       const DropdownMenuItem(
-          value: customPromptOption, child: Text(customPromptOption)),
+        value: customPromptOption, child: Text(customPromptOption)),
     ];
 
-    if (prompts.isEmpty) {
+    if (widget.prompts.isEmpty) {
       return const InputDecorator(
         decoration: InputDecoration(
           labelText: 'Select a prompt',
@@ -61,8 +98,9 @@ class PromptSelector extends StatelessWidget {
     }
 
     return DropdownButtonFormField<String>(
-      initialValue:
-          items.any((i) => i.value == value) ? value : items.first.value,
+      initialValue: items.any((i) => i.value == widget.value)
+          ? widget.value
+          : items.first.value,
       decoration: const InputDecoration(
         labelText: 'Select a prompt',
         border: OutlineInputBorder(),
@@ -70,10 +108,17 @@ class PromptSelector extends StatelessWidget {
       items: items,
       onChanged: (selected) {
         if (selected != null) {
-          onChanged(selected);
+          widget.onChanged(selected);
         }
       },
     );
+  }
+
+  Prompt? _promptById(List<Prompt> prompts, String id) {
+    for (final p in prompts) {
+      if (p.id == id) return p;
+    }
+    return null;
   }
 }
 
