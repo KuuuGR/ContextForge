@@ -630,13 +630,17 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return false;
   }
 
-  /// Inserts [url] into slot [index], normalizes it first, validates it,
-  /// and focuses the field.
+  /// Inserts [url] into slot [index] without modification and focuses the
+  /// field.
+  ///
+  /// The clipboard contents are inserted exactly as-is; the YouTube URL
+  /// parser is only used later for validation/metadata. This keeps every
+  /// paste method (Cmd+V, Ctrl+V, toolbar Paste, context menu Paste)
+  /// behaving identically.
   void _insertIntoSlot(int index, String url) {
-    final normalized = _urlParser.normalizeUrl(url);
-    _urlControllers[index].text = normalized;
-    _videoControllers[index].refreshHistoryStatus(normalized);
-    _videoControllers[index].loadMetadata(normalized);
+    _urlControllers[index].text = url;
+    _videoControllers[index].refreshHistoryStatus(url);
+    _videoControllers[index].loadMetadata(url);
     _urlFocusNodes[index].requestFocus();
   }
 
