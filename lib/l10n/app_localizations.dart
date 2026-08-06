@@ -391,7 +391,7 @@ abstract class AppLocalizations {
   /// No description provided for @helpBody.
   ///
   /// In en, this message translates to:
-  /// **'1. Copy a YouTube URL.\n2. Press ⌘V (or use Paste).\n3. Select a prompt.\n4. Press Generate.\n5. Copy the generated output.\n\nQuick Access:\n⭐  Favorite prompt.\n🌟  Default prompt. Automatically selected when ContextForge starts.\n⚡  Quick Workflow. Runs the complete workflow automatically using the clipboard.\n① ② ③  Quick Prompt Slots. Instantly switch the selected prompt.'**
+  /// **'1. Copy a YouTube URL.\n2. Press ⌘V (or use Paste).\n3. Select a prompt.\n4. Press Generate.\n5. Copy the generated output.\n\nQuick Access:\n⭐  Favorite prompt.\n✪  Default prompt. Automatically selected when ContextForge starts.\n⚡  Quick Workflow. Runs the complete workflow automatically using the clipboard.\n① ② ③  Quick Prompt Slots. Instantly switch the selected prompt.'**
   String get helpBody;
 }
 

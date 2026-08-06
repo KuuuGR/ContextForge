@@ -1342,7 +1342,7 @@ class _Footer extends StatelessWidget {
             '5. Copy the generated output.\n\n'
             'Quick Access:\n'
             '⭐  Favorite prompt.\n'
-            '🌟  Default prompt. Automatically selected when '
+            '✪  Default prompt. Automatically selected when '
             'ContextForge starts.\n'
             '⚡  Quick Workflow. Runs the complete workflow '
             'automatically using the clipboard.\n'

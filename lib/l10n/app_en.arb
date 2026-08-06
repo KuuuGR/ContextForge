@@ -48,5 +48,5 @@
   "defaultLabel": "Default",
   "aboutBody": "ContextForge 0.1.17\n\nBuild AI-ready context from YouTube transcripts.\n\nBuilt with Flutter.\nBuilt using the SODA methodology.",
   "shortcutsBody": "⌘V  Paste the clipboard YouTube URL into the first available slot. Successive paste operations continue filling the next empty slot.\n\n⌘R  Generate output.\n\n⌘C  If nothing is selected: copy the generated output. Otherwise: perform native copy.",
-  "helpBody": "1. Copy a YouTube URL.\n2. Press ⌘V (or use Paste).\n3. Select a prompt.\n4. Press Generate.\n5. Copy the generated output.\n\nQuick Access:\n⭐  Favorite prompt.\n🌟  Default prompt. Automatically selected when ContextForge starts.\n⚡  Quick Workflow. Runs the complete workflow automatically using the clipboard.\n① ② ③  Quick Prompt Slots. Instantly switch the selected prompt."
+      "helpBody": "1. Copy a YouTube URL.\n2. Press ⌘V (or use Paste).\n3. Select a prompt.\n4. Press Generate.\n5. Copy the generated output.\n\nQuick Access:\n⭐  Favorite prompt.\n✪  Default prompt. Automatically selected when ContextForge starts.\n⚡  Quick Workflow. Runs the complete workflow automatically using the clipboard.\n① ② ③  Quick Prompt Slots. Instantly switch the selected prompt."
 }
