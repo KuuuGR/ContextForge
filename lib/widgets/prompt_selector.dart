@@ -154,8 +154,9 @@ class _PromptSelectorState extends State<PromptSelector> {
   /// Determines which prompt to restore when the expanded panel is closed.
   ///
   /// Prefers the Default (🌟) prompt; otherwise restores the previously
-  /// active prompt when it still exists. Returns `null` when neither is
-  /// available (keeps the current behavior).
+  /// active prompt when it still exists. When neither is available, falls
+  /// back to the first prompt so the editor never ends up empty and the
+  /// panel always collapses with a valid selection.
   String? _restorePromptOnClose() {
     for (final p in _prompts.value) {
       if (p.isDefault) return p.title;
@@ -164,6 +165,9 @@ class _PromptSelectorState extends State<PromptSelector> {
         (widget.value == customPromptOption ||
             _prompts.value.any((p) => p.title == widget.value))) {
       return widget.value;
+    }
+    if (_prompts.value.isNotEmpty) {
+      return _prompts.value.first.title;
     }
     return null;
   }
