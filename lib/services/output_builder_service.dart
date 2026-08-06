@@ -51,16 +51,14 @@ class OutputBuilderService {
     buffer.writeln();
 
     var index = 1;
-    // `videos` and `transcripts` are index-parallel (a successful video always
-    // pairs with its cleaned transcript). When the video title was retrieved,
-    // use it as the transcript block name; otherwise fall back to the
+    // Match each transcript to its video by ID so the correct retrieved
+    // YouTube title is used as the block name even if the lists are not
+    // positionally aligned. When no title is available, fall back to the
     // numbered naming.
-    for (var i = 0; i < transcripts.length; i++) {
-      final transcript = transcripts[i];
+    for (final transcript in transcripts) {
       final text = transcript.text.trim();
       if (text.isEmpty) continue;
-      final video = i < videos.length ? videos[i] : null;
-      final title = video?.title.trim() ?? '';
+      final title = _titleForVideo(transcript.videoId, videos);
       final blockName = title.isNotEmpty ? title : 'Transcript $index';
       buffer.writeln(blockName);
       buffer.writeln();
@@ -72,6 +70,18 @@ class OutputBuilderService {
     buffer.write(_separator);
 
     return buffer.toString();
+  }
+
+  /// Returns the trimmed title of the video matching [videoId], or an empty
+  /// string when no match exists (fallback to numbered naming).
+  String _titleForVideo(String videoId, List<Video> videos) {
+    for (final video in videos) {
+      if (video.videoId == videoId) {
+        final title = video.title.trim();
+        if (title.isNotEmpty) return title;
+      }
+    }
+    return '';
   }
 
   /// Formats a [DateTime] as `YYYY-MM-DD`.
