@@ -73,9 +73,13 @@ class _FirstLaunchIntroState extends State<FirstLaunchIntro>
   }
 
   double _fade(double start, double end) {
+    // _controller.value is a normalized fraction (0.0–1.0) of the total
+    // duration, but the choreography keyframes are expressed in seconds.
+    // Convert to elapsed seconds so the timings match the choreography.
+    final seconds = _controller.value * _totalDuration;
     // Fade in over ~0.8s, then hold. Opacity becomes (now - start) / (end - start)
     // clamped to [0, 1] while the element is visible.
-    return (_controller.value - start) / (end - start);
+    return (seconds - start) / (end - start);
   }
 
   Widget _fadeTo(double opacity, Widget child) {
