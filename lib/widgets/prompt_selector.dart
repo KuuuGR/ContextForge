@@ -68,11 +68,11 @@ class _PromptSelectorState extends State<PromptSelector> {
       DropdownMenuItem<String>(
         value: _closeOption,
         // Desktop (macOS) grab-handle behavior: collapsing the panel must not
-        // change the currently selected prompt. Pop with the current value so
-        // the dropdown closes and the selection stays untouched.
-        child: _CloseMenuItem(
-          restoreValue: widget.value.isEmpty ? null : widget.value,
-        ),
+        // change the currently selected prompt. Popping without a result
+        // dismisses the dropdown like a normal desktop menu — onChanged is
+        // never invoked, the FormField value stays untouched, and the UI does
+        // not rebuild during route teardown (which would freeze the selector).
+        child: const _CloseMenuItem(),
       ),
       for (final prompt in widget.prompts)
         DropdownMenuItem(
@@ -163,16 +163,14 @@ class _PromptSelectorState extends State<PromptSelector> {
 
 /// Close control for the expanded prompt selector.
 ///
-/// Tapping this row dismisses the dropdown menu and pops with [restoreValue]
-/// so the currently selected prompt stays unchanged when the panel collapses.
+/// Tapping this row dismisses the dropdown menu without a result so the
+/// currently selected prompt stays unchanged and the panel simply collapses,
+/// behaving like a normal desktop dropdown.
 ///
 /// The control is styled as an Apple-style grab handle (a thin rounded gray
 /// horizontal bar) centered at the top of the expanded panel.
 class _CloseMenuItem extends StatelessWidget {
-  const _CloseMenuItem({required this.restoreValue});
-
-  /// Current selected value to keep, or `null` when there is none.
-  final String? restoreValue;
+  const _CloseMenuItem();
 
   @override
   Widget build(BuildContext context) {
@@ -180,7 +178,7 @@ class _CloseMenuItem extends StatelessWidget {
     return Center(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () => Navigator.pop(context, restoreValue),
+        onTap: () => Navigator.pop(context),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Container(
