@@ -51,10 +51,18 @@ class OutputBuilderService {
     buffer.writeln();
 
     var index = 1;
-    for (final transcript in transcripts) {
+    // `videos` and `transcripts` are index-parallel (a successful video always
+    // pairs with its cleaned transcript). When the video title was retrieved,
+    // use it as the transcript block name; otherwise fall back to the
+    // numbered naming.
+    for (var i = 0; i < transcripts.length; i++) {
+      final transcript = transcripts[i];
       final text = transcript.text.trim();
       if (text.isEmpty) continue;
-      buffer.writeln('Transcript $index');
+      final video = i < videos.length ? videos[i] : null;
+      final title = video?.title.trim() ?? '';
+      final blockName = title.isNotEmpty ? title : 'Transcript $index';
+      buffer.writeln(blockName);
       buffer.writeln();
       buffer.writeln(text);
       buffer.writeln();
