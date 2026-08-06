@@ -131,6 +131,9 @@ class _PromptSelectorState extends State<PromptSelector> {
               return _PromptTitleWithStar(
                 prompt: live,
                 onToggleFavorite: widget.onToggleFavorite,
+                onAssignQuickAccess: widget.onAssignQuickAccess == null
+                    ? null
+                    : (role) => widget.onAssignQuickAccess!((live, role)),
               );
             },
           ),
@@ -248,13 +251,16 @@ class _PromptTitleWithStar extends StatelessWidget {
   const _PromptTitleWithStar({
     required this.prompt,
     this.onToggleFavorite,
+    this.onAssignQuickAccess,
   });
 
   final Prompt prompt;
   final ValueChanged<Prompt>? onToggleFavorite;
+  final ValueChanged<PromptQuickAccess>? onAssignQuickAccess;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -274,8 +280,88 @@ class _PromptTitleWithStar extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
+        if (onAssignQuickAccess != null) ...[
+          const SizedBox(width: 4),
+          InkWell(
+            onTap: () => _showQuickAccessMenu(context),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                _roleIcon(prompt.quickAccess),
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  IconData _roleIcon(PromptQuickAccess role) {
+    switch (role) {
+      case PromptQuickAccess.none:
+        return Icons.bookmark_border;
+      case PromptQuickAccess.quickWorkflow:
+        return Icons.bolt_outlined;
+      case PromptQuickAccess.slotOne:
+        return Icons.looks_one_outlined;
+      case PromptQuickAccess.slotTwo:
+        return Icons.looks_two_outlined;
+      case PromptQuickAccess.slotThree:
+        return Icons.looks_3_outlined;
+    }
+  }
+
+  void _showQuickAccessMenu(BuildContext context) {
+    showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(200, 0, 0, 0),
+      items: [
+        PopupMenuItem(
+          value: 'none',
+          child: Text(prompt.quickAccess == PromptQuickAccess.none
+              ? '✓ None'
+              : 'None'),
+        ),
+        PopupMenuItem(
+          value: 'quickWorkflow',
+          child: Text(prompt.quickAccess == PromptQuickAccess.quickWorkflow
+              ? '✓ ⚡ Quick Workflow'
+              : '⚡ Quick Workflow'),
+        ),
+        PopupMenuItem(
+          value: 'slotOne',
+          child: Text(prompt.quickAccess == PromptQuickAccess.slotOne
+              ? '✓ ① Slot One'
+              : '① Slot One'),
+        ),
+        PopupMenuItem(
+          value: 'slotTwo',
+          child: Text(prompt.quickAccess == PromptQuickAccess.slotTwo
+              ? '✓ ② Slot Two'
+              : '② Slot Two'),
+        ),
+        PopupMenuItem(
+          value: 'slotThree',
+          child: Text(prompt.quickAccess == PromptQuickAccess.slotThree
+              ? '✓ ③ Slot Three'
+              : '③ Slot Three'),
+        ),
+      ],
+    ).then((value) {
+      if (value == null || onAssignQuickAccess == null) return;
+      final role = switch (value) {
+        'none' => PromptQuickAccess.none,
+        'quickWorkflow' => PromptQuickAccess.quickWorkflow,
+        'slotOne' => PromptQuickAccess.slotOne,
+        'slotTwo' => PromptQuickAccess.slotTwo,
+        'slotThree' => PromptQuickAccess.slotThree,
+        _ => PromptQuickAccess.none,
+      };
+      onAssignQuickAccess!(role);
+    });
   }
 }
 
