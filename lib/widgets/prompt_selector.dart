@@ -67,7 +67,12 @@ class _PromptSelectorState extends State<PromptSelector> {
     final items = <DropdownMenuItem<String>>[
       DropdownMenuItem<String>(
         value: _closeOption,
-        child: _CloseMenuItem(restoreValue: _restorePromptOnClose()),
+        // Desktop (macOS) grab-handle behavior: collapsing the panel must not
+        // change the currently selected prompt. Pop with the current value so
+        // the dropdown closes and the selection stays untouched.
+        child: _CloseMenuItem(
+          restoreValue: widget.value.isEmpty ? null : widget.value,
+        ),
       ),
       for (final prompt in widget.prompts)
         DropdownMenuItem(
@@ -154,41 +159,19 @@ class _PromptSelectorState extends State<PromptSelector> {
     return null;
   }
 
-  /// Determines which prompt to restore when the expanded panel is closed.
-  ///
-  /// Prefers the Default (🌟) prompt; otherwise restores the previously
-  /// active prompt when it still exists. When neither is available, falls
-  /// back to the first prompt so the editor never ends up empty and the
-  /// panel always collapses with a valid selection.
-  String? _restorePromptOnClose() {
-    for (final p in _prompts.value) {
-      if (p.isDefault) return p.title;
-    }
-    if (widget.value.isNotEmpty &&
-        (widget.value == customPromptOption ||
-            _prompts.value.any((p) => p.title == widget.value))) {
-      return widget.value;
-    }
-    if (_prompts.value.isNotEmpty) {
-      return _prompts.value.first.title;
-    }
-    return null;
-  }
 }
 
 /// Close control for the expanded prompt selector.
 ///
 /// Tapping this row dismisses the dropdown menu and pops with [restoreValue]
-/// so the FormField selects the restored prompt (Default 🌟 if present,
-/// otherwise the previously active prompt) and the editor never ends up
-/// empty when a Default Prompt is available.
+/// so the currently selected prompt stays unchanged when the panel collapses.
 ///
 /// The control is styled as an Apple-style grab handle (a thin rounded gray
 /// horizontal bar) centered at the top of the expanded panel.
 class _CloseMenuItem extends StatelessWidget {
   const _CloseMenuItem({required this.restoreValue});
 
-  /// Title of the prompt to restore, or `null` to keep the current behavior.
+  /// Current selected value to keep, or `null` when there is none.
   final String? restoreValue;
 
   @override
