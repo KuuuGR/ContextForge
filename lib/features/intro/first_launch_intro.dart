@@ -104,17 +104,14 @@ class _FirstLaunchIntroState extends State<FirstLaunchIntro>
                 // 1. Etaosin logo
                 _fadeTo(
                   _fade(_logoStart, _logoEnd),
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(
-                      Icons.text_snippet_outlined,
-                      size: 32,
-                      color: colorScheme.primary,
+                  SizedBox(
+                    width: 128,
+                    height: 152,
+                    // Preserves the source aspect ratio (400×476) with no
+                    // stretching or clipping inside the splash layout.
+                    child: Image.asset(
+                      'assets/images/etaosinLogo.png',
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
