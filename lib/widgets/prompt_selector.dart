@@ -130,9 +130,7 @@ class _PromptSelectorState extends State<PromptSelector> {
               final live = _promptById(prompts, prompt.id) ?? prompt;
               return _PromptTitleWithStar(
                 prompt: live,
-                onToggleFavorite: widget.onToggleFavorite == null
-                    ? null
-                    : () => widget.onToggleFavorite!(live),
+                onToggleFavorite: widget.onToggleFavorite,
               );
             },
           ),
