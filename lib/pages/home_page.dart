@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../models/clean_transcript.dart';
 import '../models/prompt.dart';
@@ -24,6 +23,7 @@ import '../services/video_service.dart';
 import '../services/youtube_url_parser.dart';
 import '../viewmodels/video_card_controller.dart';
 import '../widgets/command_bar.dart';
+import '../widgets/destination_selector.dart';
 import '../widgets/generate_button.dart';
 import '../widgets/output_preview.dart';
 import '../widgets/prompt_manager.dart';
@@ -1250,38 +1250,9 @@ class _Footer extends StatelessWidget {
           label: const Text('Help'),
         ),
         const SizedBox(width: 8),
-        TextButton.icon(
-          onPressed: () => _showAiMenu(context),
-          icon: const Icon(Icons.smart_toy_outlined, size: 16),
-          label: const Text('AI'),
-        ),
+        const DestinationSelector(),
       ],
     );
-  }
-
-  void _showAiMenu(BuildContext context) {
-    showMenu<String>(
-      context: context,
-      position: RelativeRect.fromLTRB(200, 0, 0, 0),
-      items: const [
-        PopupMenuItem(value: 'chatgpt', child: Text('ChatGPT')),
-        PopupMenuItem(value: 'gemini', child: Text('Gemini')),
-        PopupMenuItem(value: 'claude', child: Text('Claude')),
-        PopupMenuItem(value: 'deepseek', child: Text('DeepSeek')),
-      ],
-    ).then((value) {
-      if (value == null) return;
-      final url = switch (value) {
-        'chatgpt' => 'https://chat.openai.com',
-        'gemini' => 'https://gemini.google.com',
-        'claude' => 'https://claude.ai',
-        'deepseek' => 'https://chat.deepseek.com',
-        _ => null,
-      };
-      if (url != null) {
-        launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-      }
-    });
   }
 
   void _showAbout(BuildContext context) {
