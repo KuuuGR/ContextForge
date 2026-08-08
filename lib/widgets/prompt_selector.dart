@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/prompt.dart';
 import '../models/prompt_quick_access.dart';
 import '../presentation/prompt_constants.dart';
+import 'default_prompt_icon.dart';
 
 /// Non-selectable value for the close row at the top of the dropdown menu.
 const String _closeOption = '__prompt_selector_close__';
@@ -199,7 +200,10 @@ class _CloseMenuItem extends StatelessWidget {
 ///
 /// - ☆ (normal)   → [Icons.star_border]
 /// - ★ (favorite) → [Icons.star]
-/// - 🌟 (default)  → [Icons.stars]
+/// - 🌟 (default)  → [DefaultPromptIcon]
+///
+/// The Default Prompt icon is rendered by the single reusable
+/// [DefaultPromptIcon] component so every view stays identical.
 class _PromptStarMark extends StatelessWidget {
   const _PromptStarMark({required this.prompt, this.size = 16});
 
@@ -209,14 +213,13 @@ class _PromptStarMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    if (prompt.isDefault) {
+      return DefaultPromptIcon(size: size);
+    }
     return Icon(
-      prompt.isDefault
-          ? Icons.stars
-          : prompt.isFavorite
-              ? Icons.star
-              : Icons.star_border,
+      prompt.isFavorite ? Icons.star : Icons.star_border,
       size: size,
-      color: prompt.isDefault || prompt.isFavorite
+      color: prompt.isFavorite
           ? Colors.amber
           : theme.colorScheme.onSurfaceVariant,
     );
