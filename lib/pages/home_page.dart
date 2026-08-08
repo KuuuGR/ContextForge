@@ -8,6 +8,7 @@ import '../models/prompt_quick_access.dart';
 import '../models/transcript_selection.dart';
 import '../models/video.dart';
 import '../presentation/prompt_constants.dart';
+import '../presentation/responsive.dart';
 import '../providers/youtube_explode_provider.dart';
 import '../repositories/in_memory_prompt_repository.dart';
 import '../repositories/in_memory_video_repository.dart';
@@ -235,20 +236,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('New Prompt'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: contentController,
-              maxLines: 4,
-              decoration: const InputDecoration(labelText: 'Content'),
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: contentController,
+                maxLines: 4,
+                decoration: const InputDecoration(labelText: 'Content'),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -283,20 +286,22 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Edit Prompt'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: contentController,
-              maxLines: 4,
-              decoration: const InputDecoration(labelText: 'Content'),
-            ),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Title'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: contentController,
+                maxLines: 4,
+                decoration: const InputDecoration(labelText: 'Content'),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -919,167 +924,225 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             body: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1200),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = isCompactWidth(constraints.maxWidth);
+                    final padding = compact ? 16.0 : 24.0;
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.all(padding),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: _Header(textTheme: textTheme),
-                          ),
-                          const SizedBox(width: 16),
-                          CommandBar(
-                            prompts: _prompts,
-                            selectedPrompt: _selectedPrompt,
-                            onSelectPrompt: _onPromptChanged,
-                            onPaste: _smartPasteGlobal,
-                            canPaste: _clipboardHasValidUrl,
-                            onGenerate: _canGenerate ? _generate : null,
-                            canGenerate: _canGenerate,
-                            onCopy: _copyOutput,
-                            canCopy: _canCopy,
-                            onQuickWorkflow:
-                                _canQuickWorkflow ? _quickWorkflow : null,
-                            canQuickWorkflow: _canQuickWorkflow,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      _SectionCard(
-                        title: 'Prompt',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            PromptManager(
+                          if (compact) ...[
+                            _Header(textTheme: textTheme),
+                            const SizedBox(height: 16),
+                            CommandBar(
                               prompts: _prompts,
-                              value: _selectedPrompt,
-                              onChanged: _onPromptChanged,
-                              onToggleFavorite: _onToggleFavorite,
-                              onAssignQuickAccess: _onAssignQuickAccess,
-                              onCreatePrompt: _onCreatePrompt,
-                              onEditPrompt: _onEditPrompt,
-                              onDeletePrompt: _onDeletePrompt,
-                              editorController: _promptEditorController,
-                              editorEnabled: _isCustomPrompt,
+                              selectedPrompt: _selectedPrompt,
+                              onSelectPrompt: _onPromptChanged,
+                              onPaste: _smartPasteGlobal,
+                              canPaste: _clipboardHasValidUrl,
+                              onGenerate: _canGenerate ? _generate : null,
+                              canGenerate: _canGenerate,
+                              onCopy: _copyOutput,
+                              canCopy: _canCopy,
+                              onQuickWorkflow:
+                                  _canQuickWorkflow ? _quickWorkflow : null,
+                              canQuickWorkflow: _canQuickWorkflow,
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _SectionCard(
-                        title: 'Videos',
-                        child: Column(
-                          children: [
-                            for (var i = 0; i < _videoControllers.length; i++) ...[
-                              VideoInputCard(
-                                controller: _videoControllers[i],
-                                textController: _urlControllers[i],
-                                focusNode: _urlFocusNodes[i],
-                                onSubmitted: (value) =>
-                                    _handleUrlSubmitted(i, value),
-                                textInputAction:
-                                    i < _videoControllers.length - 1
-                                        ? TextInputAction.next
-                                        : TextInputAction.done,
-                                onClipboardPressed: () => _smartPasteIntoField(i),
-                                clipboardEnabled: _clipboardHasValidUrl,
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _SectionCard(
-                        title: 'Output',
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                          ] else ...[
                             Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Focus(
-                                  focusNode: _copyFocusNode,
-                                  child: OutlinedButton.icon(
-                                    onPressed:
-                                        _canCopy ? _copyOutput : null,
-                                    icon: const Icon(Icons.copy),
-                                    label: const Text('Copy'),
-                                  ),
+                                Expanded(
+                                  child: _Header(textTheme: textTheme),
                                 ),
-                                const SizedBox(width: 12),
-                                Focus(
-                                  focusNode: _exportFocusNode,
-                                  child: OutlinedButton.icon(
-                                    onPressed:
-                                        _canExport ? _exportMarkdown : null,
-                                    icon: const Icon(
-                                        Icons.description_outlined),
-                                    label: const Text('Export Markdown'),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                OutlinedButton.icon(
-                                  onPressed:
-                                      _canClear ? _clearSession : null,
-                                  icon: const Icon(Icons.clear),
-                                  label: const Text('Clear'),
+                                const SizedBox(width: 16),
+                                CommandBar(
+                                  prompts: _prompts,
+                                  selectedPrompt: _selectedPrompt,
+                                  onSelectPrompt: _onPromptChanged,
+                                  onPaste: _smartPasteGlobal,
+                                  canPaste: _clipboardHasValidUrl,
+                                  onGenerate: _canGenerate ? _generate : null,
+                                  canGenerate: _canGenerate,
+                                  onCopy: _copyOutput,
+                                  canCopy: _canCopy,
+                                  onQuickWorkflow:
+                                      _canQuickWorkflow ? _quickWorkflow : null,
+                                  canQuickWorkflow: _canQuickWorkflow,
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
-                            if (_generationFailures.isNotEmpty) ...[
-                              _FailureBanner(failures: _generationFailures),
-                              const SizedBox(height: 12),
-                            ],
-                            Shortcuts(
-                              shortcuts: const {
-                                SingleActivator(
-                                    LogicalKeyboardKey.keyC,
-                                    control: true):
-                                    _CopyOutputIntent(),
-                                SingleActivator(
-                                    LogicalKeyboardKey.keyC,
-                                    meta: true):
-                                    _CopyOutputIntent(),
-                              },
-                              child: Actions(
-                                actions: {
-                                  _CopyOutputIntent:
-                                      CallbackAction<_CopyOutputIntent>(
-                                    onInvoke: (_) {
-                                      if (_canCopy) _copyOutput();
-                                      return null;
-                                    },
-                                  ),
-                                },
-                                child: Focus(
-                                  focusNode: _outputFocusNode,
-                                  child: OutputPreview(
-                                      controller: _outputController),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Focus(
-                                focusNode: _generateFocusNode,
-                                child: GenerateButton(
-                                  onPressed: _generate,
-                                  isLoading: _isGenerating,
-                                ),
-                              ),
-                            ),
                           ],
-                        ),
+                          const SizedBox(height: 24),
+                          _SectionCard(
+                            title: 'Prompt',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                PromptManager(
+                                  prompts: _prompts,
+                                  value: _selectedPrompt,
+                                  onChanged: _onPromptChanged,
+                                  onToggleFavorite: _onToggleFavorite,
+                                  onAssignQuickAccess: _onAssignQuickAccess,
+                                  onCreatePrompt: _onCreatePrompt,
+                                  onEditPrompt: _onEditPrompt,
+                                  onDeletePrompt: _onDeletePrompt,
+                                  editorController: _promptEditorController,
+                                  editorEnabled: _isCustomPrompt,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _SectionCard(
+                            title: 'Videos',
+                            child: Column(
+                              children: [
+                                for (var i = 0; i < _videoControllers.length; i++) ...[
+                                  VideoInputCard(
+                                    controller: _videoControllers[i],
+                                    textController: _urlControllers[i],
+                                    focusNode: _urlFocusNodes[i],
+                                    onSubmitted: (value) =>
+                                        _handleUrlSubmitted(i, value),
+                                    textInputAction:
+                                        i < _videoControllers.length - 1
+                                            ? TextInputAction.next
+                                            : TextInputAction.done,
+                                    onClipboardPressed: () => _smartPasteIntoField(i),
+                                    clipboardEnabled: _clipboardHasValidUrl,
+                                  ),
+                                  const SizedBox(height: 16),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _SectionCard(
+                            title: 'Output',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (compact)
+                                  Wrap(
+                                    spacing: 12,
+                                    runSpacing: 8,
+                                    children: [
+                                      Focus(
+                                        focusNode: _copyFocusNode,
+                                        child: OutlinedButton.icon(
+                                          onPressed:
+                                              _canCopy ? _copyOutput : null,
+                                          icon: const Icon(Icons.copy),
+                                          label: const Text('Copy'),
+                                        ),
+                                      ),
+                                      Focus(
+                                        focusNode: _exportFocusNode,
+                                        child: OutlinedButton.icon(
+                                          onPressed:
+                                              _canExport ? _exportMarkdown : null,
+                                          icon: const Icon(
+                                              Icons.description_outlined),
+                                          label: const Text('Export Markdown'),
+                                        ),
+                                      ),
+                                      OutlinedButton.icon(
+                                        onPressed:
+                                            _canClear ? _clearSession : null,
+                                        icon: const Icon(Icons.clear),
+                                        label: const Text('Clear'),
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  Row(
+                                    children: [
+                                      Focus(
+                                        focusNode: _copyFocusNode,
+                                        child: OutlinedButton.icon(
+                                          onPressed:
+                                              _canCopy ? _copyOutput : null,
+                                          icon: const Icon(Icons.copy),
+                                          label: const Text('Copy'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Focus(
+                                        focusNode: _exportFocusNode,
+                                        child: OutlinedButton.icon(
+                                          onPressed:
+                                              _canExport ? _exportMarkdown : null,
+                                          icon: const Icon(
+                                              Icons.description_outlined),
+                                          label: const Text('Export Markdown'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      OutlinedButton.icon(
+                                        onPressed:
+                                            _canClear ? _clearSession : null,
+                                        icon: const Icon(Icons.clear),
+                                        label: const Text('Clear'),
+                                      ),
+                                    ],
+                                  ),
+                                const SizedBox(height: 12),
+                                if (_generationFailures.isNotEmpty) ...[
+                                  _FailureBanner(failures: _generationFailures),
+                                  const SizedBox(height: 12),
+                                ],
+                                Shortcuts(
+                                  shortcuts: const {
+                                    SingleActivator(
+                                        LogicalKeyboardKey.keyC,
+                                        control: true):
+                                        _CopyOutputIntent(),
+                                    SingleActivator(
+                                        LogicalKeyboardKey.keyC,
+                                        meta: true):
+                                        _CopyOutputIntent(),
+                                  },
+                                  child: Actions(
+                                    actions: {
+                                      _CopyOutputIntent:
+                                          CallbackAction<_CopyOutputIntent>(
+                                        onInvoke: (_) {
+                                          if (_canCopy) _copyOutput();
+                                          return null;
+                                        },
+                                      ),
+                                    },
+                                    child: Focus(
+                                      focusNode: _outputFocusNode,
+                                      child: OutputPreview(
+                                          controller: _outputController),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Focus(
+                                    focusNode: _generateFocusNode,
+                                    child: GenerateButton(
+                                      onPressed: _generate,
+                                      isLoading: _isGenerating,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          const _Footer(),
+                        ],
                       ),
-                      const SizedBox(height: 24),
-                      const _Footer(),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -1230,28 +1293,42 @@ class _Footer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompact(context);
+    final about = TextButton.icon(
+      onPressed: () => _showAbout(context),
+      icon: const Icon(Icons.info_outline, size: 16),
+      label: const Text('About'),
+    );
+    final shortcuts = TextButton.icon(
+      onPressed: () => _showShortcuts(context),
+      icon: const Icon(Icons.keyboard_outlined, size: 16),
+      label: const Text('Shortcuts'),
+    );
+    final help = TextButton.icon(
+      onPressed: () => _showHelp(context),
+      icon: const Icon(Icons.help_outline, size: 16),
+      label: const Text('Help'),
+    );
+    final destination = const DestinationSelector();
+
+    if (compact) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: [about, shortcuts, help, destination],
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        TextButton.icon(
-          onPressed: () => _showAbout(context),
-          icon: const Icon(Icons.info_outline, size: 16),
-          label: const Text('About'),
-        ),
+        about,
         const SizedBox(width: 8),
-        TextButton.icon(
-          onPressed: () => _showShortcuts(context),
-          icon: const Icon(Icons.keyboard_outlined, size: 16),
-          label: const Text('Shortcuts'),
-        ),
+        shortcuts,
         const SizedBox(width: 8),
-        TextButton.icon(
-          onPressed: () => _showHelp(context),
-          icon: const Icon(Icons.help_outline, size: 16),
-          label: const Text('Help'),
-        ),
+        help,
         const SizedBox(width: 8),
-        const DestinationSelector(),
+        destination,
       ],
     );
   }
@@ -1346,65 +1423,67 @@ class _AboutDialogState extends State<_AboutDialog> {
     final theme = Theme.of(context);
     return AlertDialog(
       title: const Text('About ContextForge'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'ContextForge 0.1.17\n\n'
-            'Build AI-ready context from YouTube transcripts.\n\n'
-            'Built with Flutter.\n'
-            'Built using the SODA methodology.',
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () => setState(() => etaosinMode = !etaosinMode),
-            child: Text(
-              etaosinMode ? '𝐞𝐭✪𝐨𝐬𝐢𝐧' : '𝐞𝐭✰𝐨𝐬𝐢𝐧',
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w600,
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'ContextForge 0.1.17\n\n'
+              'Build AI-ready context from YouTube transcripts.\n\n'
+              'Built with Flutter.\n'
+              'Built using the SODA methodology.',
+            ),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => setState(() => etaosinMode = !etaosinMode),
+              child: Text(
+                etaosinMode ? '𝐞𝐭✪𝐨𝐬𝐢𝐧' : '𝐞𝐭✰𝐨𝐬𝐢𝐧',
+                style: TextStyle(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
-          const Divider(height: 32),
-          Text(
-            'Feedback',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 4),
-          const Text("We'd love to hear from you!"),
-          const SizedBox(height: 8),
-          _FeedbackAction(
-            icon: '💡',
-            label: 'Suggest an Idea',
-            onPressed: () => _openFeedback(
-              subject: 'ContextForge - Suggestion',
+            const Divider(height: 32),
+            Text(
+              'Feedback',
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
             ),
-          ),
-          _FeedbackAction(
-            icon: '🐞',
-            label: 'Report a Bug',
-            onPressed: () => _openFeedback(
-              subject: 'ContextForge - Bug Report',
+            const SizedBox(height: 4),
+            const Text("We'd love to hear from you!"),
+            const SizedBox(height: 8),
+            _FeedbackAction(
+              icon: '💡',
+              label: 'Suggest an Idea',
+              onPressed: () => _openFeedback(
+                subject: 'ContextForge - Suggestion',
+              ),
             ),
-          ),
-          _FeedbackAction(
-            icon: '✉️',
-            label: 'General Feedback',
-            onPressed: () => _openFeedback(
-              subject: 'ContextForge - Feedback',
+            _FeedbackAction(
+              icon: '🐞',
+              label: 'Report a Bug',
+              onPressed: () => _openFeedback(
+                subject: 'ContextForge - Bug Report',
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Your ideas help shape future versions of ContextForge.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            _FeedbackAction(
+              icon: '✉️',
+              label: 'General Feedback',
+              onPressed: () => _openFeedback(
+                subject: 'ContextForge - Feedback',
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'Your ideas help shape future versions of ContextForge.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(

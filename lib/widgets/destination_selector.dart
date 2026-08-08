@@ -157,8 +157,8 @@ class _DestinationDialogState extends State<_DestinationDialog> {
     return AlertDialog(
       title: const Text('Destination'),
       contentPadding: const EdgeInsets.symmetric(vertical: 8),
-      content: SizedBox(
-        width: 360,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
         child: ListView(
           shrinkWrap: true,
           children: [
