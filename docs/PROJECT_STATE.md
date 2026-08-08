@@ -3,9 +3,9 @@
 | Field               | Value                                 |
 | ------------------- | ------------------------------------- |
 | **Current Version** | 0.1.17                                |
-| **Current Phase**   | 031                                   |
-| **Status**          | First Launch Intro                    |
-| **Current Milestone** | Power User Workflow                  |
+| **Current Phase**   | 034                                   |
+| **Status**          | Release Preparation                   |
+| **Current Milestone** | App Store Preparation                |
 
 ## Phase Tracking
 
@@ -48,6 +48,13 @@
 | 029E  | Usability Finalization                   | Completed |
 | 030   | App Store Readiness I                    | Completed |
 | 031   | First Launch Intro                        | Completed |
+| 032B  | Prompt List Live Refresh                 | Completed |
+| 033B  | Unify Default Prompt Icon                | Completed |
+| 033C  | Centralize Default Prompt Icon           | Completed |
+| 033D  | Etaosin Easter Egg                       | Completed |
+| 033E  | User Feedback                            | Completed |
+| 033F  | Feedback Polish & Roadmap Update         | Completed |
+| 034   | Release Preparation                      | Completed |
 
 ## Notes
 
@@ -107,7 +114,23 @@
   - One-time editorial introduction, opacity-only choreography, 12s duration.
   - Context Reflections (random), persisted completion, dedicated feature architecture.
   - Documented in `docs/FIRST_LAUNCH_INTRO.md`.
+- Phase 032B added live refresh of the expanded prompt selector (Favorite / Default /
+  Quick Access updates without closing the dropdown).
+- Phase 033B unified the Default Prompt icon across the collapsed and expanded selectors.
+- Phase 033C centralized the Default Prompt icon into a single reusable `DefaultPromptIcon`
+  component used everywhere.
+- Phase 033D added the Etaosin Easter Egg (clickable `𝐞𝐭✰𝐨𝐬𝐢𝐧` toggle in the About dialog).
+- Phase 033E added the Feedback section (💡 Suggest an Idea, 🐞 Report a Bug,
+  ✉️ General Feedback) via `mailto:` links to etaosin@gmail.com.
+- Phase 033F polished the Feedback section (subtle footer) and expanded the roadmap.
+- Phase 034 entered Release Preparation:
+  - Reviewed macOS + iOS platform readiness (entitlements, app icons, Info.plist).
+  - Fixed the version mismatch: `pubspec.yaml` now reports `0.1.17+1`, matching the
+    About dialog and this document.
+  - Updated the backlog with planned features (URL Normalization, Prompt Library,
+    Destination, Localization, Prompt Output Language, Etaosin Mode, Community Feedback).
+  - The project is entering App Store preparation.
 
 ## Next Phase
 
-Phase 032.
+Post-release development cycle.

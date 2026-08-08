@@ -45,6 +45,19 @@ consideration.
 - **Description:** Continue refining desktop interactions (dropdown behavior, grab handles,
   selection and focus handling) so the macOS experience feels like a native application.
 
+## URL Normalization
+
+- **Status:** Planned
+- **Description:** Normalize pasted YouTube URLs before processing. Examples:
+  - remove unnecessary `www.`
+  - normalize `youtu.be` links
+  - remove timestamp parameters (`t=`, `start=`, etc.)
+  - remove playlist parameters when not required
+  - remove tracking parameters
+  - keep only the information required to identify the video
+
+  **Note:** This feature is **planned only** — it is **not implemented** in this phase.
+
 ## Official Feedback Portal
 
 - **Status:** Under consideration
@@ -53,26 +66,28 @@ consideration.
   feedback portal. The UI (the Feedback section with its three actions) is designed to stay
   the same — only the underlying action implementation would change.
 
-## Prompt Library Expansion
+## Prompt Library
 
 - **Status:** Planned
 - **Description:** Expand the built-in prompt library with:
   - more built-in prompt templates
   - community-requested prompt templates
 
-## Destination Improvements
+## Destination
 
 - **Status:** Planned
-- **Description:** Improve the Destination selector by:
-  - allowing users to configure Favorite Destinations
-  - shipping several popular destinations marked as favorites by default
+- **Description:** Improve the Destination selector with:
+  - Favorite Destinations
+  - a better default Destination list
+  - additional online AI destinations
 
 ## Localization
 
 - **Status:** Planned
 - **Description:** Localize the application into additional languages, including:
-  - the built-in prompt library
-  - Help and onboarding content
+  - UI localization
+  - built-in prompt localization
+  - Help localization
 
 ## Prompt Output Language
 
@@ -89,13 +104,19 @@ consideration.
 - **Status:** Planned
 - **Description:** A planned hidden developer mode (toggled via the About dialog Easter Egg,
   the clickable `𝐞𝐭✰𝐨𝐬𝐢𝐧` marker). Future ideas may include:
-  - batch processing of YouTube channel URLs
+  - batch YouTube channel processing
   - experimental workflows
-  - advanced developer diagnostics
-  - other hidden power-user features
+  - diagnostics
+  - power-user features
 
   **Important:** This mode is **not implemented yet**. The About toggle currently only
   switches the marker between `✰` and `✪` and does not enable any hidden behavior.
+
+## Community Feedback
+
+- **Status:** Under consideration
+- **Description:** Future versions may replace the `mailto:` feedback links with an online
+  ContextForge feedback portal, preserving the same UI.
 
 ---
 
