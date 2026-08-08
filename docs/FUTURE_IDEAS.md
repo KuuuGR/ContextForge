@@ -45,21 +45,6 @@ consideration.
 - **Description:** Continue refining desktop interactions (dropdown behavior, grab handles,
   selection and focus handling) so the macOS experience feels like a native application.
 
-## Etaosin Mode
-
-- **Status:** Planned
-- **Description:** A planned developer-only mode to be enabled through the temporary About
-  dialog Easter Egg (the clickable `𝐞𝐭✰𝐨𝐬𝐢𝐧` marker). Future versions may use this toggle
-  to enable advanced developer-only features, for example:
-  - batch processing of YouTube channel URLs
-  - experimental workflows
-  - diagnostic tools
-  - other advanced capabilities
-
-  **Important:** This functionality is **planned only** and is **not implemented** in the
-  current phase. The About toggle currently only switches the marker between `✰` and `✪`
-  and does not enable any hidden behavior.
-
 ## Official Feedback Portal
 
 - **Status:** Under consideration
@@ -67,6 +52,50 @@ consideration.
   `mailto:` links to etaosin@gmail.com in the About dialog) with an official ContextForge
   feedback portal. The UI (the Feedback section with its three actions) is designed to stay
   the same — only the underlying action implementation would change.
+
+## Prompt Library Expansion
+
+- **Status:** Planned
+- **Description:** Expand the built-in prompt library with:
+  - more built-in prompt templates
+  - community-requested prompt templates
+
+## Destination Improvements
+
+- **Status:** Planned
+- **Description:** Improve the Destination selector by:
+  - allowing users to configure Favorite Destinations
+  - shipping several popular destinations marked as favorites by default
+
+## Localization
+
+- **Status:** Planned
+- **Description:** Localize the application into additional languages, including:
+  - the built-in prompt library
+  - Help and onboarding content
+
+## Prompt Output Language
+
+- **Status:** Planned
+- **Description:** Allow the user to select the desired output language directly from the
+  Prompt UI (e.g. English, Polish, German, French, Spanish, Italian, Japanese, …). The
+  selected language should automatically append the appropriate instruction to the
+  generated prompt instead of requiring users to edit prompts manually.
+
+  **Note:** This is documentation only — the feature is **not implemented** yet.
+
+## Etaosin Mode
+
+- **Status:** Planned
+- **Description:** A planned hidden developer mode (toggled via the About dialog Easter Egg,
+  the clickable `𝐞𝐭✰𝐨𝐬𝐢𝐧` marker). Future ideas may include:
+  - batch processing of YouTube channel URLs
+  - experimental workflows
+  - advanced developer diagnostics
+  - other hidden power-user features
+
+  **Important:** This mode is **not implemented yet**. The About toggle currently only
+  switches the marker between `✰` and `✪` and does not enable any hidden behavior.
 
 ---
 

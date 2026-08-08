@@ -1397,6 +1397,13 @@ class _AboutDialogState extends State<_AboutDialog> {
               subject: 'ContextForge - Feedback',
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            'Your ideas help shape future versions of ContextForge.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
       actions: [
