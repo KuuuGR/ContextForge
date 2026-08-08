@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/clean_transcript.dart';
 import '../models/prompt.dart';
@@ -1342,6 +1343,7 @@ class _AboutDialogState extends State<_AboutDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AlertDialog(
       title: const Text('About ContextForge'),
       content: Column(
@@ -1360,9 +1362,39 @@ class _AboutDialogState extends State<_AboutDialog> {
             child: Text(
               etaosinMode ? '𝐞𝐭✪𝐨𝐬𝐢𝐧' : '𝐞𝐭✰𝐨𝐬𝐢𝐧',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
+                color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w600,
               ),
+            ),
+          ),
+          const Divider(height: 32),
+          Text(
+            'Feedback',
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          const Text("We'd love to hear from you!"),
+          const SizedBox(height: 8),
+          _FeedbackAction(
+            icon: '💡',
+            label: 'Suggest an Idea',
+            onPressed: () => _openFeedback(
+              subject: 'ContextForge - Suggestion',
+            ),
+          ),
+          _FeedbackAction(
+            icon: '🐞',
+            label: 'Report a Bug',
+            onPressed: () => _openFeedback(
+              subject: 'ContextForge - Bug Report',
+            ),
+          ),
+          _FeedbackAction(
+            icon: '✉️',
+            label: 'General Feedback',
+            onPressed: () => _openFeedback(
+              subject: 'ContextForge - Feedback',
             ),
           ),
         ],
@@ -1373,6 +1405,61 @@ class _AboutDialogState extends State<_AboutDialog> {
           child: const Text('Close'),
         ),
       ],
+    );
+  }
+
+  /// Opens the feedback channel for the given [subject].
+  ///
+  /// Currently opens the default mail application via a `mailto:` link.
+  /// Future versions may replace this with an official ContextForge feedback
+  /// portal — only this method needs to change; the UI stays the same.
+  void _openFeedback({required String subject}) {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: 'etaosin@gmail.com',
+      queryParameters: {'subject': subject},
+    );
+    launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+}
+
+/// A single feedback action row (icon + label) shown in the About dialog.
+///
+/// The action implementation is decoupled from the UI so the underlying
+/// feedback channel (email today, a web portal in the future) can be swapped
+/// without touching this widget.
+class _FeedbackAction extends StatelessWidget {
+  const _FeedbackAction({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final String icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Row(
+          children: [
+            Text(icon, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

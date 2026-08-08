@@ -60,6 +60,14 @@ consideration.
   current phase. The About toggle currently only switches the marker between `✰` and `✪`
   and does not enable any hidden behavior.
 
+## Official Feedback Portal
+
+- **Status:** Under consideration
+- **Description:** Future versions may replace the email feedback actions (currently
+  `mailto:` links to etaosin@gmail.com in the About dialog) with an official ContextForge
+  feedback portal. The UI (the Feedback section with its three actions) is designed to stay
+  the same — only the underlying action implementation would change.
+
 ---
 
 _This file will be updated as ideas are collected during development._
