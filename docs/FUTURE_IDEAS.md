@@ -45,6 +45,21 @@ consideration.
 - **Description:** Continue refining desktop interactions (dropdown behavior, grab handles,
   selection and focus handling) so the macOS experience feels like a native application.
 
+## Etaosin Mode
+
+- **Status:** Planned
+- **Description:** A planned developer-only mode to be enabled through the temporary About
+  dialog Easter Egg (the clickable `𝐞𝐭✰𝐨𝐬𝐢𝐧` marker). Future versions may use this toggle
+  to enable advanced developer-only features, for example:
+  - batch processing of YouTube channel URLs
+  - experimental workflows
+  - diagnostic tools
+  - other advanced capabilities
+
+  **Important:** This functionality is **planned only** and is **not implemented** in the
+  current phase. The About toggle currently only switches the marker between `✰` and `✪`
+  and does not enable any hidden behavior.
+
 ---
 
 _This file will be updated as ideas are collected during development._

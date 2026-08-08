@@ -1258,21 +1258,7 @@ class _Footer extends StatelessWidget {
   void _showAbout(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('About ContextForge'),
-        content: const Text(
-          'ContextForge 0.1.17\n\n'
-          'Build AI-ready context from YouTube transcripts.\n\n'
-          'Built with Flutter.\n'
-          'Built using the SODA methodology.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+      builder: (context) => const _AboutDialog(),
     );
   }
 
@@ -1328,6 +1314,65 @@ class _Footer extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// About dialog with the Etaosin Easter Egg.
+///
+/// Displays the version and a clickable `𝐞𝐭✰𝐨𝐬𝐢𝐧` marker. Clicking it toggles
+/// the internal `etaosinMode` flag, switching the marker between `✰` and `✪`.
+///
+/// The flag exists only while this dialog is open — it is never persisted and
+/// is not used anywhere else yet. Future versions may use it to enable
+/// advanced developer-only features (see FUTURE_IDEAS.md).
+class _AboutDialog extends StatefulWidget {
+  const _AboutDialog();
+
+  @override
+  State<_AboutDialog> createState() => _AboutDialogState();
+}
+
+class _AboutDialogState extends State<_AboutDialog> {
+  /// Internal flag for the Etaosin Easter Egg.
+  ///
+  /// Defaults to `false` (✰). Toggled on each click of the marker. Not
+  /// persisted and not used anywhere else in this phase.
+  bool etaosinMode = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('About ContextForge'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'ContextForge 0.1.17\n\n'
+            'Build AI-ready context from YouTube transcripts.\n\n'
+            'Built with Flutter.\n'
+            'Built using the SODA methodology.',
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => setState(() => etaosinMode = !etaosinMode),
+            child: Text(
+              etaosinMode ? '𝐞𝐭✪𝐨𝐬𝐢𝐧' : '𝐞𝐭✰𝐨𝐬𝐢𝐧',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
     );
   }
 }
