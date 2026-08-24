@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,12 +12,14 @@ import '../models/video.dart';
 import '../presentation/prompt_constants.dart';
 import '../presentation/responsive.dart';
 import '../providers/youtube_explode_provider.dart';
-import '../repositories/in_memory_prompt_repository.dart';
 import '../repositories/in_memory_video_repository.dart';
+import '../repositories/json_prompt_repository.dart';
+import '../services/app_review_service.dart';
 import '../services/json_video_history_storage.dart';
 import '../services/markdown_export_service.dart';
 import '../services/output_builder_service.dart';
 import '../services/prompt_service.dart';
+import '../services/prompt_transfer_service.dart';
 import '../services/runtime_trace.dart';
 import '../services/transcript_cleanup_service.dart';
 import '../services/transcript_selection_service.dart';
@@ -71,7 +75,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final TextEditingController _promptEditorController = TextEditingController();
 
   late final PromptService _promptService = widget.promptService ??
-      PromptService(repository: InMemoryPromptRepository());
+      PromptService(repository: JsonPromptRepository());
 
   late final VideoHistoryService _videoHistoryService =
       widget.videoHistoryService ??
@@ -86,6 +90,12 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final MarkdownExportService _markdownExportService =
       MarkdownExportService();
   final YouTubeUrlParser _urlParser = const YouTubeUrlParser();
+
+  /// Records meaningful use and schedules eligible App Store review requests.
+  final AppReviewService _reviewService = AppReviewService();
+
+  /// Pending review-request timer (scheduled after a successful workflow).
+  Timer? _reviewTimer;
 
   List<Prompt> _prompts = const [];
   String _selectedPrompt = '';
@@ -431,6 +441,99 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
+  /// Exports the user's saved prompts to a JSON file via the native dialog.
+  ///
+  /// Only user-created prompts are exported — the built-in catalogue is never
+  /// treated as user data.
+  Future<void> _exportPrompts() async {
+    try {
+      final userPrompts = await _promptService.getUserPrompts();
+      if (userPrompts.isEmpty) {
+        _showSnackBar('There are no user prompts to export.');
+        return;
+      }
+      final saved =
+          await PromptTransferService().exportPrompts(userPrompts);
+      if (!saved) return; // User cancelled.
+      _showSnackBar(
+          'Exported ${userPrompts.length} prompt'
+          '${userPrompts.length == 1 ? '' : 's'} to '
+          '${PromptTransferService.suggestedFileName}.');
+    } catch (_) {
+      _showSnackBar('Could not export prompts.');
+    }
+  }
+
+  /// Imports user prompts from a JSON file and reflects them in the UI.
+  ///
+  /// Uses an intelligent merge: new prompts are added automatically, identical
+  /// prompts are left unchanged, and prompts whose corresponding existing
+  /// entry has different content are presented to the user for resolution.
+  Future<void> _importPrompts() async {
+    try {
+      final incoming = await PromptTransferService().pickPrompts();
+      if (incoming == null) return; // User cancelled.
+
+      final plan = await _promptService.analyzeImport(incoming);
+
+      if (plan.hasConflicts) {
+        final confirmed = await _showConflictResolutionDialog(plan.conflicts);
+        if (!confirmed) return; // User cancelled the import.
+      }
+
+      final result = await _promptService.applyImport(plan);
+      final prompts = await _promptService.getAllPrompts();
+      if (!mounted) return;
+      setState(() {
+        _prompts = prompts;
+      });
+
+      _showImportSummary(result);
+    } on FormatException {
+      _showSnackBar(
+          'The selected file is not a valid ContextForge prompts file.');
+    } catch (_) {
+      _showSnackBar('Could not import prompts.');
+    }
+  }
+
+  /// Shows a concise summary of the import outcome, e.g.
+  /// "7 new prompts added, 2 already existed, 1 conflict."
+  void _showImportSummary(PromptImportResult result) {
+    final parts = <String>[
+      '${result.newAddedCount} new prompt${result.newAddedCount == 1 ? '' : 's'} added',
+    ];
+    if (result.alreadyExistedCount > 0) {
+      parts.add('${result.alreadyExistedCount} already existed');
+    }
+    if (result.conflictCount > 0) {
+      parts.add(
+          '${result.conflictCount} conflict${result.conflictCount == 1 ? '' : 's'}');
+    }
+    _showSnackBar('${parts.join(', ')}.');
+  }
+
+  /// Prompts the user to resolve import conflicts, one choice per conflict.
+  ///
+  /// Returns `true` when the user confirmed the choices, `false` when they
+  /// cancelled the import.
+  Future<bool> _showConflictResolutionDialog(
+      List<PromptConflict> conflicts) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => _ImportConflictDialog(conflicts: conflicts),
+    );
+    return confirmed ?? false;
+  }
+
+  /// Shows a transient message using the surrounding [ScaffoldMessenger].
+  void _showSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
 
   /// Handles Enter in a URL field.
   ///
@@ -454,7 +557,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Future<void> _refreshClipboardState() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     final text = data?.text?.trim() ?? '';
-    final isValid = text.isNotEmpty && _urlParser.isValidUrl(text);
+    final isValid = text.isNotEmpty &&
+        _clipboardLooksLikeYouTubeUrl(text) &&
+        _urlParser.isValidUrl(text);
     if (isValid != _clipboardHasValidUrl || text != _clipboardUrl) {
       if (mounted) {
         setState(() {
@@ -463,6 +568,28 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         });
       }
     }
+  }
+
+  /// Cheap pre-filter so ordinary clipboard text (a sentence, multiline text,
+  /// etc.) is never sent to the YouTube URL parser during routine clipboard
+  /// polling. Sending arbitrary text there logs a noisy parse-failure stack
+  /// for every non-URL value.
+  ///
+  /// A valid YouTube URL is a single whitespace-free token starting with an
+  /// `http(s)://` scheme (or a bare YouTube short/domain form). Anything else
+  /// is simply treated as "not a YouTube URL" without touching the parser.
+  bool _clipboardLooksLikeYouTubeUrl(String text) {
+    final t = text.trim();
+    if (t.isEmpty) return false;
+    // Real URLs never contain internal whitespace; reject prose/multiline text.
+    if (t.contains(RegExp(r'\s'))) return false;
+    final lower = t.toLowerCase();
+    return lower.startsWith('http://') ||
+        lower.startsWith('https://') ||
+        lower.startsWith('youtu.be/') ||
+        lower.startsWith('youtube.com/') ||
+        lower.startsWith('www.youtube.com/') ||
+        lower.startsWith('m.youtube.com/');
   }
 
   /// Reads the clipboard URL and validates its video ID.
@@ -817,6 +944,26 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       _isGenerating = false;
       _generationFailures = failures;
     });
+
+    // A meaningful workflow completed successfully — schedule (not immediate)
+    // an eligible App Store review request after a short pause.
+    if (videos.isNotEmpty) {
+      _scheduleReviewRequest();
+    }
+  }
+
+  /// Schedules a review request after a successful meaningful workflow.
+  ///
+  /// Records one completed meaningful workflow (setting the first-meaningful-use
+  /// date the first time and incrementing the usage counter) and, after a short
+  /// pause, requests a review only if the user is eligible. Never called at app
+  /// launch and never immediately after a button tap.
+  void _scheduleReviewRequest() {
+    _reviewService.recordMeaningfulUse();
+    _reviewTimer?.cancel();
+    _reviewTimer = Timer(const Duration(seconds: 3), () {
+      _reviewService.requestReviewIfEligible();
+    });
   }
 
   @override
@@ -829,6 +976,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _reviewTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     for (final c in _videoControllers) {
       c.dispose();
@@ -949,6 +1097,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                               onQuickWorkflow:
                                   _canQuickWorkflow ? _quickWorkflow : null,
                               canQuickWorkflow: _canQuickWorkflow,
+                              onClear: _canClear ? _clearSession : null,
+                              canClear: _canClear,
                             ),
                           ] else ...[
                             Row(
@@ -971,6 +1121,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                   onQuickWorkflow:
                                       _canQuickWorkflow ? _quickWorkflow : null,
                                   canQuickWorkflow: _canQuickWorkflow,
+                                  onClear: _canClear ? _clearSession : null,
+                                  canClear: _canClear,
                                 ),
                               ],
                             ),
@@ -992,6 +1144,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                   onDeletePrompt: _onDeletePrompt,
                                   editorController: _promptEditorController,
                                   editorEnabled: _isCustomPrompt,
+                                  onExportPrompts: _exportPrompts,
+                                  onImportPrompts: _importPrompts,
                                 ),
                               ],
                             ),
@@ -1429,7 +1583,7 @@ class _AboutDialogState extends State<_AboutDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'ContextForge 0.1.17\n\n'
+              'ContextForge 1.1.0\n\n'
               'Build AI-ready context from YouTube transcripts.\n\n'
               'Built with Flutter.\n'
               'Built using the SODA methodology.',
@@ -1549,3 +1703,140 @@ class _FeedbackAction extends StatelessWidget {
     );
   }
 }
+
+/// Dialog that lets the user resolve import conflicts before applying them.
+class _ImportConflictDialog extends StatefulWidget {
+  const _ImportConflictDialog({required this.conflicts});
+
+  final List<PromptConflict> conflicts;
+
+  @override
+  State<_ImportConflictDialog> createState() => _ImportConflictDialogState();
+}
+
+class _ImportConflictDialogState extends State<_ImportConflictDialog> {
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final conflicts = widget.conflicts;
+    return AlertDialog(
+      title: const Text('Resolve Import Conflicts'),
+      content: SizedBox(
+        width: 520,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${conflicts.length} prompt${conflicts.length == 1 ? '' : 's'} already '
+              'exist with different content. Choose how to handle each.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (final conflict in conflicts)
+                      _ConflictTile(conflict: conflict),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Import'),
+        ),
+      ],
+    );
+  }
+}
+
+/// One conflict row with its resolution selector.
+class _ConflictTile extends StatefulWidget {
+  const _ConflictTile({required this.conflict});
+
+  final PromptConflict conflict;
+
+  @override
+  State<_ConflictTile> createState() => _ConflictTileState();
+}
+
+class _ConflictTileState extends State<_ConflictTile> {
+  late PromptConflictResolution _resolution;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolution = widget.conflict.resolution;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final conflict = widget.conflict;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(conflict.imported.title, style: theme.textTheme.titleSmall),
+            const SizedBox(height: 4),
+            _preview(theme, 'Existing', conflict.existing.content),
+            const SizedBox(height: 2),
+            _preview(theme, 'Imported', conflict.imported.content),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: DropdownButton<PromptConflictResolution>(
+                value: _resolution,
+                isDense: true,
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() => _resolution = value);
+                  conflict.resolution = value;
+                },
+                items: const [
+                  DropdownMenuItem(
+                    value: PromptConflictResolution.addNew,
+                    child: Text('Add as New'),
+                  ),
+                  DropdownMenuItem(
+                    value: PromptConflictResolution.overwrite,
+                    child: Text('Overwrite Existing'),
+                  ),
+                  DropdownMenuItem(
+                    value: PromptConflictResolution.skip,
+                    child: Text('Skip'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _preview(ThemeData theme, String label, String content) {
+    final text =
+        content.length > 100 ? '${content.substring(0, 100)}…' : content;
+    return Text(
+      '$label: $text',
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: theme.textTheme.bodySmall,
+    );
+  }
+}
+

@@ -41,6 +41,11 @@ class JsonPromptRepository implements PromptRepository {
   }
 
   @override
+  Future<void> saveAll(List<Prompt> prompts) async {
+    await _storage.savePrompts(prompts);
+  }
+
+  @override
   Future<void> delete(String id) async {
     final prompts = await _storage.loadPrompts();
     prompts.removeWhere((p) => p.id == id);

@@ -379,7 +379,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutBody.
   ///
   /// In en, this message translates to:
-  /// **'ContextForge 0.1.17\n\nBuild AI-ready context from YouTube transcripts.\n\nBuilt with Flutter.\nBuilt using the SODA methodology.'**
+  /// **'ContextForge 1.1.0\n\nBuild AI-ready context from YouTube transcripts.\n\nBuilt with Flutter.\nBuilt using the SODA methodology.'**
   String get aboutBody;
 
   /// No description provided for @shortcutsBody.

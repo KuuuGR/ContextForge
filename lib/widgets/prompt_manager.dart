@@ -24,6 +24,8 @@ class PromptManager extends StatelessWidget {
     required this.onDeletePrompt,
     this.editorController,
     this.editorEnabled = false,
+    this.onExportPrompts,
+    this.onImportPrompts,
   });
 
   final List<Prompt> prompts;
@@ -36,6 +38,12 @@ class PromptManager extends StatelessWidget {
   final ValueChanged<Prompt> onDeletePrompt;
   final TextEditingController? editorController;
   final bool editorEnabled;
+
+  /// Exports the user's saved prompts to a JSON file.
+  final VoidCallback? onExportPrompts;
+
+  /// Imports user prompts from a JSON file.
+  final VoidCallback? onImportPrompts;
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +77,28 @@ class PromptManager extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
               ),
             ),
+            if (onImportPrompts != null) ...[
+              Tooltip(
+                message: 'Import Prompts',
+                child: IconButton(
+                  onPressed: onImportPrompts,
+                  icon: const Icon(Icons.file_download_outlined),
+                  tooltip: 'Import Prompts',
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+            if (onExportPrompts != null) ...[
+              Tooltip(
+                message: 'Export Prompts',
+                child: IconButton(
+                  onPressed: onExportPrompts,
+                  icon: const Icon(Icons.file_upload_outlined),
+                  tooltip: 'Export Prompts',
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 12),

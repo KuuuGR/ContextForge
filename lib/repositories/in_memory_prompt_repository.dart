@@ -28,6 +28,13 @@ class InMemoryPromptRepository implements PromptRepository {
   }
 
   @override
+  Future<void> saveAll(List<Prompt> prompts) async {
+    _prompts
+      ..clear()
+      ..addAll(prompts);
+  }
+
+  @override
   Future<void> delete(String id) async {
     _prompts.removeWhere((p) => p.id == id);
   }

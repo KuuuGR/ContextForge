@@ -175,6 +175,21 @@ void main() {
     }
   });
 
+  testWidgets('Multiline clipboard text is treated as not a YouTube URL',
+      (WidgetTester tester) async {
+    // Regression: ordinary multiline clipboard text (e.g. copied instructions)
+    // must never be sent to the YouTube URL parser during clipboard polling.
+    mockClipboard(
+        tester, '⚡  ✕\n1  3\n2  ...\n\nOrdinary multiline text, not a URL.');
+    await pumpApp(tester);
+
+    final buttons = clipboardButtons(tester);
+    expect(buttons, hasLength(3));
+    for (final button in buttons) {
+      expect(button.onPressed, isNull);
+    }
+  });
+
   testWidgets('Clipboard button is enabled when clipboard has a YouTube URL',
       (WidgetTester tester) async {
     mockClipboard(

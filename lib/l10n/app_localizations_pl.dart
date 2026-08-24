@@ -148,7 +148,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get aboutBody =>
-      'ContextForge 0.1.17\n\nTwórz gotowy kontekst AI z transkrypcji YouTube.\n\nZbudowano w Flutter.\nZbudowano zgodnie z metodologią SODA.';
+      'ContextForge 1.1.0\n\nTwórz gotowy kontekst AI z transkrypcji YouTube.\n\nZbudowano w Flutter.\nZbudowano zgodnie z metodologią SODA.';
 
   @override
   String get shortcutsBody =>

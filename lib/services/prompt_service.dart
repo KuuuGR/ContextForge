@@ -103,6 +103,7 @@ class PromptService {
           rating: 0,
           createdAt: now,
           updatedAt: now,
+          isBuiltIn: true,
         ),
       );
     }
@@ -126,6 +127,16 @@ class PromptService {
       if (p.isDefault) return p;
     }
     return null;
+  }
+
+  /// Returns only user-created prompts (excluding built-in templates), in
+  /// their stored order.
+  ///
+  /// This is the set used for the user prompt export — the built-in catalogue
+  /// is never treated as user data.
+  Future<List<Prompt>> getUserPrompts() async {
+    final prompts = await repository.getAll();
+    return [for (final p in prompts) if (!p.isBuiltIn) p];
   }
 
   /// Toggles the Favorite state of the prompt with [id].
@@ -290,6 +301,152 @@ class PromptService {
     await repository.delete(id);
   }
 
+  /// Builds an intelligent merge plan for an import.
+  ///
+  /// Each imported prompt is classified against the current [existing] set:
+  /// - **New** — no existing prompt corresponds (by stable id, or by title as a
+  ///   secondary identity for imports from another installation). These are
+  ///   added automatically.
+  /// - **Identical** — a corresponding prompt already exists with the same
+  ///   content. Left unchanged (no duplicate, no overwrite).
+  /// - **Conflict** — a corresponding prompt exists but its content differs.
+  ///   The caller must ask the user to choose Add as New / Overwrite / Skip.
+  ///
+  /// Matching prefers the stable prompt id when the import originates from the
+  /// same ContextForge export; when ids do not correspond it falls back to a
+  /// secondary comparison based on prompt identity/content. Prompts are never
+  /// matched by title alone — a matching title with different content is a
+  /// conflict, not a duplicate.
+  PromptImportPlan buildImportPlan(
+    List<Prompt> incoming,
+    List<Prompt> existing,
+  ) {
+    final newPrompts = <Prompt>[];
+    final identical = <Prompt>[];
+    final conflicts = <PromptConflict>[];
+
+    for (final raw in incoming) {
+      final title = raw.title.trim();
+      final content = raw.content.trim();
+      if (title.isEmpty || content.isEmpty) continue;
+
+      // Primary match: stable id (same ContextForge export).
+      Prompt? candidate;
+      for (final ex in existing) {
+        if (ex.id == raw.id) {
+          candidate = ex;
+          break;
+        }
+      }
+      // Secondary match: title as the prompt identity (another installation).
+      if (candidate == null) {
+        for (final ex in existing) {
+          if (ex.title == title) {
+            candidate = ex;
+            break;
+          }
+        }
+      }
+
+      if (candidate == null) {
+        newPrompts.add(raw);
+      } else if (candidate.content == content) {
+        identical.add(raw);
+      } else {
+        conflicts.add(PromptConflict(imported: raw, existing: candidate));
+      }
+    }
+
+    return PromptImportPlan(
+      newPrompts: newPrompts,
+      identical: identical,
+      conflicts: conflicts,
+    );
+  }
+
+  /// Analyses an import against the currently stored prompts.
+  ///
+  /// See [buildImportPlan]. Callers should let the user resolve any conflicts
+  /// in the returned plan before passing it to [applyImport].
+  Future<PromptImportPlan> analyzeImport(List<Prompt> incoming) async {
+    final existing = await repository.getAll();
+    return buildImportPlan(incoming, existing);
+  }
+
+  /// Applies an import plan produced by [buildImportPlan] / [analyzeImport].
+  ///
+  /// - New prompts are added, **preserving their ids** so that re-importing the
+  ///   same file is idempotent. A title that would collide is suffixed and a
+  ///   colliding id is regenerated.
+  /// - Identical prompts are left untouched (never overwritten).
+  /// - Conflicts are applied according to each [PromptConflict.resolution]:
+  ///   `addNew` adds the imported prompt, `overwrite` replaces the existing
+  ///   prompt's content (keeping its id and local state), `skip` ignores it.
+  ///
+  /// Imported prompts are always stored as user prompts (`isBuiltIn = false`);
+  /// the built-in catalogue is never affected.
+  Future<PromptImportResult> applyImport(PromptImportPlan plan) async {
+    final existing = await repository.getAll();
+    final now = _nowIso8601();
+
+    final additions = <Prompt>[
+      ...plan.newPrompts,
+      for (final c in plan.conflicts)
+        if (c.resolution == PromptConflictResolution.addNew) c.imported,
+    ];
+
+    final existingById = {for (final p in existing) p.id: p};
+    final usedIds = existingById.keys.toSet();
+    final usedTitles = existing.map((p) => p.title).toSet();
+    final normalized = <Prompt>[];
+    for (final p in additions) {
+      final title = p.title.trim();
+      if (title.isEmpty) continue;
+
+      var uniqueTitle = title;
+      var counter = 2;
+      while (usedTitles.contains(uniqueTitle)) {
+        uniqueTitle = '$title ($counter)';
+        counter++;
+      }
+      usedTitles.add(uniqueTitle);
+
+      var id = p.id;
+      if (usedIds.contains(id)) id = _generateUuid();
+      usedIds.add(id);
+
+      normalized.add(
+        p.copyWith(id: id, title: uniqueTitle, isBuiltIn: false),
+      );
+    }
+
+    final overwriteById = <String, Prompt>{
+      for (final c in plan.conflicts)
+        if (c.resolution == PromptConflictResolution.overwrite)
+          c.existing.id: c.imported,
+    };
+
+    final finalList = <Prompt>[];
+    for (final ex in existing) {
+      final imp = overwriteById[ex.id];
+      if (imp != null) {
+        finalList.add(
+          ex.copyWith(content: imp.content.trim(), updatedAt: now),
+        );
+      } else {
+        finalList.add(ex);
+      }
+    }
+    finalList.addAll(normalized);
+
+    await repository.saveAll(finalList);
+    return PromptImportResult(
+      newAddedCount: normalized.length,
+      alreadyExistedCount: plan.identical.length,
+      conflictCount: plan.conflicts.length,
+    );
+  }
+
   String _validateAndTrimTitle(String title) {
     final trimmed = title.trim();
     if (trimmed.isEmpty) {
@@ -327,4 +484,68 @@ class PromptService {
         '${hex.substring(16, 20)}-'
         '${hex.substring(20)}';
   }
+}
+
+/// How a single conflicting imported prompt should be handled.
+enum PromptConflictResolution { addNew, overwrite, skip }
+
+/// A single import conflict: an imported prompt corresponds to an existing
+/// prompt but has different content.
+class PromptConflict {
+  PromptConflict({required this.imported, required this.existing});
+
+  /// The prompt as found in the imported file.
+  final Prompt imported;
+
+  /// The existing prompt it corresponds to.
+  final Prompt existing;
+
+  /// The resolution chosen by the user.
+  ///
+  /// Defaults to [PromptConflictResolution.addNew] (non-destructive) and is
+  /// updated by the conflict-resolution dialog before the import is applied.
+  PromptConflictResolution resolution = PromptConflictResolution.addNew;
+}
+
+/// The result of analysing an import: what will be added, ignored, or still
+/// needs a decision.
+class PromptImportPlan {
+  const PromptImportPlan({
+    required this.newPrompts,
+    required this.identical,
+    required this.conflicts,
+  });
+
+  /// Prompts with no existing equivalent — added automatically.
+  final List<Prompt> newPrompts;
+
+  /// Prompts identical to an existing prompt — left unchanged.
+  final List<Prompt> identical;
+
+  /// Prompts whose corresponding existing prompt has different content.
+  final List<PromptConflict> conflicts;
+
+  /// Whether any imported prompt requires a user decision.
+  bool get hasConflicts => conflicts.isNotEmpty;
+}
+
+/// Outcome of an [PromptService.applyImport] call.
+class PromptImportResult {
+  const PromptImportResult({
+    required this.newAddedCount,
+    required this.alreadyExistedCount,
+    required this.conflictCount,
+  });
+
+  /// Number of prompts newly added (auto-added plus "Add as New" conflicts).
+  final int newAddedCount;
+
+  /// Number of prompts that already existed and were left unchanged.
+  final int alreadyExistedCount;
+
+  /// Number of conflicting prompts that required a decision.
+  final int conflictCount;
+
+  /// Whether any prompts were newly added.
+  bool get didAdd => newAddedCount > 0;
 }

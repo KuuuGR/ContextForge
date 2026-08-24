@@ -2,6 +2,49 @@
 
 All notable changes to ContextForge will be documented in this file.
 
+## [1.1.0] — 2026-08-24
+
+### Added
+
+- **Persistent user prompts** — user-created and edited prompts, including
+  Favorites, Default, Quick Access assignments, ratings and ordering, are now
+  stored locally in `prompts.json` and restored automatically on launch.
+- **Built-in vs user prompt separation** — ContextForge's built-in prompt
+  catalogue stays separate from user data and is never exported as a user
+  prompt.
+- **Export Prompts** — saves your user-created prompts to
+  `ContextForge-Prompts.json` (name, content, favorite, Quick Access, metadata).
+- **Import Prompts** — restores prompts from a previously exported JSON file
+  using an intelligent merge: new prompts are added, identical prompts are
+  left unchanged, and prompts whose content differs are resolved per-prompt
+  (Add as New / Overwrite Existing / Skip) with a concise result summary.
+  Re-importing the same file is idempotent and never silently overwrites an
+  existing prompt.
+- **Clear button in the top bar** — a second Clear action next to the
+  Generate controls that performs the same session reset as the bottom Clear
+  button.
+- **App Store rating requests** — occasionally asks for a review using Apple's
+  system review prompt (`AppStore.requestReview`). Eligibility combines elapsed
+  time with meaningful usage (completed workflows) and is deliberately
+  conservative: ~30 days + 30 workflows, ~3 months + 45 workflows, ~1 year +
+  60 workflows. It is never requested at launch, never for opening
+  Settings/About, and never repeatedly for the same app version. Apple decides
+  whether the prompt is actually shown.
+
+### Changed
+
+- Version bumped to **1.1.0 (build 3)**.
+
+### Notes
+
+- **Prompt migration** — prompts stored by 1.0.0 (before the `isBuiltIn` flag)
+  are treated as **user** prompts after upgrading. This is intentional: users
+  may modify the supplied prompts, so we do not try to reconstruct whether a
+  legacy prompt was originally built-in. They may be included in exports. For
+  new installs, shipped prompts remain `isBuiltIn = true`, user-created and
+  imported prompts remain `isBuiltIn = false`.
+- No subscriptions or in-app purchases were added.
+
 ## [0.1.17] — 2026-08-04 (031)
 
 ### Added

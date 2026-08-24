@@ -46,7 +46,7 @@
   "quickWorkflow": "Szybki przepływ (wkrótce)",
   "noPromptAssigned": "Brak przypisanej komendy",
   "defaultLabel": "Domyślna",
-  "aboutBody": "ContextForge 0.1.17\n\nTwórz gotowy kontekst AI z transkrypcji YouTube.\n\nZbudowano w Flutter.\nZbudowano zgodnie z metodologią SODA.",
+  "aboutBody": "ContextForge 1.1.0\n\nTwórz gotowy kontekst AI z transkrypcji YouTube.\n\nZbudowano w Flutter.\nZbudowano zgodnie z metodologią SODA.",
   "shortcutsBody": "⌘V  Wklej URL YouTube ze schowka do pierwszego wolnego slotu.\n\n⌘R  Generuj wynik.\n\n⌘C  Jeśli nic nie zaznaczono: skopiuj wygenerowany wynik. Jeśli zaznaczono: skopiuj zaznaczenie.",
   "helpBody": "1. Skopiuj URL YouTube.\n2. Naciśnij ⌘V (lub użyj Wklej).\n3. Wybierz komendę.\n4. Naciśnij Generuj.\n5. Skopiuj wygenerowany wynik."
 }

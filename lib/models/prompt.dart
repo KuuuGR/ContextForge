@@ -17,6 +17,7 @@ class Prompt {
     this.isFavorite = false,
     this.isDefault = false,
     this.quickAccess = PromptQuickAccess.none,
+    this.isBuiltIn = false,
   }) : assert(
           !isDefault || isFavorite,
           'Default implies Favorite.',
@@ -44,6 +45,13 @@ class Prompt {
   /// Quick Access role assignment.
   final PromptQuickAccess quickAccess;
 
+  /// Whether this prompt is a built-in supplied by ContextForge.
+  ///
+  /// Built-in prompts are seeded on first run and remain separate from
+  /// user-created prompts: they are never exported as user data and are
+  /// never created through import.
+  final bool isBuiltIn;
+
   /// Creation timestamp as ISO-8601 string.
   final String createdAt;
 
@@ -61,6 +69,7 @@ class Prompt {
     bool? isFavorite,
     bool? isDefault,
     PromptQuickAccess? quickAccess,
+    bool? isBuiltIn,
     String? createdAt,
     String? updatedAt,
   }) {
@@ -74,6 +83,7 @@ class Prompt {
       isFavorite: newDefault ? true : newFavorite,
       isDefault: newDefault,
       quickAccess: quickAccess ?? this.quickAccess,
+      isBuiltIn: isBuiltIn ?? this.isBuiltIn,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -89,6 +99,7 @@ class Prompt {
       'isFavorite': isFavorite,
       'isDefault': isDefault,
       'quickAccess': quickAccess.name,
+      'isBuiltIn': isBuiltIn,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
     };
@@ -111,6 +122,7 @@ class Prompt {
       isDefault: isDefault,
       quickAccess:
           PromptQuickAccess.fromName(json['quickAccess'] as String?),
+      isBuiltIn: json['isBuiltIn'] as bool? ?? false,
       createdAt: json['createdAt'] as String,
       updatedAt: json['updatedAt'] as String,
     );
@@ -127,6 +139,7 @@ class Prompt {
         other.isFavorite == isFavorite &&
         other.isDefault == isDefault &&
         other.quickAccess == quickAccess &&
+        other.isBuiltIn == isBuiltIn &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
   }
@@ -135,14 +148,14 @@ class Prompt {
   int get hashCode {
     return Object.hash(
         id, title, content, rating, isFavorite, isDefault, quickAccess,
-        createdAt, updatedAt);
+        isBuiltIn, createdAt, updatedAt);
   }
 
   @override
   String toString() {
     return 'Prompt(id: $id, title: $title, rating: $rating, '
         'isFavorite: $isFavorite, isDefault: $isDefault, '
-        'quickAccess: $quickAccess, '
+        'quickAccess: $quickAccess, isBuiltIn: $isBuiltIn, '
         'createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 }

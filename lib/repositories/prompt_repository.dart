@@ -14,6 +14,11 @@ abstract class PromptRepository {
   /// Persists a [prompt]. Creates or updates depending on storage semantics.
   Future<void> save(Prompt prompt);
 
+  /// Persists the whole [prompts] collection atomically.
+  ///
+  /// Replaces the stored set with exactly [prompts] in the given order.
+  Future<void> saveAll(List<Prompt> prompts);
+
   /// Deletes the prompt with the given [id].
   Future<void> delete(String id);
 }

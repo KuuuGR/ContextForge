@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:context_forge/exceptions/prompt_exceptions.dart';
+import 'package:context_forge/models/prompt.dart';
 import 'package:context_forge/repositories/json_prompt_repository.dart';
 import 'package:context_forge/services/json_prompt_storage.dart';
 import 'package:context_forge/services/prompt_service.dart';
@@ -380,6 +381,226 @@ void main() {
 
         final prompts = await service.getAllPrompts();
         expect(prompts, isEmpty);
+      });
+    });
+
+    group('user prompts and built-ins', () {
+      test('ensureDefaultPrompts seeds built-in prompts', () async {
+        await service.ensureDefaultPrompts();
+        final prompts = await service.getAllPrompts();
+        expect(prompts, isNotEmpty);
+        expect(prompts.every((p) => p.isBuiltIn), isTrue);
+      });
+
+      test('createPrompt produces a user prompt (not built-in)', () async {
+        final created = await service.createPrompt(
+            title: 'Mine', content: 'Custom content');
+        expect(created.isBuiltIn, isFalse);
+      });
+
+      test('getUserPrompts excludes built-in prompts', () async {
+        await service.ensureDefaultPrompts();
+        final created = await service.createPrompt(
+            title: 'Mine', content: 'Custom content');
+        final userPrompts = await service.getUserPrompts();
+        expect(userPrompts, hasLength(1));
+        expect(userPrompts.single.id, created.id);
+      });
+
+      test('legacy 1.0.0 prompt (no isBuiltIn flag) becomes a user prompt',
+          () async {
+        // Simulate a prompt stored by 1.0.0, which predates the isBuiltIn
+        // flag. It must NOT be treated as a built-in: it is a user prompt and
+        // is included in the user's exported collection.
+        await service.repository.save(
+          Prompt.fromJson({
+            'id': 'legacy',
+            'title': 'Legacy',
+            'content': 'Old content',
+            'rating': 0,
+            'isFavorite': false,
+            'isDefault': false,
+            'quickAccess': 'none',
+            'createdAt': '2026-01-01T00:00:00Z',
+            'updatedAt': '2026-01-01T00:00:00Z',
+          }),
+        );
+
+        final all = await service.getAllPrompts();
+        expect(all.single.isBuiltIn, isFalse);
+
+        final userPrompts = await service.getUserPrompts();
+        expect(userPrompts.map((p) => p.id), contains('legacy'));
+      });
+    });
+
+    group('intelligent import', () {
+      Prompt userPrompt({
+        required String id,
+        required String title,
+        String content = 'Content',
+      }) {
+        return Prompt(
+          id: id,
+          title: title,
+          content: content,
+          rating: 0,
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        );
+      }
+
+      test('new prompt with no equivalent is added automatically', () async {
+        final imported =
+            userPrompt(id: 'n1', title: 'New', content: 'Brand new');
+        final plan = await service.analyzeImport([imported]);
+        expect(plan.newPrompts, [imported]);
+        expect(plan.identical, isEmpty);
+        expect(plan.conflicts, isEmpty);
+
+        final result = await service.applyImport(plan);
+        expect(result.newAddedCount, 1);
+        expect(result.alreadyExistedCount, 0);
+        expect(result.conflictCount, 0);
+
+        final prompts = await service.getAllPrompts();
+        expect(prompts, hasLength(1));
+        expect(prompts.single.title, 'New');
+        expect(prompts.single.content, 'Brand new');
+        expect(prompts.single.isBuiltIn, isFalse);
+      });
+
+      test('identical prompt is ignored (no duplicate, no overwrite)',
+          () async {
+        await service.repository
+            .save(userPrompt(id: 'e1', title: 'Same', content: 'C1'));
+        final imported = userPrompt(id: 'e1', title: 'Same', content: 'C1');
+
+        final plan = await service.analyzeImport([imported]);
+        expect(plan.identical, hasLength(1));
+        expect(plan.newPrompts, isEmpty);
+        expect(plan.conflicts, isEmpty);
+
+        final result = await service.applyImport(plan);
+        expect(result.newAddedCount, 0);
+        expect(result.alreadyExistedCount, 1);
+
+        final prompts = await service.getAllPrompts();
+        expect(prompts, hasLength(1)); // no duplicate
+        expect(prompts.single.id, 'e1');
+      });
+
+      test('same title but different content is a conflict', () async {
+        await service.repository
+            .save(userPrompt(id: 'e1', title: 'Same', content: 'Old content'));
+        final imported =
+            userPrompt(id: 'other', title: 'Same', content: 'New content');
+
+        final plan = await service.analyzeImport([imported]);
+        expect(plan.conflicts, hasLength(1));
+        expect(plan.newPrompts, isEmpty);
+        expect(plan.identical, isEmpty);
+        expect(plan.conflicts.single.existing.id, 'e1');
+        expect(plan.conflicts.single.imported.id, 'other');
+      });
+
+      test('conflict resolved as Add as New adds without overwriting',
+          () async {
+        await service.repository
+            .save(userPrompt(id: 'e1', title: 'Same', content: 'Old content'));
+        final imported =
+            userPrompt(id: 'other', title: 'Same', content: 'New content');
+
+        final plan = await service.analyzeImport([imported]);
+        plan.conflicts.single.resolution = PromptConflictResolution.addNew;
+
+        final result = await service.applyImport(plan);
+        expect(result.newAddedCount, 1);
+
+        final prompts = await service.getAllPrompts();
+        expect(prompts, hasLength(2));
+        // The existing prompt is untouched.
+        final existing = prompts.firstWhere((p) => p.id == 'e1');
+        expect(existing.content, 'Old content');
+        // The new prompt is added with a unique (suffixed) title.
+        final added = prompts.firstWhere((p) => p.id == 'other');
+        expect(added.title, 'Same (2)');
+        expect(added.content, 'New content');
+      });
+
+      test('conflict resolved as Overwrite replaces existing content',
+          () async {
+        await service.repository
+            .save(userPrompt(id: 'e1', title: 'Same', content: 'Old content'));
+        final imported =
+            userPrompt(id: 'other', title: 'Same', content: 'New content');
+
+        final plan = await service.analyzeImport([imported]);
+        plan.conflicts.single.resolution = PromptConflictResolution.overwrite;
+
+        final result = await service.applyImport(plan);
+        expect(result.newAddedCount, 0);
+
+        final prompts = await service.getAllPrompts();
+        expect(prompts, hasLength(1)); // nothing new added
+        expect(prompts.single.id, 'e1'); // identity preserved
+        expect(prompts.single.content, 'New content');
+      });
+
+      test('conflict resolved as Skip leaves everything unchanged', () async {
+        await service.repository
+            .save(userPrompt(id: 'e1', title: 'Same', content: 'Old content'));
+        final imported =
+            userPrompt(id: 'other', title: 'Same', content: 'New content');
+
+        final plan = await service.analyzeImport([imported]);
+        plan.conflicts.single.resolution = PromptConflictResolution.skip;
+
+        final result = await service.applyImport(plan);
+        expect(result.newAddedCount, 0);
+
+        final prompts = await service.getAllPrompts();
+        expect(prompts, hasLength(1));
+        expect(prompts.single.content, 'Old content');
+      });
+
+      test('importing the same exported file twice adds no duplicates',
+          () async {
+        final file = [
+          userPrompt(id: 'a', title: 'A', content: 'A content'),
+          userPrompt(id: 'b', title: 'B', content: 'B content'),
+        ];
+
+        // First import: both are new.
+        final firstPlan = await service.analyzeImport(file);
+        expect(firstPlan.newPrompts, hasLength(2));
+        final firstResult = await service.applyImport(firstPlan);
+        expect(firstResult.newAddedCount, 2);
+        expect(await service.getAllPrompts(), hasLength(2));
+
+        // Second import of the same file: both are identical.
+        final secondPlan = await service.analyzeImport(file);
+        expect(secondPlan.identical, hasLength(2));
+        expect(secondPlan.newPrompts, isEmpty);
+        final secondResult = await service.applyImport(secondPlan);
+        expect(secondResult.newAddedCount, 0);
+        expect(secondResult.alreadyExistedCount, 2);
+        expect(await service.getAllPrompts(), hasLength(2)); // no duplicates
+      });
+
+      test('imported prompts persist across a restart', () async {
+        final imported =
+            userPrompt(id: 'p', title: 'Persistent', content: 'Body');
+        final plan = await service.analyzeImport([imported]);
+        await service.applyImport(plan);
+
+        // Simulate restart: fresh service reading the same file.
+        final storage = JsonPromptStorage(directoryPath: tempDir.path);
+        final repository = JsonPromptRepository(storage: storage);
+        final restarted = PromptService(repository: repository);
+        final prompts = await restarted.getAllPrompts();
+        expect(prompts.single.title, 'Persistent');
+        expect(prompts.single.isBuiltIn, isFalse);
       });
     });
   });

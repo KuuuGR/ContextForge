@@ -6,8 +6,8 @@ import '../features/intro/first_launch_intro.dart';
 import '../l10n/app_localizations.dart';
 import '../pages/home_page.dart';
 import '../providers/youtube_explode_provider.dart';
-import '../repositories/in_memory_prompt_repository.dart';
 import '../repositories/in_memory_video_repository.dart';
+import '../repositories/json_prompt_repository.dart';
 import '../services/first_launch_intro_store.dart';
 import '../services/json_video_history_storage.dart';
 import '../services/prompt_service.dart';
@@ -72,7 +72,7 @@ class ContextForgeApp extends StatelessWidget {
       home: _Root(
         introStore: introStore ?? FirstLaunchIntroStore(),
         promptService:
-            promptService ?? PromptService(repository: InMemoryPromptRepository()),
+            promptService ?? PromptService(repository: JsonPromptRepository()),
         videoService: videoService ??
             VideoService(
               repository: InMemoryVideoRepository(),

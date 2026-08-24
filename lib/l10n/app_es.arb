@@ -46,7 +46,7 @@
   "quickWorkflow": "Flujo rápido (próximamente)",
   "noPromptAssigned": "Sin prompt asignado",
   "defaultLabel": "Predeterminado",
-  "aboutBody": "ContextForge 0.1.17\n\nCrea contexto AI listo a partir de transcripciones de YouTube.\n\nHecho con Flutter.\nHecho con la metodología SODA.",
+  "aboutBody": "ContextForge 1.1.0\n\nCrea contexto AI listo a partir de transcripciones de YouTube.\n\nHecho con Flutter.\nHecho con la metodología SODA.",
   "shortcutsBody": "⌘V  Pega el URL de YouTube del portapapeles en el primer espacio disponible.\n\n⌘R  Generar resultado.\n\n⌘C  Si nada está seleccionado: copia el resultado generado. De lo contrario: copia el texto seleccionado.",
   "helpBody": "1. Copia un URL de YouTube.\n2. Pulsa ⌘V (o usa Pegar).\n3. Selecciona un prompt.\n4. Pulsa Generar.\n5. Copia el resultado generado."
 }

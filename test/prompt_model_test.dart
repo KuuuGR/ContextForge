@@ -21,6 +21,7 @@ void main() {
       expect(json['rating'], 0);
       expect(json['isFavorite'], false);
       expect(json['isDefault'], false);
+      expect(json['isBuiltIn'], false);
       expect(json['createdAt'], '2026-02-08T10:00:00Z');
       expect(json['updatedAt'], '2026-02-08T10:00:00Z');
     });
@@ -42,6 +43,27 @@ void main() {
       final decoded = Prompt.fromJson(json);
       expect(decoded.isFavorite, isFalse);
       expect(decoded.isDefault, isFalse);
+    });
+
+    test('fromJson defaults isBuiltIn to false when missing', () {
+      final json = prompt.toJson()..remove('isBuiltIn');
+      final decoded = Prompt.fromJson(json);
+      expect(decoded.isBuiltIn, isFalse);
+    });
+
+    test('serializes and deserializes isBuiltIn flag', () {
+      const builtIn = Prompt(
+        id: 'p3',
+        title: 'Instagram Post',
+        content: 'Template content',
+        rating: 0,
+        createdAt: '2026-02-08T10:00:00Z',
+        updatedAt: '2026-02-08T10:00:00Z',
+        isBuiltIn: true,
+      );
+      final json = builtIn.toJson();
+      expect(json['isBuiltIn'], true);
+      expect(Prompt.fromJson(json), builtIn);
     });
 
     test('serializes and deserializes favorite/default flags', () {
@@ -96,6 +118,7 @@ void main() {
       expect(prompt.copyWith(id: 'p2'), isNot(prompt));
       expect(prompt.copyWith(isFavorite: true), isNot(prompt));
       expect(prompt.copyWith(isDefault: true), isNot(prompt));
+      expect(prompt.copyWith(isBuiltIn: true), isNot(prompt));
     });
 
     test('toString is readable', () {

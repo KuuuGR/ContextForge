@@ -17,6 +17,8 @@ class CommandBar extends StatelessWidget {
     this.canGenerate = true,
     this.onQuickWorkflow,
     this.canQuickWorkflow = false,
+    this.onClear,
+    this.canClear = false,
   });
 
   final List<Prompt> prompts;
@@ -34,6 +36,12 @@ class CommandBar extends StatelessWidget {
 
   /// Whether a Quick Workflow prompt is assigned.
   final bool canQuickWorkflow;
+
+  /// Invokes the same Clear logic as the bottom-of-page Clear button.
+  final VoidCallback? onClear;
+
+  /// Whether there is anything to clear.
+  final bool canClear;
 
   List<Prompt?> get _slotPrompts {
     final result = <Prompt?>[null, null, null];
@@ -53,6 +61,19 @@ class CommandBar extends StatelessWidget {
     return result;
   }
 
+  // Grid geometry (3 columns × 3 rows).
+  //
+  // Column 1 is sized for the ⚡ IconButton (48px), columns 2–3 for the slot /
+  // action buttons (~36px). All three rows share the same column widths so the
+  // cells line up. In the top row the ⚡ and ✕ sit in columns 2–3 (immediately
+  // adjacent), so ✕ lands directly above "3"; column 1's top cell is empty.
+  static const int _col1Flex = 48;
+  static const int _col2Flex = 36;
+  static const int _col3Flex = 36;
+  static const double _gridGap = 6;
+  static const double _gridWidth =
+      _col1Flex + _col2Flex + _col3Flex + _gridGap * 2;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -67,8 +88,9 @@ class CommandBar extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Center(
-            child: Tooltip(
+          _gridRow(
+            cell1: const SizedBox.shrink(),
+            cell2: Tooltip(
               message: canQuickWorkflow
                   ? 'Quick Workflow'
                   : 'Quick Workflow (no prompt assigned)',
@@ -84,50 +106,81 @@ class CommandBar extends StatelessWidget {
                     : 'Quick Workflow (no prompt assigned)',
               ),
             ),
+            cell3: _ActionButton(
+              icon: Icons.clear,
+              tooltip: 'Clear',
+              onPressed: canClear ? onClear : null,
+            ),
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (var i = 0; i < 3; i++) ...[
-                if (i > 0) const SizedBox(width: 6),
-                _SlotButton(
-                  label: i == 0 ? '1' : i == 1 ? '2' : '3',
-                  prompt: slots[i],
-                  isSelected: slots[i] != null &&
-                      slots[i]!.title == selectedPrompt,
-                  onTap: slots[i] == null
-                      ? null
-                      : () => onSelectPrompt(slots[i]!.title),
-                ),
-              ],
-            ],
+          _gridRow(
+            cell1: _SlotButton(
+              label: '1',
+              prompt: slots[0],
+              isSelected: slots[0] != null && slots[0]!.title == selectedPrompt,
+              onTap: slots[0] == null
+                  ? null
+                  : () => onSelectPrompt(slots[0]!.title),
+            ),
+            cell2: _SlotButton(
+              label: '2',
+              prompt: slots[1],
+              isSelected: slots[1] != null && slots[1]!.title == selectedPrompt,
+              onTap: slots[1] == null
+                  ? null
+                  : () => onSelectPrompt(slots[1]!.title),
+            ),
+            cell3: _SlotButton(
+              label: '3',
+              prompt: slots[2],
+              isSelected: slots[2] != null && slots[2]!.title == selectedPrompt,
+              onTap: slots[2] == null
+                  ? null
+                  : () => onSelectPrompt(slots[2]!.title),
+            ),
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _ActionButton(
-                icon: Icons.content_paste,
-                tooltip: 'Paste from clipboard',
-                onPressed: canPaste ? onPaste : null,
-              ),
-              const SizedBox(width: 8),
-              _ActionButton(
-                icon: Icons.play_arrow,
-                tooltip: 'Generate',
-                onPressed: canGenerate ? onGenerate : null,
-              ),
-              const SizedBox(width: 8),
-              _ActionButton(
-                icon: Icons.copy,
-                tooltip: 'Copy output',
-                onPressed: canCopy ? onCopy : null,
-              ),
-            ],
+          _gridRow(
+            cell1: _ActionButton(
+              icon: Icons.content_paste,
+              tooltip: 'Paste from clipboard',
+              onPressed: canPaste ? onPaste : null,
+            ),
+            cell2: _ActionButton(
+              icon: Icons.play_arrow,
+              tooltip: 'Generate',
+              onPressed: canGenerate ? onGenerate : null,
+            ),
+            cell3: _ActionButton(
+              icon: Icons.copy,
+              tooltip: 'Copy output',
+              onPressed: canCopy ? onCopy : null,
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// Lays out three cells as a single grid row with shared column widths.
+  ///
+  /// Every row uses the same [Expanded] flex factors and gap, so cells line up
+  /// vertically across rows. Each cell is given a positive, bounded size so
+  /// there is never a zero-size render box in the hit-test path.
+  Widget _gridRow({
+    required Widget cell1,
+    required Widget cell2,
+    required Widget cell3,
+  }) {
+    return SizedBox(
+      width: _gridWidth,
+      child: Row(
+        children: [
+          Expanded(flex: _col1Flex, child: Center(child: cell1)),
+          const SizedBox(width: _gridGap),
+          Expanded(flex: _col2Flex, child: Center(child: cell2)),
+          const SizedBox(width: _gridGap),
+          Expanded(flex: _col3Flex, child: Center(child: cell3)),
         ],
       ),
     );
