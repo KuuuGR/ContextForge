@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 /// The single, reusable Default Prompt icon.
 ///
-/// The official Default Prompt icon is the Unicode character 🌟. Rendering it
-/// as text (rather than a Material icon) guarantees the exact same glyph in
-/// every view — collapsed selector, expanded selector, Prompt Manager, Help,
-/// legends, and tooltips.
+/// Rendered as a Material icon (`Icons.auto_awesome`) rather than a Unicode
+/// emoji character. The bundled `MaterialIcons` font is available on every
+/// platform, whereas emoji glyphs (e.g. 🌟) are missing from the iOS system
+/// font fallback and showed up as empty "tofu" squares.
 ///
 /// To change the Default Prompt icon in the future, modify only this widget.
 class DefaultPromptIcon extends StatelessWidget {
@@ -19,13 +19,10 @@ class DefaultPromptIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      '🌟',
-      style: TextStyle(
-        fontSize: size,
-        color: color ?? Colors.amber,
-        height: 1,
-      ),
+    return Icon(
+      Icons.auto_awesome,
+      size: size,
+      color: color ?? Colors.amber,
     );
   }
 }

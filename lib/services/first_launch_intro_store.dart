@@ -68,6 +68,12 @@ class FirstLaunchIntroStore {
       final home = Platform.environment['HOME'] ?? '';
       return '$home/Library/Application Support/context_forge';
     }
+    if (Platform.isIOS) {
+      // HOME is null and Directory.current is "/" on iOS; the system temp
+      // directory lives in the writable app data container (<container>/tmp).
+      final container = Directory.systemTemp.parent.path;
+      return '$container/Library/Application Support/context_forge';
+    }
     return Directory.current.path;
   }
 }

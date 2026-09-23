@@ -85,6 +85,14 @@ class JsonPromptStorage {
       final home = Platform.environment['HOME'] ?? '';
       return '$home/Library/Application Support/context_forge';
     }
+    if (Platform.isIOS) {
+      // The Dart sandbox on iOS exposes neither HOME nor a usable working
+      // directory (HOME is null and Directory.current is "/"). iOS always
+      // places the system temp directory inside the app data container
+      // (<container>/tmp), so its parent is a writable, durable location.
+      final container = Directory.systemTemp.parent.path;
+      return '$container/Library/Application Support/context_forge';
+    }
     return Directory.current.path;
   }
 }

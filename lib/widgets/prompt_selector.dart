@@ -198,9 +198,9 @@ class _CloseMenuItem extends StatelessWidget {
 
 /// Star mark for the favorite / super-star (default) state cycle:
 ///
-/// - ☆ (normal)   → [Icons.star_border]
-/// - ★ (favorite) → [Icons.star]
-/// - 🌟 (default)  → [DefaultPromptIcon]
+/// - normal        → [Icons.star_border]
+/// - favorite      → [Icons.star]
+/// - default       → [DefaultPromptIcon]
 ///
 /// The Default Prompt icon is rendered by the single reusable
 /// [DefaultPromptIcon] component so every view stays identical.
@@ -302,38 +302,10 @@ class _PromptTitleWithStar extends StatelessWidget {
     showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(200, 0, 0, 0),
-      items: [
-        PopupMenuItem(
-          value: 'none',
-          child: Text(prompt.quickAccess == PromptQuickAccess.none
-              ? '✓ None'
-              : 'None'),
-        ),
-        PopupMenuItem(
-          value: 'quickWorkflow',
-          child: Text(prompt.quickAccess == PromptQuickAccess.quickWorkflow
-              ? '✓ ⚡ Quick Workflow'
-              : '⚡ Quick Workflow'),
-        ),
-        PopupMenuItem(
-          value: 'slotOne',
-          child: Text(prompt.quickAccess == PromptQuickAccess.slotOne
-              ? '✓ ① Slot One'
-              : '① Slot One'),
-        ),
-        PopupMenuItem(
-          value: 'slotTwo',
-          child: Text(prompt.quickAccess == PromptQuickAccess.slotTwo
-              ? '✓ ② Slot Two'
-              : '② Slot Two'),
-        ),
-        PopupMenuItem(
-          value: 'slotThree',
-          child: Text(prompt.quickAccess == PromptQuickAccess.slotThree
-              ? '✓ ③ Slot Three'
-              : '③ Slot Three'),
-        ),
-      ],
+      items: _quickAccessMenuItems(
+        prompt.quickAccess,
+        iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
     ).then((value) {
       if (value == null || onAssignQuickAccess == null) return;
       final role = switch (value) {
@@ -347,6 +319,47 @@ class _PromptTitleWithStar extends StatelessWidget {
       onAssignQuickAccess!(role);
     });
   }
+}
+
+/// Shared Quick Access popup menu entries.
+///
+/// Uses Material icons (bundled with the app) instead of emoji characters so
+/// the menu renders identically on macOS and iOS.
+List<PopupMenuEntry<String>> _quickAccessMenuItems(
+  PromptQuickAccess current, {
+  required Color iconColor,
+}) {
+  PopupMenuItem<String> entry(
+    String value,
+    PromptQuickAccess role,
+    IconData icon,
+    String label,
+  ) {
+    final selected = current == role;
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: iconColor),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label)),
+          if (selected) Icon(Icons.check, size: 16, color: iconColor),
+        ],
+      ),
+    );
+  }
+
+  return <PopupMenuEntry<String>>[
+    entry('none', PromptQuickAccess.none, Icons.bookmark_border, 'None'),
+    entry('quickWorkflow', PromptQuickAccess.quickWorkflow,
+        Icons.bolt_outlined, 'Quick Workflow'),
+    entry('slotOne', PromptQuickAccess.slotOne, Icons.looks_one_outlined,
+        'Slot One'),
+    entry('slotTwo', PromptQuickAccess.slotTwo, Icons.looks_two_outlined,
+        'Slot Two'),
+    entry('slotThree', PromptQuickAccess.slotThree, Icons.looks_3_outlined,
+        'Slot Three'),
+  ];
 }
 
 class _PromptMenuItem extends StatelessWidget {
@@ -464,38 +477,10 @@ class _PromptMenuItem extends StatelessWidget {
     showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(200, 0, 0, 0),
-      items: [
-        PopupMenuItem(
-          value: 'none',
-          child: Text(prompt.quickAccess == PromptQuickAccess.none
-              ? '✓ None'
-              : 'None'),
-        ),
-        PopupMenuItem(
-          value: 'quickWorkflow',
-          child: Text(prompt.quickAccess == PromptQuickAccess.quickWorkflow
-              ? '✓ ⚡ Quick Workflow'
-              : '⚡ Quick Workflow'),
-        ),
-        PopupMenuItem(
-          value: 'slotOne',
-          child: Text(prompt.quickAccess == PromptQuickAccess.slotOne
-              ? '✓ ① Slot One'
-              : '① Slot One'),
-        ),
-        PopupMenuItem(
-          value: 'slotTwo',
-          child: Text(prompt.quickAccess == PromptQuickAccess.slotTwo
-              ? '✓ ② Slot Two'
-              : '② Slot Two'),
-        ),
-        PopupMenuItem(
-          value: 'slotThree',
-          child: Text(prompt.quickAccess == PromptQuickAccess.slotThree
-              ? '✓ ③ Slot Three'
-              : '③ Slot Three'),
-        ),
-      ],
+      items: _quickAccessMenuItems(
+        prompt.quickAccess,
+        iconColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
     ).then((value) {
       if (value == null || onAssignQuickAccess == null) return;
       final role = switch (value) {

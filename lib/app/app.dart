@@ -69,6 +69,8 @@ class ContextForgeApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
+      // Force dark mode regardless of the system setting.
+      themeMode: ThemeMode.dark,
       home: _Root(
         introStore: introStore ?? FirstLaunchIntroStore(),
         promptService:

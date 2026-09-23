@@ -29,6 +29,7 @@ import '../services/video_service.dart';
 import '../services/youtube_url_parser.dart';
 import '../viewmodels/video_card_controller.dart';
 import '../widgets/command_bar.dart';
+import '../widgets/default_prompt_icon.dart';
 import '../widgets/destination_selector.dart';
 import '../widgets/generate_button.dart';
 import '../widgets/output_preview.dart';
@@ -347,10 +348,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     String? roleLabel;
     if (prompt.quickAccess != PromptQuickAccess.none) {
       roleLabel = switch (prompt.quickAccess) {
-        PromptQuickAccess.quickWorkflow => '⚡ Quick Workflow',
-        PromptQuickAccess.slotOne => '① Slot One',
-        PromptQuickAccess.slotTwo => '② Slot Two',
-        PromptQuickAccess.slotThree => '③ Slot Three',
+        PromptQuickAccess.quickWorkflow => 'Quick Workflow',
+        PromptQuickAccess.slotOne => 'Slot One',
+        PromptQuickAccess.slotTwo => 'Slot Two',
+        PromptQuickAccess.slotThree => 'Slot Three',
         PromptQuickAccess.none => null,
       };
     }
@@ -1069,7 +1070,10 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           ),
         },
         child: Scaffold(
-            body: Center(
+            // Keep the whole workflow inside the device safe area so the top
+            // content never sits under the notch / status bar on iOS. This is a
+            // no-op on macOS (zero insets), leaving the desktop layout unchanged.
+            body: SafeArea(child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1200),
                 child: LayoutBuilder(
@@ -1130,6 +1134,32 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           const SizedBox(height: 24),
                           _SectionCard(
                             title: 'Prompt',
+                            // Prompt transfer actions live in the section header
+                            // so the "Select a prompt" field below can use the
+                            // full card width on narrow (iOS) screens.
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Tooltip(
+                                  message: 'Import Prompts',
+                                  child: IconButton(
+                                    onPressed: _importPrompts,
+                                    icon: const Icon(Icons.file_download_outlined),
+                                    tooltip: 'Import Prompts',
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ),
+                                Tooltip(
+                                  message: 'Export Prompts',
+                                  child: IconButton(
+                                    onPressed: _exportPrompts,
+                                    icon: const Icon(Icons.file_upload_outlined),
+                                    tooltip: 'Export Prompts',
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ),
+                              ],
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -1144,8 +1174,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                                   onDeletePrompt: _onDeletePrompt,
                                   editorController: _promptEditorController,
                                   editorEnabled: _isCustomPrompt,
-                                  onExportPrompts: _exportPrompts,
-                                  onImportPrompts: _importPrompts,
                                 ),
                               ],
                             ),
@@ -1299,7 +1327,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   },
                 ),
               ),
-            ),
+            )),
           ),
         ),
     );
@@ -1411,13 +1439,29 @@ class _Header extends StatelessWidget {
 
 /// Card wrapper used for each main section of the app.
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.child});
+  const _SectionCard({
+    required this.title,
+    required this.child,
+    this.trailing,
+  });
 
   final String title;
   final Widget child;
 
+  /// Optional action(s) rendered on the right side of the section header,
+  /// vertically aligned with the [title].
+  final Widget? trailing;
+
   @override
   Widget build(BuildContext context) {
+    final titleText = Text(
+      title,
+      style: Theme.of(context)
+          .textTheme
+          .titleLarge
+          ?.copyWith(fontWeight: FontWeight.w600),
+    );
+    final trailingWidget = trailing;
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -1425,13 +1469,20 @@ class _SectionCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w600),
-            ),
+            if (trailingWidget == null)
+              titleText
+            else
+              // Keep the header title and its trailing actions on the same
+              // baseline; the row is allowed to wrap onto a second line only
+              // when the available width is too small for both.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(child: titleText),
+                  const SizedBox(width: 8),
+                  trailingWidget,
+                ],
+              ),
             const SizedBox(height: 12),
             child,
           ],
@@ -1500,6 +1551,8 @@ class _Footer extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Keyboard Shortcuts'),
         content: const Text(
+          'Keyboard shortcuts work best in the macOS app. On iPhone and iPad '
+          'a connected hardware keyboard is required.\n\n'
           '⌘V  Paste the clipboard YouTube URL into the first '
           'available slot. Successive paste operations continue '
           'filling the next empty slot.\n\n'
@@ -1523,20 +1576,48 @@ class _Footer extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('How to use ContextForge'),
         content: SingleChildScrollView(
-          child: const Text(
-            '1. Copy a YouTube URL.\n'
-            '2. Press ⌘V (or use Paste).\n'
-            '3. Select a prompt.\n'
-            '4. Press Generate.\n'
-            '5. Copy the generated output.\n\n'
-            'Quick Access:\n'
-            '⭐  Favorite prompt.\n'
-            '🌟  Default prompt. Automatically selected when '
-            'ContextForge starts.\n'
-            '⚡  Quick Workflow. Runs the complete workflow '
-            'automatically using the clipboard.\n'
-            '① ② ③  Quick Prompt Slots. Instantly switch the '
-            'selected prompt.',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                '1. Copy a YouTube URL.\n'
+                '2. Press ⌘V (or use Paste).\n'
+                '3. Select a prompt.\n'
+                '4. Press Generate.\n'
+                '5. Copy the generated output.\n\n'
+                'Quick Access:',
+              ),
+              SizedBox(height: 12),
+              // Legend icons are Material icons (bundled font) instead of
+              // emoji, which are missing from the iOS system font fallback.
+              _LegendRow(
+                icon: Icon(Icons.star, size: 18, color: Colors.amber),
+                text: 'Favorite prompt.',
+              ),
+              _LegendRow(
+                icon: DefaultPromptIcon(size: 18),
+                text: 'Default prompt. Automatically selected when '
+                    'ContextForge starts.',
+              ),
+              _LegendRow(
+                icon: Icon(Icons.bolt_outlined, size: 18),
+                text: 'Quick Workflow. Runs the complete workflow '
+                    'automatically using the clipboard.',
+              ),
+              _LegendRow(
+                icon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.looks_one_outlined, size: 18),
+                    Icon(Icons.looks_two_outlined, size: 18),
+                    Icon(Icons.looks_3_outlined, size: 18),
+                  ],
+                ),
+                text: 'Quick Prompt Slots. Instantly switch the '
+                    'selected prompt.',
+              ),
+            ],
           ),
         ),
         actions: [
@@ -1550,10 +1631,37 @@ class _Footer extends StatelessWidget {
   }
 }
 
+/// Single "icon + description" row used by the Help dialog legend.
+///
+/// The icon column has a fixed width so every legend entry aligns, and it is
+/// wide enough for the three Quick Prompt Slot icons.
+class _LegendRow extends StatelessWidget {
+  const _LegendRow({required this.icon, required this.text});
+
+  final Widget icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 62, child: Center(child: icon)),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
+}
+
 /// About dialog with the Etaosin Easter Egg.
 ///
-/// Displays the version and a clickable `𝐞𝐭✰𝐨𝐬𝐢𝐧` marker. Clicking it toggles
-/// the internal `etaosinMode` flag, switching the marker between `✰` and `✪`.
+/// Displays the version and a clickable `et★osin` marker. Clicking it toggles
+/// the internal `etaosinMode` flag, switching the marker between an outline
+/// star and a filled star.
 ///
 /// The flag exists only while this dialog is open — it is never persisted and
 /// is not used anywhere else yet. Future versions may use it to enable
@@ -1568,13 +1676,18 @@ class _AboutDialog extends StatefulWidget {
 class _AboutDialogState extends State<_AboutDialog> {
   /// Internal flag for the Etaosin Easter Egg.
   ///
-  /// Defaults to `false` (✰). Toggled on each click of the marker. Not
-  /// persisted and not used anywhere else in this phase.
+  /// Defaults to `false` (outline star). Toggled on each click of the marker.
+  /// Not persisted and not used anywhere else in this phase.
   bool etaosinMode = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final markerStyle = TextStyle(
+      color: theme.colorScheme.primary,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 1.5,
+    );
     return AlertDialog(
       title: const Text('About ContextForge'),
       content: SingleChildScrollView(
@@ -1591,12 +1704,20 @@ class _AboutDialogState extends State<_AboutDialog> {
             const SizedBox(height: 12),
             GestureDetector(
               onTap: () => setState(() => etaosinMode = !etaosinMode),
-              child: Text(
-                etaosinMode ? '𝐞𝐭✪𝐨𝐬𝐢𝐧' : '𝐞𝐭✰𝐨𝐬𝐢𝐧',
-                style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('et', style: markerStyle),
+                  // Material star instead of the ✰ / ✪ glyphs (and plain
+                  // letters instead of the Mathematical Bold characters),
+                  // which are missing from the iOS system font fallback.
+                  Icon(
+                    etaosinMode ? Icons.star : Icons.star_border,
+                    size: 15,
+                    color: theme.colorScheme.primary,
+                  ),
+                  Text('osin', style: markerStyle),
+                ],
               ),
             ),
             const Divider(height: 32),
@@ -1609,21 +1730,21 @@ class _AboutDialogState extends State<_AboutDialog> {
             const Text("We'd love to hear from you!"),
             const SizedBox(height: 8),
             _FeedbackAction(
-              icon: '💡',
+              icon: Icons.lightbulb_outline,
               label: 'Suggest an Idea',
               onPressed: () => _openFeedback(
                 subject: 'ContextForge - Suggestion',
               ),
             ),
             _FeedbackAction(
-              icon: '🐞',
+              icon: Icons.bug_report_outlined,
               label: 'Report a Bug',
               onPressed: () => _openFeedback(
                 subject: 'ContextForge - Bug Report',
               ),
             ),
             _FeedbackAction(
-              icon: '✉️',
+              icon: Icons.mail_outline,
               label: 'General Feedback',
               onPressed: () => _openFeedback(
                 subject: 'ContextForge - Feedback',
@@ -1675,7 +1796,7 @@ class _FeedbackAction extends StatelessWidget {
     required this.onPressed,
   });
 
-  final String icon;
+  final IconData icon;
   final String label;
   final VoidCallback onPressed;
 
@@ -1689,7 +1810,7 @@ class _FeedbackAction extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         child: Row(
           children: [
-            Text(icon, style: const TextStyle(fontSize: 16)),
+            Icon(icon, size: 18, color: theme.colorScheme.primary),
             const SizedBox(width: 10),
             Text(
               label,

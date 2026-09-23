@@ -156,34 +156,40 @@ class _DestinationDialogState extends State<_DestinationDialog> {
     final theme = Theme.of(context);
     return AlertDialog(
       title: const Text('Destination'),
-      contentPadding: const EdgeInsets.symmetric(vertical: 8),
-      content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 360),
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            for (final destination in _destinations)
-              ListTile(
-                dense: true,
-                leading: IconButton(
-                  icon: Icon(
-                    _favoriteIds.contains(destination.id)
-                        ? Icons.star
-                        : Icons.star_border,
-                    size: 20,
-                    color: _favoriteIds.contains(destination.id)
-                        ? Colors.amber
-                        : theme.colorScheme.onSurfaceVariant,
+      contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      // A scrollable `ListView` cannot be measured inside the AlertDialog's
+      // IntrinsicWidth pass, which made the dialog open with an empty body.
+      // A fixed-width `SingleChildScrollView` + `Column` is layout-safe and
+      // renders the full destination list on every platform (iOS included).
+      content: SizedBox(
+        width: 320,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final destination in _destinations)
+                ListTile(
+                  dense: true,
+                  leading: IconButton(
+                    icon: Icon(
+                      _favoriteIds.contains(destination.id)
+                          ? Icons.star
+                          : Icons.star_border,
+                      size: 20,
+                      color: _favoriteIds.contains(destination.id)
+                          ? Colors.amber
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                    tooltip: _favoriteIds.contains(destination.id)
+                        ? 'Remove favorite'
+                        : 'Mark as favorite',
+                    onPressed: () => _toggle(destination.id),
                   ),
-                  tooltip: _favoriteIds.contains(destination.id)
-                      ? 'Remove favorite'
-                      : 'Mark as favorite',
-                  onPressed: () => _toggle(destination.id),
+                  title: Text(destination.name),
+                  onTap: () => _launch(destination),
                 ),
-                title: Text(destination.name),
-                onTap: () => _launch(destination),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
       actions: [
